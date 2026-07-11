@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام أوامر التكليف</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --maroon-950:#3a0a15;
+    --maroon-900:#5c0f22;
+    --maroon-800:#7a1230;
+    --maroon-700:#8f1a3a;
+    --maroon-600:#a3264a;
+    --maroon-100:#f6e6ea;
+    --maroon-50:#fbf3f4;
+    --gold:#c9a24b;
+    --red:#c0273f;
+    --ink:#2a1116;
+    --line:#e6ccd2;
+    --white:#ffffff;
+    --font-body:'Sakkal Majalla','Tajawal','Cairo',sans-serif;
+    --font-head:'29LT Bukra','Cairo',sans-serif;
+    --radius:10px;
+    --shadow:0 4px 18px rgba(58,10,21,.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--font-body);
+    background:var(--maroon-50);
+    color:var(--ink);
+    min-height:100vh;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px);
+    background-size: 100% 34px;
+  }
+  #app{display:flex; min-height:100vh;}
+  #sidebar{
+    width:250px; flex:0 0 250px;
+    background:linear-gradient(180deg,var(--maroon-900),var(--maroon-950));
+    color:var(--white);
+    display:flex; flex-direction:column;
+    position:sticky; top:0; height:100vh;
+  }
+  .brand{display:flex; align-items:center; gap:10px; padding:20px 16px; border-bottom:1px solid rgba(255,255,255,.12);}
+  .brand img{width:42px;height:42px;object-fit:contain;border-radius:8px;background:#fff;}
+  .brand .logo-placeholder{width:42px;height:42px;border-radius:8px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .brand-name{font-family:var(--font-head);font-weight:800;font-style:italic;font-size:16px;line-height:1.3;}
+  .brand-sub{font-size:11px;opacity:.75;margin-top:2px;}
+  nav.mainnav{flex:1; padding:14px 10px; display:flex; flex-direction:column; gap:4px; overflow-y:auto;}
+  nav.mainnav button{all:unset; cursor:pointer; display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:8px; font-size:14px; color:rgba(255,255,255,.88); transition:background .15s;}
+  nav.mainnav button .ic{font-size:17px; width:20px; text-align:center;}
+  nav.mainnav button:hover{background:rgba(255,255,255,.08);}
+  nav.mainnav button.active{background:var(--gold); color:var(--maroon-950); font-weight:700;}
+  .sidebar-foot{padding:14px; font-size:11px; opacity:.6; border-top:1px solid rgba(255,255,255,.12);}
+  #main{flex:1; display:flex; flex-direction:column; min-width:0;}
+  header.topbar{background:var(--white); border-bottom:2px solid var(--maroon-800); padding:16px 26px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:5; box-shadow:var(--shadow);}
+  header.topbar h1{font-family:var(--font-head); font-style:italic; font-weight:800; color:var(--maroon-800); font-size:21px; margin:0;}
+  header.topbar .sub{font-size:12.5px;color:#7a5560;margin-top:3px;}
+  .content{padding:24px 26px 60px; flex:1;}
+  .card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; margin-bottom:20px;}
+  .card h2{font-family:var(--font-head); font-style:italic; color:var(--maroon-800); font-size:17px; margin:0 0 14px; padding-bottom:10px; border-bottom:2px solid var(--maroon-100); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .card h3.sub-h{font-family:var(--font-head); font-style:italic; color:var(--maroon-800); font-size:15px; margin:18px 0 8px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px;}
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field label{font-size:12.5px; font-weight:700; color:var(--maroon-800);}
+  .field .row-inline{display:flex; gap:6px;}
+  input,select,textarea{font-family:var(--font-body); font-size:14px; padding:9px 10px; border:1.5px solid var(--line); border-radius:7px; background:#fff; color:var(--ink); width:100%;}
+  input:focus,select:focus,textarea:focus{outline:none; border-color:var(--maroon-600);}
+  input:disabled, select:disabled{background:#f2eaec; color:#a98d94;}
+  textarea{resize:vertical; min-height:64px;}
+  .btn{all:unset; cursor:pointer; font-family:var(--font-body); font-size:13.5px; font-weight:700; padding:9px 16px; border-radius:7px; text-align:center; display:inline-flex; align-items:center; gap:6px;}
+  .btn-primary{background:var(--maroon-800); color:#fff;}
+  .btn-primary:hover{background:var(--maroon-900);}
+  .btn-outline{background:#fff; color:var(--maroon-800); border:1.5px solid var(--maroon-800);}
+  .btn-outline:hover{background:var(--maroon-100);}
+  .btn-gold{background:var(--gold); color:var(--maroon-950);}
+  .btn-sm{padding:6px 10px; font-size:12.5px;}
+  .icon-btn{all:unset; cursor:pointer; width:30px; height:30px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:15px; background:var(--maroon-100); color:var(--maroon-800);}
+  .icon-btn:hover{background:var(--maroon-800); color:#fff;}
+  .icon-btn.danger:hover{background:#a3263a;}
+  .plus-btn{all:unset; cursor:pointer; width:34px; height:34px; border-radius:7px; flex:0 0 auto; background:var(--maroon-800); color:#fff; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center;}
+  .plus-btn:hover{background:var(--maroon-900);}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{background:var(--maroon-800); color:#fff; padding:9px 7px; text-align:right; font-family:var(--font-head); font-weight:700; font-style:italic; font-size:12px;}
+  tbody td{padding:8px 7px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tbody tr:hover{background:var(--maroon-50);}
+  .actions-cell{display:flex; gap:4px; flex-wrap:wrap;}
+  .badge{display:inline-block; padding:3px 9px; border-radius:20px; background:var(--maroon-100); color:var(--maroon-800); font-size:11.5px; font-weight:700;}
+  .badge.busy{background:#f4c9d1;color:#7a1230;}
+  .badge.ok{background:#d9f0dd;color:#1e6b34;}
+  .badge.bad{background:#f7d6d6;color:#8f1a1a;}
+  .empty-state{text-align:center; padding:40px 10px; color:#946; opacity:.65;}
+  .checkbox-list{display:flex; flex-wrap:wrap; gap:10px;}
+  .checkbox-chip{display:flex; align-items:center; gap:6px; border:1.5px solid var(--line); border-radius:20px; padding:6px 12px; font-size:13px; cursor:pointer;}
+  .checkbox-chip input{width:auto;}
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px;}
+  .stat-box{background:linear-gradient(135deg,var(--maroon-800),var(--maroon-900)); color:#fff; border-radius:var(--radius); padding:18px; text-align:center;}
+  .stat-box .num{font-size:28px; font-weight:800; font-family:var(--font-head); font-style:italic;}
+  .stat-box .lbl{font-size:12.5px; opacity:.85; margin-top:4px;}
+  .tabs{display:flex; gap:6px; margin-bottom:16px; border-bottom:2px solid var(--maroon-100); flex-wrap:wrap;}
+  .tab-btn{all:unset; cursor:pointer; padding:9px 18px; font-size:13.5px; font-weight:700; color:#8a5a66; border-bottom:3px solid transparent;}
+  .tab-btn.active{color:var(--maroon-800); border-bottom-color:var(--maroon-800);}
+  .helper{font-size:11.5px; color:#8a6470; margin-top:2px;}
+  .divider{height:1px; background:var(--line); margin:16px 0;}
+  .supervisor-info{background:var(--maroon-50); border:1px dashed var(--maroon-100); border-radius:8px; padding:10px; font-size:12.5px; display:flex; gap:16px; flex-wrap:wrap;}
+  .notif{background:var(--maroon-50); border-right:4px solid var(--maroon-800); padding:10px 12px; border-radius:6px; margin-bottom:8px; font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .notif.unread{background:#fdf0e6; border-right-color:var(--gold);}
+  .chart-wrap{margin-top:10px; overflow-x:auto;}
+
+  /* Modal */
+  .modal-overlay{position:fixed; inset:0; background:rgba(42,17,22,.55); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; overflow-y:auto;}
+  .modal-overlay.open{display:flex;}
+  .modal-box{background:#fff; border-radius:12px; width:100%; max-width:460px; padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.3); max-height:90vh; overflow-y:auto;}
+  .modal-box h3{margin:0 0 16px; font-family:var(--font-head); font-style:italic; color:var(--maroon-800);}
+  .modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:18px;}
+  .star{transition:color .1s;}
+
+  .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--maroon-900); color:#fff; padding:11px 22px; border-radius:24px; font-size:13.5px; box-shadow:var(--shadow); z-index:200; opacity:0; transition:opacity .25s, bottom .25s; pointer-events:none; max-width:90vw; text-align:center;}
+  .toast.show{opacity:1; bottom:34px;}
+
+  #printArea{display:none;}
+  @media print{
+    body.printing > *:not(#printArea){display:none !important;}
+    body.printing{background:#fff;}
+    #printArea{display:block !important; padding:6px;}
+  }
+  .print-doc{font-family:var(--font-body); color:var(--ink); border-bottom:4px solid var(--maroon-800); padding-bottom:16px;}
+  .print-brand-head{display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid var(--maroon-800); padding-bottom:10px; margin-bottom:14px;}
+  .print-logo img{width:64px;height:64px;object-fit:contain;}
+  .print-logo-placeholder{width:64px;height:64px;border-radius:8px;background:var(--maroon-100);display:flex;align-items:center;justify-content:center;font-size:26px;}
+  .print-org-lines{text-align:right; font-weight:800; color:var(--maroon-900); line-height:1.7; font-size:14px;}
+  .print-title-bar{background:var(--maroon-100); color:var(--maroon-900); text-align:center; font-family:var(--font-head); font-style:italic; font-weight:800; padding:10px; border-radius:6px; margin-bottom:12px; font-size:16px;}
+  .print-daterange{display:flex; gap:14px; margin-bottom:14px;}
+  .dr-item{display:flex; border-radius:6px; overflow:hidden; border:1px solid var(--line);}
+  .dr-label{background:var(--red); color:#fff; padding:6px 14px; font-size:12.5px; font-weight:700;}
+  .dr-value{background:#eee; padding:6px 14px; font-size:12.5px;}
+  .print-table{width:100%; border-collapse:collapse; margin-top:10px;}
+  .print-table td, .print-table th{border:1px solid var(--line); padding:7px 9px; font-size:12.5px;}
+  .print-table th{background:var(--maroon-800); color:#fff; text-align:right;}
+
+  @media (max-width:860px){
+    #sidebar{position:fixed; right:0; z-index:50; transform:translateX(100%); transition:transform .2s;}
+    #sidebar.open{transform:translateX(0);}
+    .content{padding:16px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <div id="logoSlot"><div class="logo-placeholder">🕌</div></div>
+      <div>
+        <div class="brand-name" id="orgNameDisplay">إدارة الفعاليات</div>
+        <div class="brand-sub">نظام أوامر التكليف</div>
+      </div>
+    </div>
+    <nav class="mainnav" id="mainNav"></nav>
+    <div class="sidebar-foot">تصميم عنابي × أبيض — نُظّم بمسطرة</div>
+  </aside>
+  <div id="main">
+    <header class="topbar">
+      <div>
+        <h1 id="pageTitle">الصفحة الرئيسية</h1>
+        <div class="sub" id="pageSub">نظرة عامة على البرنامج</div>
+      </div>
+      <div id="topbarActions"></div>
+    </header>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+<div id="printArea"></div>
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modalOverlay"><div class="modal-box" id="modalBox"></div></div>
+
+<script>
+/* ============ Storage & State ============ */
+const STORAGE_KEY = 'taklief-app-state-v2';
+let state = null;
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function defaultState(){
+  return {
+    orgName:'إدارة الفعاليات',
+    logo:'',
+    printHeader:{ line1:'مؤسسة عيد الخيرية', line2:'مركز عيد الثقافي', line3:'قسم البرامج المجتمعية' },
+    nextSerial:1,
+    fields:[
+      {id:uid(), name:'طلب إداري'},{id:uid(), name:'ثقافي إجتماعي صحي'},
+      {id:uid(), name:'البرامج القيمية الترفيهية'},{id:uid(), name:'ثقافي تنافسي'},
+      {id:uid(), name:'ثقافي تطوير معرفي'},{id:uid(), name:'البرامج القيمية - المصلى المتنقل'},
+      {id:uid(), name:'البرامج القيمية'},{id:uid(), name:'الأنشطة النوعية'},
+    ],
+    programTypes:[
+      {id:uid(), name:'حملات'},{id:uid(), name:'مدارك'},{id:uid(), name:'مواهب ومسابقات'},{id:uid(), name:'صحبة'},
+    ],
+    schools:[
+      {id:uid(), name:'مدرسة الشمال الابتدائية', level:'ابتدائي', supervisors:[{id:uid(), name:'أ. خالد المري', phone:'55511111', email:'khaled@example.com'}]},
+      {id:uid(), name:'مدرسة عبدالله بن زيد آل محمود', level:'إعدادي', supervisors:[{id:uid(), name:'أ. سعد العبدالله', phone:'55522222', email:'saad@example.com'}]},
+      {id:uid(), name:'مدرسة اليرموك الإعدادية', level:'إعدادي', supervisors:[{id:uid(), name:'أ. محمد الكواري', phone:'55533333', email:'mohd@example.com'}]},
+    ],
+    trainers:[
+      {id:uid(), name:'أ. أحمد النعيمي', phone:'55011122'},
+      {id:uid(), name:'أ. فيصل السليطي', phone:'55033344'},
+    ],
+    adminRequestsList:[
+      {id:uid(), name:'توفير سيارة'},{id:uid(), name:'توفير مندوب لإيصال المدرب'},
+      {id:uid(), name:'حجز مخيم'},{id:uid(), name:'حجز استراحة المؤسسة'},{id:uid(), name:'توفير مقر مركز عيد الثقافي'},
+    ],
+    orders:[],
+    trainerRequests:[],
+    notifications:[],
+    tasks:[]
+  };
+}
+
+async function loadState(){
+  try{
+    const r=await fetch('/api/state');
+    const j=await r.json();
+    if(j&&j.value){ state=j.value;
+      if(!state.printHeader) state.printHeader={line1:'مؤسسة عيد الخيرية',line2:'مركز عيد الثقافي',line3:'قسم البرامج المجتمعية'};
+      if(!state.trainerRequests) state.trainerRequests=[];
+      if(!state.notifications) state.notifications=[];
+      return; }
+  }catch(e){ console.error('تعذر تحميل البيانات من الخادم:',e); }
+  state = defaultState();
+  await saveState();
+}
+let saving=false, pendingSave=false;
+async function saveState(){
+  if(saving){ pendingSave=true; return; }
+  saving=true;
+  try{ await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)}); }
+  catch(e){ console.error('save error', e); }
+  saving=false;
+  if(pendingSave){ pendingSave=false; saveState(); }
+}
+
+/* ============ Navigation ============ */
+const PAGES = [
+  {id:'home', label:'الصفحة الرئيسية', icon:'🏠'},
+  {id:'order', label:'أمر التكليف', icon:'📋'},
+  {id:'admin', label:'الإداريات (اليومية)', icon:'🗓️'},
+  {id:'reports', label:'التقارير', icon:'📄'},
+  {id:'stats', label:'الإحصائيات', icon:'📊'},
+  {id:'tasks', label:'المهام', icon:'✅'},
+  {id:'trainerPortal', label:'بوابة منفذ البرنامج', icon:'🧑‍🏫'},
+  {id:'settings', label:'الإعدادات والقوائم', icon:'⚙️'},
+];
+let currentPage='home';
+let orderSubTab='new';
+let editingOrderId=null;
+let loggedTrainerId=null;
+let trainerPortalTab='upcoming';
+
+function renderNav(){
+  const nav = document.getElementById('mainNav');
+  nav.innerHTML='';
+  PAGES.forEach(p=>{
+    const b=document.createElement('button');
+    b.className = p.id===currentPage ? 'active':'';
+    b.innerHTML = `<span class="ic">${p.icon}</span><span>${p.label}</span>`;
+    b.onclick=()=>{ currentPage=p.id; if(p.id==='order'){editingOrderId=null;} render(); };
+    nav.appendChild(b);
+  });
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer=setTimeout(()=>t.classList.remove('show'),2600);
+}
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function fileToDataUrl(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+/* ============ Modal helper (generic simple fields) ============ */
+function openModal(title, fieldsConfig, onSubmit){
+  const overlay=document.getElementById('modalOverlay');
+  const box=document.getElementById('modalBox');
+  box.innerHTML = `<h3>${title}</h3><div id="modalFields" class="grid"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" id="modalCancel">إلغاء</button>
+      <button class="btn btn-primary" id="modalSave">حفظ</button>
+    </div>`;
+  const fc = box.querySelector('#modalFields');
+  fieldsConfig.forEach(f=>{
+    const wrap=document.createElement('div'); wrap.className='field';
+    wrap.innerHTML = `<label>${f.label}</label>` + (f.type==='select'
+      ? `<select id="mf_${f.name}">${f.options.map(o=>`<option value="${o.value}">${o.label}</option>`).join('')}</select>`
+      : `<input id="mf_${f.name}" type="${f.type||'text'}" placeholder="${f.placeholder||''}">`);
+    fc.appendChild(wrap);
+  });
+  overlay.classList.add('open');
+  box.querySelector('#modalCancel').onclick=()=>overlay.classList.remove('open');
+  box.querySelector('#modalSave').onclick=async ()=>{
+    const values={};
+    fieldsConfig.forEach(f=>{ values[f.name]=document.getElementById('mf_'+f.name).value.trim(); });
+    const missingReq = fieldsConfig.some(f=>f.required && !values[f.name]);
+    if(missingReq){ toast('يرجى تعبئة الحقول المطلوبة'); return; }
+    await onSubmit(values);
+    overlay.classList.remove('open');
+  };
+}
+
+/* ============ Star rating helper ============ */
+function starRatingHtml(name, val){
+  val = Number(val)||0;
+  let stars='';
+  for(let i=1;i<=10;i++){
+    stars += `<span class="star" data-name="${name}" data-val="${i}" style="cursor:pointer;font-size:19px;color:${i<=val?'var(--gold)':'#ddd'}">★</span>`;
+  }
+  return `<div id="stars_${name}">${stars}</div><input type="hidden" id="${name}_val" value="${val}"><div class="helper">التقييم الحالي: <span id="${name}_lbl">${val}</span> / 10</div>`;
+}
+function wireStars(container){
+  container.querySelectorAll('.star').forEach(s=>{
+    s.onclick=()=>{
+      const name=s.dataset.name, val=Number(s.dataset.val);
+      document.getElementById(name+'_val').value = val;
+      const lbl=document.getElementById(name+'_lbl'); if(lbl) lbl.textContent=val;
+      container.querySelectorAll(`.star[data-name="${name}"]`).forEach(st=>{
+        st.style.color = Number(st.dataset.val)<=val ? 'var(--gold)':'#ddd';
+      });
+    };
+  });
+}
+
+/* ============ Scheduling conflict helpers ============ */
+function parseDT(dateStr, timeStr){
+  if(!dateStr) return null;
+  return new Date(dateStr+'T'+(timeStr||'00:00')+':00');
+}
+function trainerConflict(trainerId, date, timeFrom, timeTo, excludeOrderId){
+  if(!trainerId || !date) return null;
+  const newStart = parseDT(date, timeFrom||'00:00');
+  const newEnd = parseDT(date, timeTo||timeFrom||'23:59');
+  const bufferMs = 90*60*1000;
+  return state.orders.find(o=>{
+    if(o.id===excludeOrderId) return false;
+    if(o.trainerId!==trainerId) return false;
+    if(o.date!==date) return false;
+    const exStart = parseDT(o.date, o.timeFrom||'00:00');
+    const exEnd = parseDT(o.date, o.timeTo||o.timeFrom||'23:59');
+    const winStart = new Date(exStart.getTime()-bufferMs);
+    const winEnd = new Date(exEnd.getTime()+bufferMs);
+    return newStart < winEnd && newEnd > winStart;
+  }) || null;
+}
+function schoolSameDay(schoolId, date, excludeOrderId){
+  if(!schoolId||!date) return null;
+  return state.orders.find(o=> o.id!==excludeOrderId && o.schoolId===schoolId && o.date===date) || null;
+}
+
+/* ============ Render dispatcher ============ */
+function render(){
+  renderNav();
+  const titleMap={home:['الصفحة الرئيسية','نظرة عامة على البرنامج'],
+    order:['أمر التكليف','إنشاء ومتابعة أوامر التكليف'],
+    admin:['الإداريات','المتابعة اليومية للفعاليات'],
+    reports:['التقارير','تقارير المدربين والمدارس والساعات'],
+    stats:['الإحصائيات','تصنيفات وأعداد البرامج'],
+    tasks:['المهام','قائمة المهام الإدارية'],
+    trainerPortal:['بوابة منفذ البرنامج','دخول المدرب لمتابعة برامجه وتقييمها'],
+    settings:['الإعدادات والقوائم','إدارة القوائم المنسدلة والشعار وطلبات الترشيح']};
+  document.getElementById('pageTitle').textContent = titleMap[currentPage][0];
+  document.getElementById('pageSub').textContent = titleMap[currentPage][1];
+  document.getElementById('topbarActions').innerHTML='';
+
+  const c = document.getElementById('content');
+  c.innerHTML='';
+  if(currentPage==='home') renderHome(c);
+  else if(currentPage==='order') renderOrderPage(c);
+  else if(currentPage==='admin') renderAdminPage(c);
+  else if(currentPage==='reports') renderReportsPage(c);
+  else if(currentPage==='stats') renderStatsPage(c);
+  else if(currentPage==='tasks') renderTasksPage(c);
+  else if(currentPage==='trainerPortal') renderTrainerPortalPage(c);
+  else if(currentPage==='settings') renderSettingsPage(c);
+
+  document.getElementById('orgNameDisplay').textContent = state.orgName || 'إدارة الفعاليات';
+  const logoSlot=document.getElementById('logoSlot');
+  logoSlot.innerHTML = state.logo ? `<img src="${state.logo}">` : `<div class="logo-placeholder">🕌</div>`;
+}
+
+/* ============ Home ============ */
+function renderHome(c){
+  const totalOrders = state.orders.length;
+  const thisMonth = state.orders.filter(o=>{
+    if(!o.date) return false;
+    const d=new Date(o.date), now=new Date();
+    return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  }).length;
+  const totalParticipants = state.orders.reduce((s,o)=>s+(Number(o.participantsCount)||0),0);
+  const pendingReq = state.trainerRequests.filter(r=>r.status==='pending').length;
+
+  c.innerHTML = `
+  <div class="stat-grid" style="margin-bottom:20px;">
+    <div class="stat-box"><div class="num">${totalOrders}</div><div class="lbl">إجمالي أوامر التكليف</div></div>
+    <div class="stat-box"><div class="num">${thisMonth}</div><div class="lbl">فعاليات هذا الشهر</div></div>
+    <div class="stat-box"><div class="num">${state.schools.length}</div><div class="lbl">عدد المدارس</div></div>
+    <div class="stat-box"><div class="num">${state.trainers.length}</div><div class="lbl">عدد المدربين</div></div>
+    <div class="stat-box"><div class="num">${totalParticipants}</div><div class="lbl">إجمالي المشاركين</div></div>
+    <div class="stat-box"><div class="num">${pendingReq}</div><div class="lbl">طلبات ترشيح بانتظار الرد</div></div>
+  </div>
+  <div class="card"><h2>أحدث أوامر التكليف</h2>${ordersTableHtml(state.orders.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,6))}</div>
+  <div class="card">
+    <h2>بيانات المؤسسة</h2>
+    <div class="grid">
+      <div class="field"><label>اسم الجهة</label><input id="homeOrgName" value="${escapeHtml(state.orgName||'')}"></div>
+      <div class="field"><label>شعار الجهة</label><input id="homeLogo" type="file" accept="image/*"></div>
+    </div>
+    <div style="margin-top:12px;"><button class="btn btn-primary" id="saveOrgBtn">حفظ</button></div>
+  </div>`;
+  document.getElementById('saveOrgBtn').onclick=async ()=>{
+    state.orgName = document.getElementById('homeOrgName').value.trim();
+    const file=document.getElementById('homeLogo').files[0];
+    if(file){ state.logo = await fileToDataUrl(file); }
+    await saveState(); toast('تم الحفظ'); render();
+  };
+}
+
+/* ============ Order table (screen, with actions) ============ */
+function ordersTableHtml(list){
+  if(!list.length) return `<div class="empty-state">لا توجد أوامر تكليف بعد</div>`;
+  return `<table><thead><tr>
+    <th>م</th><th>العنوان</th><th>التاريخ</th><th>المجال</th><th>المدرسة</th><th>المدرب</th><th>الإنجاز</th><th>إجراءات</th>
+  </tr></thead><tbody>
+  ${list.map(o=>{
+    const field = state.fields.find(f=>f.id===o.fieldId);
+    const school = state.schools.find(s=>s.id===o.schoolId);
+    const trainer = state.trainers.find(t=>t.id===o.trainerId);
+    const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>'
+      : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : '<span class="badge">—</span>';
+    return `<tr>
+      <td><span class="badge">${o.serial}</span></td>
+      <td>${escapeHtml(o.title)}</td>
+      <td>${o.date||''}</td>
+      <td>${field?escapeHtml(field.name):''}</td>
+      <td>${school?escapeHtml(school.name):''}</td>
+      <td>${trainer?escapeHtml(trainer.name):''}</td>
+      <td>${statusBadge}</td>
+      <td class="actions-cell">
+        <button class="icon-btn" title="تعديل" onclick="editOrder('${o.id}')">✏️</button>
+        <button class="icon-btn" title="تقييم وإنجاز" onclick="openEvaluationModal('${o.id}')">📝</button>
+        <button class="icon-btn" title="طباعة / حفظ PDF" onclick="printOrder('${o.id}')">🖨️</button>
+        <button class="icon-btn" title="إرسال بالبريد" onclick="emailOrder('${o.id}')">✉️</button>
+        <button class="icon-btn danger" title="حذف" onclick="deleteOrder('${o.id}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('')}
+  </tbody></table>`;
+}
+/* Print-safe version: no actions column */
+function ordersTableHtmlPrint(list){
+  if(!list.length) return `<div class="empty-state">لا توجد بيانات ضمن هذه المعايير</div>`;
+  return `<table class="print-table"><thead><tr>
+    <th>م</th><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>المدرسة</th><th>المدرب</th><th>الإنجاز</th>
+  </tr></thead><tbody>
+  ${list.map(o=>{
+    const school = state.schools.find(s=>s.id===o.schoolId);
+    const trainer = state.trainers.find(t=>t.id===o.trainerId);
+    return `<tr>
+      <td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td>
+      <td>${school?escapeHtml(school.name):''}</td><td>${trainer?escapeHtml(trainer.name):''}</td>
+      <td>${o.completionStatus||'—'}</td>
+    </tr>`;
+  }).join('')}
+  </tbody></table>`;
+}
+
+/* ============ Order Page ============ */
+function renderOrderPage(c){
+  c.innerHTML = `
+  <div class="tabs">
+    <button class="tab-btn ${orderSubTab==='new'?'active':''}" id="tabNew">أمر تكليف جديد</button>
+    <button class="tab-btn ${orderSubTab==='list'?'active':''}" id="tabList">كل الأوامر</button>
+  </div>
+  <div id="orderSubContent"></div>`;
+  document.getElementById('tabNew').onclick=()=>{orderSubTab='new'; editingOrderId=null; render();};
+  document.getElementById('tabList').onclick=()=>{orderSubTab='list'; render();};
+
+  const sub = document.getElementById('orderSubContent');
+  if(orderSubTab==='list'){
+    sub.innerHTML = `<div class="card"><h2>كل أوامر التكليف</h2>${ordersTableHtml(state.orders.slice().sort((a,b)=>b.serial-a.serial))}</div>`;
+    return;
+  }
+  renderOrderForm(sub);
+}
+
+function renderOrderForm(sub){
+  const editing = editingOrderId ? state.orders.find(o=>o.id===editingOrderId) : null;
+
+  sub.innerHTML = `
+  <div class="card">
+    <h2>${editing? 'تعديل أمر التكليف رقم '+editing.serial : 'أمر تكليف جديد — تسلسل رقم '+state.nextSerial}</h2>
+    <div class="grid">
+      <div class="field"><label>عنوان الفعالية</label><input id="f_title" value="${editing?escapeHtml(editing.title):''}"></div>
+      <div class="field"><label>مجال الفعالية</label>
+        <div class="row-inline"><select id="f_field">${state.fields.map(f=>`<option value="${f.id}" ${editing&&editing.fieldId===f.id?'selected':''}>${escapeHtml(f.name)}</option>`).join('')}</select>
+        <button class="plus-btn" title="إضافة مجال جديد" onclick="quickAddField()">+</button></div>
+      </div>
+      <div class="field"><label>عدد المشاركين</label><input id="f_count" type="number" min="0" value="${editing?editing.participantsCount:''}"></div>
+      <div class="field"><label>تاريخ الفعالية</label><input id="f_date" type="date" value="${editing?editing.date:''}"></div>
+      <div class="field"><label>وقت الفعالية من</label><input id="f_timeFrom" type="time" value="${editing?editing.timeFrom:''}"></div>
+      <div class="field"><label>وقت الفعالية إلى</label><input id="f_timeTo" type="time" value="${editing?editing.timeTo:''}"></div>
+      <div class="field"><label>نوع البرنامج</label>
+        <div class="row-inline"><select id="f_ptype">${state.programTypes.map(p=>`<option value="${p.id}" ${editing&&editing.programTypeId===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('')}</select>
+        <button class="plus-btn" title="إضافة نوع برنامج" onclick="quickAddPType()">+</button></div>
+      </div>
+      <div class="field"><label>مكان الفعالية (المدرسة)</label>
+        <div class="row-inline"><select id="f_school">${state.schools.map(s=>`<option value="${s.id}" ${editing&&editing.schoolId===s.id?'selected':''}>${escapeHtml(s.name)} — ${escapeHtml(s.level)}</option>`).join('')}</select>
+        <button class="plus-btn" title="إضافة مدرسة" onclick="quickAddSchool()">+</button></div>
+      </div>
+      <div class="field"><label>المشرف</label>
+        <div class="row-inline"><select id="f_supervisor"></select>
+        <button class="plus-btn" title="إضافة مشرف لهذه المدرسة" onclick="quickAddSupervisor()">+</button></div>
+      </div>
+      <div class="field"><label>مقدم البرنامج / المدرب</label>
+        <div class="row-inline"><select id="f_trainer"></select>
+        <button class="plus-btn" title="إضافة مدرب" onclick="quickAddTrainer()">+</button></div>
+        <div class="helper">المدربون المشغولون بفارق أقل من ساعة ونصف عن فعالية أخرى في نفس اليوم يظهرون كـ"مشغول" ولا يمكن اختيارهم.</div>
+      </div>
+    </div>
+    <div id="supervisorInfo" class="supervisor-info" style="margin-top:12px;"></div>
+    <div class="divider"></div>
+    <div class="grid">
+      <div class="field"><label>ملاحظة الجهة الطالبة</label><textarea id="f_reqNote">${editing?escapeHtml(editing.requesterNote||''):''}</textarea></div>
+      <div class="field"><label>ملاحظة الإدارة</label><textarea id="f_adminNote">${editing?escapeHtml(editing.adminNote||''):''}</textarea></div>
+    </div>
+    <div class="divider"></div>
+    <div class="field">
+      <label style="display:flex;justify-content:space-between;align-items:center;">
+        <span>الطلبات الإدارية للبرنامج</span>
+        <button class="plus-btn" style="width:28px;height:28px;font-size:15px;" title="إضافة طلب إداري" onclick="quickAddAdminRequest()">+</button>
+      </label>
+      <div class="checkbox-list" id="adminReqList"></div>
+      <div class="helper">إذا كان الطلب مستخدمًا مسبقًا لبرنامج آخر في نفس التاريخ سيظهر تنبيه بذلك.</div>
+    </div>
+    <div class="divider"></div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-primary" id="saveOrderBtn">${editing?'حفظ التعديلات':'حفظ أمر التكليف'}</button>
+      ${editing?'<button class="btn btn-outline" id="cancelEditBtn">إلغاء التعديل</button>':''}
+    </div>
+  </div>`;
+
+  function currentDate(){ return document.getElementById('f_date').value; }
+  function currentTimeFrom(){ return document.getElementById('f_timeFrom').value; }
+  function currentTimeTo(){ return document.getElementById('f_timeTo').value; }
+
+  function refreshTrainerOptions(){
+    const date = currentDate(), tf=currentTimeFrom(), tt=currentTimeTo();
+    const sel = document.getElementById('f_trainer');
+    const prevVal = sel.value || (editing?editing.trainerId:'');
+    sel.innerHTML = state.trainers.map(t=>{
+      const conflict = date ? trainerConflict(t.id, date, tf, tt, editing?editing.id:null) : null;
+      const busy = !!conflict;
+      return `<option value="${t.id}" ${busy?'disabled':''} ${prevVal===t.id?'selected':''}>${escapeHtml(t.name)} — ${escapeHtml(t.phone||'')}${busy?' (مشغول في هذا الوقت)':''}</option>`;
+    }).join('');
+  }
+  function refreshSupervisors(){
+    const schId = document.getElementById('f_school').value;
+    const sch = state.schools.find(s=>s.id===schId);
+    const sel = document.getElementById('f_supervisor');
+    sel.innerHTML = (sch?sch.supervisors:[]).map(sv=>`<option value="${sv.id}" ${editing&&editing.supervisorId===sv.id?'selected':''}>${escapeHtml(sv.name)}</option>`).join('') || '<option value="">لا يوجد مشرفين</option>';
+    updateSupervisorInfo();
+  }
+  function updateSupervisorInfo(){
+    const schId = document.getElementById('f_school').value;
+    const sch = state.schools.find(s=>s.id===schId);
+    const svId = document.getElementById('f_supervisor').value;
+    const sv = sch? sch.supervisors.find(s=>s.id===svId):null;
+    const box=document.getElementById('supervisorInfo');
+    box.innerHTML = sv ? `<span>📱 ${escapeHtml(sv.phone||'-')}</span><span>✉️ ${escapeHtml(sv.email||'-')}</span><span>🏫 المرحلة: ${escapeHtml(sch.level)}</span>`
+      : `<span>اختر مدرسة ومشرف لعرض بياناته</span>`;
+  }
+  document.getElementById('f_school').addEventListener('change', refreshSupervisors);
+  document.getElementById('f_supervisor').addEventListener('change', updateSupervisorInfo);
+  ['f_date','f_timeFrom','f_timeTo'].forEach(id=>document.getElementById(id).addEventListener('change', refreshTrainerOptions));
+  refreshSupervisors();
+  refreshTrainerOptions();
+
+  const reqBox = document.getElementById('adminReqList');
+  function renderReqChips(){
+    reqBox.innerHTML = state.adminRequestsList.map(r=>{
+      const checked = editing && editing.adminRequests && editing.adminRequests.includes(r.id) ? 'checked':'';
+      return `<label class="checkbox-chip"><input type="checkbox" value="${r.id}" ${checked}> ${escapeHtml(r.name)}</label>`;
+    }).join('') || '<span class="helper">لا توجد طلبات إدارية بعد</span>';
+    reqBox.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        if(!cb.checked) return;
+        const date = currentDate();
+        if(!date) return;
+        const conflictOrder = state.orders.find(o=>{
+          if(editing && o.id===editing.id) return false;
+          return o.date===date && (o.adminRequests||[]).includes(cb.value);
+        });
+        if(conflictOrder){
+          const ok = confirm(`تنبيه: هذا الطلب الإداري "${state.adminRequestsList.find(r=>r.id===cb.value)?.name||''}" مطلوب مسبقًا لبرنامج آخر (${conflictOrder.title}) في نفس التاريخ. قد يكون هناك تداخل. هل تريد المواصلة؟`);
+          if(!ok){ cb.checked=false; }
+        }
+      });
+    });
+  }
+  renderReqChips();
+
+  if(editing) document.getElementById('cancelEditBtn').onclick=()=>{editingOrderId=null; render();};
+
+  document.getElementById('saveOrderBtn').onclick=async ()=>{
+    const title=document.getElementById('f_title').value.trim();
+    if(!title){ toast('يرجى إدخال عنوان الفعالية'); return; }
+    const date=document.getElementById('f_date').value;
+    const timeFrom=document.getElementById('f_timeFrom').value;
+    const timeTo=document.getElementById('f_timeTo').value;
+    const trainerId=document.getElementById('f_trainer').value;
+    const schoolId=document.getElementById('f_school').value;
+
+    if(trainerId && date){
+      const conflict = trainerConflict(trainerId, date, timeFrom, timeTo, editing?editing.id:null);
+      if(conflict){
+        toast('لا يمكن اختيار هذا المدرب: لديه فعالية أخرى في نفس اليوم ولم يمر ساعة ونصف على وقتها.');
+        return;
+      }
+    }
+    if(schoolId && date){
+      const schConf = schoolSameDay(schoolId, date, editing?editing.id:null);
+      if(schConf){
+        const ok = confirm(`تنبيه: توجد فعالية أخرى مجدولة في نفس المدرسة بنفس التاريخ (أمر رقم ${schConf.serial} - ${schConf.title}). هل ترغب بالمتابعة؟`);
+        if(!ok) return;
+      }
+    }
+
+    const checkedReqs = Array.from(reqBox.querySelectorAll('input:checked')).map(i=>i.value);
+    const orderData = {
+      title, fieldId: document.getElementById('f_field').value, participantsCount: document.getElementById('f_count').value,
+      date, timeFrom, timeTo, programTypeId: document.getElementById('f_ptype').value,
+      schoolId, supervisorId: document.getElementById('f_supervisor').value, trainerId,
+      requesterNote: document.getElementById('f_reqNote').value, adminNote: document.getElementById('f_adminNote').value,
+      adminRequests: checkedReqs,
+    };
+    if(editing){ Object.assign(editing, orderData); }
+    else {
+      orderData.id = uid(); orderData.serial = state.nextSerial++; orderData.createdAt = Date.now();
+      orderData.completionStatus=''; orderData.notDoneReason=''; orderData.supervisorRating=0; orderData.schoolRating=0; orderData.studentsRating=0; orderData.recommendSchool='';
+      state.orders.push(orderData);
+    }
+    await saveState();
+    toast(editing?'تم حفظ التعديلات':'تم حفظ أمر التكليف');
+    editingOrderId=null; orderSubTab='list'; render();
+  };
+}
+
+function editOrder(id){ editingOrderId=id; orderSubTab='new'; currentPage='order'; render(); }
+async function deleteOrder(id){
+  if(!confirm('هل تريد حذف أمر التكليف هذا؟')) return;
+  state.orders = state.orders.filter(o=>o.id!==id);
+  await saveState(); toast('تم الحذف'); render();
+}
+
+/* ============ Evaluation modal (خاص بمنفذ البرنامج) ============ */
+function openEvaluationModal(orderId){
+  const o = state.orders.find(x=>x.id===orderId); if(!o) return;
+  const overlay=document.getElementById('modalOverlay'); const box=document.getElementById('modalBox');
+  box.innerHTML = `
+    <h3>تقييم وإنجاز: ${escapeHtml(o.title)}</h3>
+    <div class="field" style="margin-bottom:12px;">
+      <label>حالة الإنجاز</label>
+      <select id="ev_status">
+        <option value="">-- اختر --</option>
+        <option value="تم" ${o.completionStatus==='تم'?'selected':''}>تم الإنجاز</option>
+        <option value="لم يتم" ${o.completionStatus==='لم يتم'?'selected':''}>لم يتم الإنجاز</option>
+      </select>
+    </div>
+    <div class="field" id="ev_reasonWrap" style="display:${o.completionStatus==='لم يتم'?'flex':'none'};margin-bottom:12px;">
+      <label>سبب عدم الإنجاز</label><textarea id="ev_reason">${escapeHtml(o.notDoneReason||'')}</textarea>
+    </div>
+    <div class="field" style="margin-bottom:12px;"><label>تقييم مشرف المدرسة (0-10)</label>${starRatingHtml('ev_sup', o.supervisorRating)}</div>
+    <div class="field" style="margin-bottom:12px;"><label>تقييم المدرسة (0-10)</label>${starRatingHtml('ev_sch', o.schoolRating)}</div>
+    <div class="field" style="margin-bottom:12px;"><label>تقييم تفاعل الطلاب (0-10)</label>${starRatingHtml('ev_stu', o.studentsRating)}</div>
+    <div class="field" style="margin-bottom:6px;">
+      <label>هل ترشح المدرسة لفعاليات قادمة؟</label>
+      <select id="ev_recommend">
+        <option value="">-- اختر --</option>
+        <option value="نعم" ${o.recommendSchool==='نعم'?'selected':''}>نعم</option>
+        <option value="لا" ${o.recommendSchool==='لا'?'selected':''}>لا</option>
+      </select>
+    </div>
+    <div class="modal-actions"><button class="btn btn-outline" id="ev_cancel">إلغاء</button><button class="btn btn-primary" id="ev_save">حفظ التقييم</button></div>`;
+  overlay.classList.add('open');
+  wireStars(box);
+  document.getElementById('ev_status').onchange=(e)=>{ document.getElementById('ev_reasonWrap').style.display = e.target.value==='لم يتم' ? 'flex':'none'; };
+  document.getElementById('ev_cancel').onclick=()=>overlay.classList.remove('open');
+  document.getElementById('ev_save').onclick=async ()=>{
+    o.completionStatus = document.getElementById('ev_status').value;
+    o.notDoneReason = document.getElementById('ev_reason').value;
+    o.supervisorRating = Number(document.getElementById('ev_sup_val').value)||0;
+    o.schoolRating = Number(document.getElementById('ev_sch_val').value)||0;
+    o.studentsRating = Number(document.getElementById('ev_stu_val').value)||0;
+    o.recommendSchool = document.getElementById('ev_recommend').value;
+    await saveState(); overlay.classList.remove('open'); toast('تم حفظ التقييم'); render();
+  };
+}
+
+/* quick-add helpers */
+function quickAddField(){
+  openModal('إضافة مجال فعالية جديد', [{name:'name', label:'اسم المجال', required:true}], async v=>{
+    const item={id:uid(), name:v.name}; state.fields.push(item); await saveState(); render();
+    setTimeout(()=>{ const s=document.getElementById('f_field'); if(s) s.value=item.id; },0);
+  });
+}
+function quickAddPType(){
+  openModal('إضافة نوع برنامج جديد', [{name:'name', label:'اسم النوع', required:true}], async v=>{
+    const item={id:uid(), name:v.name}; state.programTypes.push(item); await saveState(); render();
+    setTimeout(()=>{ const s=document.getElementById('f_ptype'); if(s) s.value=item.id; },0);
+  });
+}
+function quickAddSchool(){
+  openModal('إضافة مدرسة جديدة', [
+    {name:'name', label:'اسم المدرسة', required:true},
+    {name:'level', label:'المرحلة الدراسية', type:'select', options:[
+      {value:'ابتدائي',label:'ابتدائي'},{value:'إعدادي',label:'إعدادي'},{value:'ثانوي',label:'ثانوي'},
+      {value:'مركز خاص',label:'مركز خاص'},{value:'غير ذلك',label:'غير ذلك'}]},
+  ], async v=>{
+    const item={id:uid(), name:v.name, level:v.level, supervisors:[]};
+    state.schools.push(item); await saveState(); render();
+    setTimeout(()=>{ const s=document.getElementById('f_school'); if(s){ s.value=item.id; s.dispatchEvent(new Event('change')); } },0);
+  });
+}
+function quickAddSupervisor(){
+  const schId = document.getElementById('f_school').value;
+  const sch = state.schools.find(s=>s.id===schId);
+  if(!sch){ toast('اختر مدرسة أولاً'); return; }
+  openModal('إضافة مشرف لمدرسة: '+sch.name, [
+    {name:'name', label:'اسم المشرف', required:true},{name:'phone', label:'رقم الجوال'},{name:'email', label:'البريد الإلكتروني'},
+  ], async v=>{
+    const item={id:uid(), name:v.name, phone:v.phone, email:v.email};
+    sch.supervisors.push(item); await saveState(); render();
+    setTimeout(()=>{
+      const s=document.getElementById('f_school'); if(s){ s.value=schId; s.dispatchEvent(new Event('change')); }
+      const sv=document.getElementById('f_supervisor'); if(sv){ sv.value=item.id; sv.dispatchEvent(new Event('change')); }
+    },0);
+  });
+}
+function quickAddTrainer(){
+  openModal('إضافة مدرب جديد', [{name:'name', label:'اسم المدرب', required:true},{name:'phone', label:'رقم الجوال'}], async v=>{
+    const item={id:uid(), name:v.name, phone:v.phone}; state.trainers.push(item); await saveState(); render();
+    setTimeout(()=>{ const s=document.getElementById('f_trainer'); if(s) s.value=item.id; },0);
+  });
+}
+function quickAddAdminRequest(){
+  openModal('إضافة طلب إداري جديد', [{name:'name', label:'اسم الطلب', required:true}], async v=>{
+    state.adminRequestsList.push({id:uid(), name:v.name}); await saveState(); render();
+  });
+}
+
+/* ============ Print header builder ============ */
+function buildPrintHeader(titleText, from, to){
+  const ph = state.printHeader || {line1:'',line2:'',line3:''};
+  let html = `<div class="print-doc"><div class="print-brand-head">
+    <div class="print-logo">${state.logo?`<img src="${state.logo}">`:'<div class="print-logo-placeholder">🕌</div>'}</div>
+    <div class="print-org-lines"><div>${escapeHtml(ph.line1)}</div><div>${escapeHtml(ph.line2)}</div><div>${escapeHtml(ph.line3)}</div></div>
+  </div>
+  <div class="print-title-bar">${escapeHtml(titleText)}</div>`;
+  if(from!==undefined){
+    html += `<div class="print-daterange">
+      <div class="dr-item"><span class="dr-label">من تاريخ</span><span class="dr-value">${from||'—'}</span></div>
+      <div class="dr-item"><span class="dr-label">إلى تاريخ</span><span class="dr-value">${to||'—'}</span></div>
+    </div>`;
+  }
+  return html;
+}
+function doPrint(html){
+  document.getElementById('printArea').innerHTML = html + `</div>`;
+  document.body.classList.add('printing');
+  window.print();
+}
+window.onafterprint = ()=>{ document.body.classList.remove('printing'); };
+
+function orderPrintBody(o){
+  const field = state.fields.find(f=>f.id===o.fieldId);
+  const school = state.schools.find(s=>s.id===o.schoolId);
+  const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
+  const trainer = state.trainers.find(t=>t.id===o.trainerId);
+  const ptype = state.programTypes.find(p=>p.id===o.programTypeId);
+  const reqs = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean);
+  return `<table class="print-table">
+      <tr><th>عنوان الفعالية</th><td>${escapeHtml(o.title)}</td></tr>
+      <tr><th>مجال الفعالية</th><td>${field?escapeHtml(field.name):''}</td></tr>
+      <tr><th>نوع البرنامج</th><td>${ptype?escapeHtml(ptype.name):''}</td></tr>
+      <tr><th>عدد المشاركين</th><td>${o.participantsCount||''}</td></tr>
+      <tr><th>تاريخ الفعالية</th><td>${o.date||''}</td></tr>
+      <tr><th>وقت الفعالية</th><td>${o.timeFrom||''} — ${o.timeTo||''}</td></tr>
+      <tr><th>مكان الفعالية</th><td>${school?escapeHtml(school.name)+' ('+escapeHtml(school.level)+')':''}</td></tr>
+      <tr><th>المشرف</th><td>${supervisor?escapeHtml(supervisor.name)+' — '+escapeHtml(supervisor.phone||'')+' — '+escapeHtml(supervisor.email||''):''}</td></tr>
+      <tr><th>مقدم البرنامج / المدرب</th><td>${trainer?escapeHtml(trainer.name)+' — '+escapeHtml(trainer.phone||''):''}</td></tr>
+      <tr><th>ملاحظة الجهة الطالبة</th><td>${escapeHtml(o.requesterNote||'')}</td></tr>
+      <tr><th>ملاحظة الإدارة</th><td>${escapeHtml(o.adminNote||'')}</td></tr>
+      <tr><th>الطلبات الإدارية</th><td>${reqs.join('، ')||'—'}</td></tr>
+      <tr><th>حالة الإنجاز</th><td>${o.completionStatus||'—'}${o.completionStatus==='لم يتم'&&o.notDoneReason?(' — السبب: '+escapeHtml(o.notDoneReason)):''}</td></tr>
+    </table>`;
+}
+function printOrder(id){ const o=state.orders.find(x=>x.id===id); if(o) doPrint(buildPrintHeader('أمر تكليف رقم '+o.serial) + orderPrintBody(o)); }
+function emailOrder(id){
+  const o=state.orders.find(x=>x.id===id); if(!o) return;
+  const field = state.fields.find(f=>f.id===o.fieldId);
+  const school = state.schools.find(s=>s.id===o.schoolId);
+  const trainer = state.trainers.find(t=>t.id===o.trainerId);
+  const subject = `أمر تكليف رقم ${o.serial} — ${o.title}`;
+  const body = `عنوان الفعالية: ${o.title}\nالمجال: ${field?field.name:''}\nالتاريخ: ${o.date||''}\nالوقت: ${o.timeFrom||''} - ${o.timeTo||''}\nالمدرسة: ${school?school.name:''}\nالمدرب: ${trainer?trainer.name:''}\nملاحظة الإدارة: ${o.adminNote||''}`;
+  window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+/* ============ Admin (Daily) Page — new column layout ============ */
+function dailyReportTable(list){
+  if(!list.length) return `<div class="empty-state">لا توجد فعاليات ضمن هذه الفترة</div>`;
+  return `<table class="print-table"><thead><tr>
+    <th>م</th><th>أمر التكليف</th><th>عنوان الفعالية</th><th>التاريخ</th><th>الوقت</th><th>المكان</th>
+    <th>رقم المشرف</th><th>عدد المشاركين</th><th>مقدم البرنامج</th><th>رقم هاتفه</th><th>الطلبات الإدارية للبرنامج</th>
+  </tr></thead><tbody>
+  ${list.map((o,i)=>{
+    const school = state.schools.find(s=>s.id===o.schoolId);
+    const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
+    const trainer = state.trainers.find(t=>t.id===o.trainerId);
+    const reqs = (o.adminRequests||[]).map(id=>{const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:'';}).filter(Boolean).join('، ');
+    return `<tr>
+      <td>${i+1}</td><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td>
+      <td>${school?escapeHtml(school.name):''}</td><td>${supervisor?escapeHtml(supervisor.phone||''):''}</td>
+      <td>${o.participantsCount||''}</td><td>${trainer?escapeHtml(trainer.name):''}</td><td>${trainer?escapeHtml(trainer.phone||''):''}</td>
+      <td>${reqs||'—'}</td>
+    </tr>`;
+  }).join('')}</tbody></table>`;
+}
+function renderAdminPage(c){
+  const today=todayStr();
+  c.innerHTML = `
+  <div class="card">
+    <h2>عرض الفعاليات اليومية</h2>
+    <div class="grid">
+      <div class="field"><label>من تاريخ</label><input id="adm_from" type="date" value="${today}"></div>
+      <div class="field"><label>إلى تاريخ</label><input id="adm_to" type="date" value="${today}"></div>
+    </div>
+    <div style="margin-top:10px;"><button class="btn btn-primary" id="adm_filter">عرض</button>
+    <button class="btn btn-outline" id="adm_print">🖨️ طباعة / حفظ PDF</button></div>
+  </div>
+  <div class="card" id="adm_results"></div>`;
+
+  function getList(){
+    const from=document.getElementById('adm_from').value, to=document.getElementById('adm_to').value;
+    return {list: state.orders.filter(o=> (!from || o.date>=from) && (!to || o.date<=to)).sort((a,b)=> (a.date||'').localeCompare(b.date||'')), from, to};
+  }
+  function doFilter(){
+    const {list}=getList();
+    document.getElementById('adm_results').innerHTML = `<h2>النتائج (${list.length})</h2>` + dailyReportTable(list);
+  }
+  document.getElementById('adm_filter').onclick=doFilter;
+  document.getElementById('adm_print').onclick=()=>{
+    const {list, from, to}=getList();
+    doPrint(buildPrintHeader('تقرير الفعاليات اليومية', from, to) + dailyReportTable(list));
+  };
+  doFilter();
+}
+
+/* ============ Reports Page ============ */
+function renderReportsPage(c){
+  c.innerHTML = `
+  <div class="tabs">
+    <button class="tab-btn active" id="rt_trainer">تقرير مدرب</button>
+    <button class="tab-btn" id="rt_school">تقرير مدرسة</button>
+    <button class="tab-btn" id="rt_hours">تقرير ساعات منفذي البرنامج</button>
+  </div>
+  <div id="reportContent"></div>`;
+  let mode='trainer';
+  const tabs = {trainer:'rt_trainer', school:'rt_school', hours:'rt_hours'};
+  function setActive(){ Object.entries(tabs).forEach(([k,id])=>document.getElementById(id).classList.toggle('active', mode===k)); }
+  document.getElementById('rt_trainer').onclick=()=>{mode='trainer'; drawTrainer(); setActive();};
+  document.getElementById('rt_school').onclick=()=>{mode='school'; drawSchool(); setActive();};
+  document.getElementById('rt_hours').onclick=()=>{mode='hours'; drawHours(); setActive();};
+
+  function drawTrainer(){
+    const box=document.getElementById('reportContent');
+    box.innerHTML = `<div class="card">
+      <h2>تقرير مدرب</h2>
+      <div class="grid">
+        <div class="field"><label>المدرب</label><select id="rp_trainer">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>من تاريخ</label><input id="rp_from" type="date"></div>
+        <div class="field"><label>إلى تاريخ</label><input id="rp_to" type="date"></div>
+      </div>
+      <div style="margin-top:10px;"><button class="btn btn-primary" id="rp_go">عرض الجدول</button>
+      <button class="btn btn-outline" id="rp_print">🖨️ طباعة / حفظ PDF</button></div>
+      <div id="rp_result" style="margin-top:16px;"></div>
+    </div>`;
+    function gen(){
+      const tId=document.getElementById('rp_trainer').value;
+      const from=document.getElementById('rp_from').value, to=document.getElementById('rp_to').value;
+      const list = state.orders.filter(o=>o.trainerId===tId && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      const trainer=state.trainers.find(t=>t.id===tId);
+      return {list, title:`جدول المدرب: ${trainer?trainer.name:''}`, from, to};
+    }
+    document.getElementById('rp_go').onclick=()=>{ document.getElementById('rp_result').innerHTML = ordersTableHtmlPrint(gen().list); };
+    document.getElementById('rp_print').onclick=()=>{ const {list,title,from,to}=gen(); doPrint(buildPrintHeader(title, from, to) + ordersTableHtmlPrint(list)); };
+  }
+  function drawSchool(){
+    const box=document.getElementById('reportContent');
+    box.innerHTML = `<div class="card">
+      <h2>تقرير مدرسة</h2>
+      <div class="grid">
+        <div class="field"><label>المدرسة</label><select id="rp_school">${state.schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>من تاريخ</label><input id="rp_from2" type="date"></div>
+        <div class="field"><label>إلى تاريخ</label><input id="rp_to2" type="date"></div>
+      </div>
+      <div style="margin-top:10px;"><button class="btn btn-primary" id="rp_go2">عرض الجدول</button>
+      <button class="btn btn-outline" id="rp_print2">🖨️ طباعة / حفظ PDF</button></div>
+      <div id="rp_result2" style="margin-top:16px;"></div>
+    </div>`;
+    function gen(){
+      const sId=document.getElementById('rp_school').value;
+      const from=document.getElementById('rp_from2').value, to=document.getElementById('rp_to2').value;
+      const list = state.orders.filter(o=>o.schoolId===sId && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      const sch=state.schools.find(s=>s.id===sId);
+      return {list, title:`جدول المدرسة: ${sch?sch.name:''}`, from, to};
+    }
+    document.getElementById('rp_go2').onclick=()=>{ document.getElementById('rp_result2').innerHTML = ordersTableHtmlPrint(gen().list); };
+    document.getElementById('rp_print2').onclick=()=>{ const {list,title,from,to}=gen(); doPrint(buildPrintHeader(title, from, to) + ordersTableHtmlPrint(list)); };
+  }
+  function drawHours(){
+    const box=document.getElementById('reportContent');
+    box.innerHTML = `<div class="card">
+      <h2>تقرير ساعات منفذي البرنامج</h2>
+      <div class="grid">
+        <div class="field"><label>المدرب</label><select id="hr_trainer">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>من تاريخ</label><input id="hr_from" type="date"></div>
+        <div class="field"><label>إلى تاريخ</label><input id="hr_to" type="date"></div>
+      </div>
+      <div style="margin-top:10px;"><button class="btn btn-primary" id="hr_go">احتساب الساعات</button>
+      <button class="btn btn-outline" id="hr_print">🖨️ طباعة / حفظ PDF</button></div>
+      <div id="hr_result" style="margin-top:16px;"></div>
+    </div>`;
+    function gen(){
+      const tId=document.getElementById('hr_trainer').value;
+      const from=document.getElementById('hr_from').value, to=document.getElementById('hr_to').value;
+      const list = state.orders.filter(o=>o.trainerId===tId && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      let totalHours=0;
+      const rows = list.map(o=>{
+        let hrs=0;
+        if(o.timeFrom && o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); hrs = Math.max(0,(e-s)/3600000); }
+        totalHours += hrs;
+        return {o, hrs};
+      });
+      const trainer=state.trainers.find(t=>t.id===tId);
+      const table = `<table class="print-table"><thead><tr><th>م</th><th>عنوان الفعالية</th><th>التاريخ</th><th>الوقت</th><th>عدد الساعات</th></tr></thead><tbody>
+        ${rows.map(r=>`<tr><td>${r.o.serial}</td><td>${escapeHtml(r.o.title)}</td><td>${r.o.date||''}</td><td>${r.o.timeFrom||''}-${r.o.timeTo||''}</td><td>${r.hrs.toFixed(1)}</td></tr>`).join('') || '<tr><td colspan="5" class="empty-state">لا توجد بيانات</td></tr>'}
+        </tbody></table>
+        <div style="margin-top:10px;font-weight:800;color:var(--maroon-800);">إجمالي الساعات: ${totalHours.toFixed(1)} ساعة</div>`;
+      return {table, title:`تقرير ساعات المدرب: ${trainer?trainer.name:''}`, from, to};
+    }
+    document.getElementById('hr_go').onclick=()=>{ document.getElementById('hr_result').innerHTML = gen().table; };
+    document.getElementById('hr_print').onclick=()=>{ const {table,title,from,to}=gen(); doPrint(buildPrintHeader(title, from, to) + table); };
+  }
+  drawTrainer();
+}
+
+/* ============ Simple SVG bar chart ============ */
+function svgBarChart(items){
+  const max = Math.max(1, ...items.map(i=>i.value));
+  const barH=22, gap=10, maxW=320;
+  const height = items.length*(barH+gap);
+  const bars = items.map((it,i)=>{
+    const w = Math.max(2, Math.round((it.value/max)*maxW));
+    const y = i*(barH+gap);
+    return `<rect x="0" y="${y}" width="${w}" height="${barH}" rx="4" fill="#7a1230"></rect>
+      <text x="${maxW+10}" y="${y+barH*0.72}" font-size="12" fill="#2a1116">${escapeHtml(it.name)} (${it.value})</text>`;
+  }).join('');
+  return `<div class="chart-wrap"><svg viewBox="0 0 ${maxW+180} ${height+10}" style="width:100%;max-width:560px;height:auto;">${bars}</svg></div>`;
+}
+
+/* ============ Statistics Page ============ */
+function renderStatsPage(c){
+  c.innerHTML = `
+  <div class="card">
+    <h2>تقرير تصنيفيات</h2>
+    <div class="grid">
+      <div class="field"><label>من تاريخ</label><input id="st_from" type="date"></div>
+      <div class="field"><label>إلى تاريخ</label><input id="st_to" type="date"></div>
+    </div>
+    <div style="margin-top:10px;"><button class="btn btn-primary" id="st_go">احتساب</button></div>
+  </div>
+  <div id="st_field_card" class="card" style="display:none;"></div>
+  <div id="st_type_card" class="card" style="display:none;"></div>
+  <div id="st_level_card" class="card" style="display:none;"></div>`;
+
+  function compute(){
+    const from=document.getElementById('st_from').value, to=document.getElementById('st_to').value;
+    const inRange = state.orders.filter(o=>(!from||o.date>=from) && (!to||o.date<=to));
+    const byField = state.fields.map(f=>{
+      const rel = inRange.filter(o=>o.fieldId===f.id);
+      const schoolsSet = new Set(rel.map(o=>o.schoolId).filter(Boolean));
+      return {name:f.name, programs:rel.length, participants: rel.reduce((s,o)=>s+(Number(o.participantsCount)||0),0), schools:schoolsSet.size};
+    });
+    const byType = state.programTypes.map(p=>{
+      const rel = inRange.filter(o=>o.programTypeId===p.id);
+      const schoolsSet = new Set(rel.map(o=>o.schoolId).filter(Boolean));
+      return {name:p.name, programs:rel.length, participants: rel.reduce((s,o)=>s+(Number(o.participantsCount)||0),0), schools:schoolsSet.size};
+    });
+    const levels=['ابتدائي','إعدادي','ثانوي','مركز خاص','غير ذلك'];
+    const byLevel = levels.map(lv=>{
+      const schoolIds = state.schools.filter(s=>s.level===lv).map(s=>s.id);
+      const rel = inRange.filter(o=>schoolIds.includes(o.schoolId));
+      return {name:lv, programs:rel.length};
+    });
+    return {byField, byType, byLevel, from, to};
+  }
+  function tableFrom(arr){
+    return `<table class="print-table"><thead><tr><th>البند</th><th>عدد البرامج</th><th>عدد المشاركين</th><th>عدد المدارس</th></tr></thead><tbody>
+      ${arr.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.programs}</td><td>${x.participants}</td><td>${x.schools}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+  function tableLevel(arr){
+    return `<table class="print-table"><thead><tr><th>المرحلة</th><th>عدد البرامج المنفذة</th></tr></thead><tbody>
+      ${arr.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.programs}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  document.getElementById('st_go').onclick=()=>{
+    const {byField, byType, byLevel, from, to} = compute();
+
+    const fCard=document.getElementById('st_field_card'); fCard.style.display='block';
+    fCard.innerHTML = `<h2>البند — حسب مجال الفعالية <button class="btn btn-outline btn-sm" id="pr_field">🖨️ طباعة منفصلة</button></h2>
+      ${tableFrom(byField)} ${svgBarChart(byField.map(x=>({name:x.name, value:x.programs})))}`;
+    document.getElementById('pr_field').onclick=()=>doPrint(buildPrintHeader('تقرير التصنيفيات — حسب البند (مجال الفعالية)', from, to) + tableFrom(byField));
+
+    const tCard=document.getElementById('st_type_card'); tCard.style.display='block';
+    tCard.innerHTML = `<h2>حسب نوع البرنامج <button class="btn btn-outline btn-sm" id="pr_type">🖨️ طباعة منفصلة</button></h2>
+      ${tableFrom(byType)} ${svgBarChart(byType.map(x=>({name:x.name, value:x.programs})))}`;
+    document.getElementById('pr_type').onclick=()=>doPrint(buildPrintHeader('تقرير التصنيفيات — حسب نوع البرنامج', from, to) + tableFrom(byType));
+
+    const lCard=document.getElementById('st_level_card'); lCard.style.display='block';
+    lCard.innerHTML = `<h2>حسب نوع المرحلة الدراسية للمدارس <button class="btn btn-outline btn-sm" id="pr_level">🖨️ طباعة منفصلة</button></h2>
+      ${tableLevel(byLevel)} ${svgBarChart(byLevel.map(x=>({name:x.name, value:x.programs})))}`;
+    document.getElementById('pr_level').onclick=()=>doPrint(buildPrintHeader('تقرير التصنيفيات — حسب المرحلة الدراسية', from, to) + tableLevel(byLevel));
+  };
+}
+
+/* ============ Tasks Page ============ */
+function renderTasksPage(c){
+  c.innerHTML = `
+  <div class="card"><h2>إضافة مهمة</h2>
+    <div class="grid"><div class="field"><label>عنوان المهمة</label><input id="tk_title"></div>
+    <div class="field"><label>تاريخ الاستحقاق</label><input id="tk_due" type="date"></div></div>
+    <div style="margin-top:10px;"><button class="btn btn-primary" id="tk_add">إضافة</button></div>
+  </div>
+  <div class="card"><h2>قائمة المهام</h2><div id="tk_list"></div></div>`;
+  function drawList(){
+    const box=document.getElementById('tk_list');
+    if(!state.tasks.length){ box.innerHTML=`<div class="empty-state">لا توجد مهام</div>`; return; }
+    box.innerHTML = `<table><thead><tr><th>✓</th><th>المهمة</th><th>الاستحقاق</th><th></th></tr></thead><tbody>
+      ${state.tasks.slice().sort((a,b)=>a.done-b.done).map(t=>`
+        <tr><td><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}')"></td>
+        <td style="${t.done?'text-decoration:line-through;opacity:.55;':''}">${escapeHtml(t.title)}</td>
+        <td>${t.due||'—'}</td><td><button class="icon-btn danger" onclick="deleteTask('${t.id}')">🗑️</button></td></tr>`).join('')}
+    </tbody></table>`;
+  }
+  document.getElementById('tk_add').onclick=async ()=>{
+    const title=document.getElementById('tk_title').value.trim();
+    if(!title){ toast('أدخل عنوان المهمة'); return; }
+    state.tasks.push({id:uid(), title, due:document.getElementById('tk_due').value, done:false});
+    await saveState(); render();
+  };
+  drawList();
+}
+async function toggleTask(id){ const t=state.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; await saveState(); render(); } }
+async function deleteTask(id){ state.tasks = state.tasks.filter(x=>x.id!==id); await saveState(); render(); }
+
+/* ============ Trainer Portal ============ */
+function renderTrainerPortalPage(c){
+  if(!loggedTrainerId){
+    c.innerHTML = `<div class="card">
+      <h2>دخول منفذ البرنامج</h2>
+      <div class="helper" style="margin-bottom:10px;">هذه بوابة مبسطة لتحديد هويتك دون كلمة مرور؛ للاستخدام الفعلي يفضل ربطها لاحقًا بنظام تسجيل دخول رسمي.</div>
+      <div class="grid">
+        <div class="field"><label>اختر اسمك</label><select id="tp_login">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
+      </div>
+      <div style="margin-top:10px;"><button class="btn btn-primary" id="tp_go">دخول</button></div>
+    </div>`;
+    document.getElementById('tp_go').onclick=()=>{ loggedTrainerId=document.getElementById('tp_login').value; trainerPortalTab='upcoming'; render(); };
+    return;
+  }
+  const trainer = state.trainers.find(t=>t.id===loggedTrainerId);
+  const today = todayStr();
+  const myOrders = state.orders.filter(o=>o.trainerId===loggedTrainerId);
+  const upcoming = myOrders.filter(o=>o.date>=today).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const past = myOrders.filter(o=>o.date<today).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const myNotifs = state.notifications.filter(n=>n.trainerId===loggedTrainerId).sort((a,b)=>b.createdAt-a.createdAt);
+  const myRequests = state.trainerRequests.filter(r=>r.trainerId===loggedTrainerId).sort((a,b)=>b.createdAt-a.createdAt);
+
+  c.innerHTML = `
+  <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+    <div><strong>مرحباً، ${escapeHtml(trainer?trainer.name:'')}</strong></div>
+    <button class="btn btn-outline btn-sm" id="tp_logout">تسجيل خروج</button>
+  </div>
+  ${myNotifs.length? `<div class="card"><h2>الإشعارات</h2>${myNotifs.map(n=>`<div class="notif ${n.read?'':'unread'}"><span>${escapeHtml(n.message)}</span>${n.read?'':`<button class="btn btn-sm btn-outline" onclick="markNotifRead('${n.id}')">تمييز كمقروء</button>`}</div>`).join('')}</div>`:''}
+  <div class="tabs">
+    <button class="tab-btn ${trainerPortalTab==='upcoming'?'active':''}" id="tp_up">برامجي القادمة</button>
+    <button class="tab-btn ${trainerPortalTab==='past'?'active':''}" id="tp_past">برامجي السابقة</button>
+    <button class="tab-btn ${trainerPortalTab==='newreq'?'active':''}" id="tp_new">تقديم طلب / ترشيح</button>
+  </div>
+  <div id="tp_content"></div>`;
+
+  document.getElementById('tp_logout').onclick=()=>{ loggedTrainerId=null; render(); };
+  document.getElementById('tp_up').onclick=()=>{ trainerPortalTab='upcoming'; render(); };
+  document.getElementById('tp_past').onclick=()=>{ trainerPortalTab='past'; render(); };
+  document.getElementById('tp_new').onclick=()=>{ trainerPortalTab='newreq'; render(); };
+
+  const box=document.getElementById('tp_content');
+  if(trainerPortalTab==='upcoming'){
+    box.innerHTML = `<div class="card"><h2>برامجي القادمة <button class="btn btn-outline btn-sm" id="tp_print_up">🖨️ طباعة</button></h2>${trainerOrdersTable(upcoming)}</div>`;
+    document.getElementById('tp_print_up').onclick=()=>doPrint(buildPrintHeader('برامج قادمة — '+(trainer?trainer.name:'')) + trainerOrdersTablePrint(upcoming));
+  } else if(trainerPortalTab==='past'){
+    box.innerHTML = `<div class="card"><h2>برامجي السابقة <button class="btn btn-outline btn-sm" id="tp_print_past">🖨️ طباعة</button></h2>${trainerOrdersTable(past)}</div>`;
+    document.getElementById('tp_print_past').onclick=()=>doPrint(buildPrintHeader('برامج سابقة — '+(trainer?trainer.name:'')) + trainerOrdersTablePrint(past));
+  } else {
+    box.innerHTML = `<div class="card">
+      <h2>تقديم طلب / ترشيح لتنفيذ برنامج</h2>
+      <div class="grid">
+        <div class="field"><label>عنوان الفعالية المقترحة</label><input id="tr_title"></div>
+        <div class="field"><label>المدرسة</label><select id="tr_school">${state.schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>التاريخ المقترح</label><input id="tr_date" type="date"></div>
+        <div class="field"><label>من الساعة</label><input id="tr_from" type="time"></div>
+        <div class="field"><label>إلى الساعة</label><input id="tr_to" type="time"></div>
+      </div>
+      <div class="field" style="margin-top:10px;"><label>ملاحظات</label><textarea id="tr_note"></textarea></div>
+      <div style="margin-top:10px;"><button class="btn btn-primary" id="tr_submit">إرسال الطلب</button></div>
+    </div>
+    <div class="card"><h2>طلباتي السابقة</h2>
+      ${myRequests.length? `<table><thead><tr><th>العنوان</th><th>المدرسة</th><th>التاريخ</th><th>الحالة</th></tr></thead><tbody>
+        ${myRequests.map(r=>{
+          const sch=state.schools.find(s=>s.id===r.schoolId);
+          const statusBadge = r.status==='accepted'?'<span class="badge ok">مقبول</span>':r.status==='rejected'?'<span class="badge bad">مرفوض</span>':'<span class="badge">بانتظار الرد</span>';
+          return `<tr><td>${escapeHtml(r.title)}</td><td>${sch?escapeHtml(sch.name):''}</td><td>${r.date||''}</td><td>${statusBadge}</td></tr>`;
+        }).join('')}
+      </tbody></table>` : `<div class="empty-state">لا توجد طلبات بعد</div>`}
+    </div>`;
+    document.getElementById('tr_submit').onclick=async ()=>{
+      const title=document.getElementById('tr_title').value.trim();
+      const date=document.getElementById('tr_date').value;
+      const timeFrom=document.getElementById('tr_from').value;
+      const timeTo=document.getElementById('tr_to').value;
+      if(!title || !date){ toast('يرجى إدخال عنوان الفعالية والتاريخ على الأقل'); return; }
+      const conflict = trainerConflict(loggedTrainerId, date, timeFrom, timeTo, null);
+      if(conflict){ toast('لا يمكن تقديم الطلب: لديك فعالية أخرى مجدولة في نفس اليوم بوقت قريب.'); return; }
+      state.trainerRequests.push({ id:uid(), trainerId:loggedTrainerId, title, schoolId:document.getElementById('tr_school').value,
+        date, timeFrom, timeTo, note:document.getElementById('tr_note').value, status:'pending', createdAt:Date.now() });
+      await saveState(); toast('تم إرسال طلبك بانتظار موافقة مدير النظام'); render();
+    };
+  }
+}
+function trainerOrdersTable(list){
+  if(!list.length) return `<div class="empty-state">لا توجد برامج</div>`;
+  return `<table><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>المدرسة</th><th>الإنجاز</th><th>إجراءات</th></tr></thead><tbody>
+    ${list.map(o=>{
+      const school=state.schools.find(s=>s.id===o.schoolId);
+      const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>' : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : '<span class="badge">—</span>';
+      return `<tr><td><span class="badge">${o.serial}</span></td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td>
+        <td>${school?escapeHtml(school.name):''}</td><td>${statusBadge}</td>
+        <td><button class="icon-btn" title="تسجيل الإنجاز والتقييم" onclick="openEvaluationModal('${o.id}')">📝</button></td></tr>`;
+    }).join('')}</tbody></table>`;
+}
+function trainerOrdersTablePrint(list){
+  if(!list.length) return `<div class="empty-state">لا توجد برامج</div>`;
+  return `<table class="print-table"><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>المدرسة</th><th>الإنجاز</th></tr></thead><tbody>
+    ${list.map(o=>{
+      const school=state.schools.find(s=>s.id===o.schoolId);
+      return `<tr><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td><td>${school?escapeHtml(school.name):''}</td><td>${o.completionStatus||'—'}</td></tr>`;
+    }).join('')}</tbody></table>`;
+}
+async function markNotifRead(id){ const n=state.notifications.find(x=>x.id===id); if(n){ n.read=true; await saveState(); render(); } }
+
+/* ============ Settings Page ============ */
+function renderSettingsPage(c){
+  const pendingReqs = state.trainerRequests.filter(r=>r.status==='pending');
+  c.innerHTML = `
+  <div class="card">
+    <h2>بيانات الجهة والشعار وترويسة الطباعة</h2>
+    <div class="grid">
+      <div class="field"><label>اسم الجهة (للاستخدام الداخلي)</label><input id="set_orgName" value="${escapeHtml(state.orgName||'')}"></div>
+      <div class="field"><label>الشعار</label><input id="set_logo" type="file" accept="image/*"></div>
+      <div class="field"><label>سطر ١ في ترويسة الطباعة</label><input id="set_ph1" value="${escapeHtml(state.printHeader.line1)}"></div>
+      <div class="field"><label>سطر ٢ في ترويسة الطباعة</label><input id="set_ph2" value="${escapeHtml(state.printHeader.line2)}"></div>
+      <div class="field"><label>سطر ٣ في ترويسة الطباعة</label><input id="set_ph3" value="${escapeHtml(state.printHeader.line3)}"></div>
+    </div>
+    <div style="margin-top:10px;"><button class="btn btn-primary" id="set_saveOrg">حفظ</button></div>
+  </div>
+
+  <div class="card">
+    <h2>طلبات الترشيح من المدربين ${pendingReqs.length?`<span class="badge busy">${pendingReqs.length} بانتظار الرد</span>`:''}</h2>
+    ${pendingReqs.length? `<table><thead><tr><th>المدرب</th><th>العنوان</th><th>المدرسة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>
+      ${pendingReqs.map(r=>{
+        const trainer=state.trainers.find(t=>t.id===r.trainerId); const sch=state.schools.find(s=>s.id===r.schoolId);
+        return `<tr><td>${trainer?escapeHtml(trainer.name):''}</td><td>${escapeHtml(r.title)}</td><td>${sch?escapeHtml(sch.name):''}</td><td>${r.date||''}</td>
+          <td class="actions-cell"><button class="icon-btn" title="قبول" onclick="acceptTrainerRequest('${r.id}')">✅</button>
+          <button class="icon-btn danger" title="رفض" onclick="rejectTrainerRequest('${r.id}')">❌</button></td></tr>`;
+      }).join('')}</tbody></table>` : `<div class="empty-state">لا توجد طلبات بانتظار الرد</div>`}
+  </div>
+
+  <div class="card"><h2>مجالات الفعالية <button class="plus-btn" onclick="quickAddField()">+</button></h2>${simpleListTable(state.fields, 'fields')}</div>
+  <div class="card"><h2>أنواع البرامج <button class="plus-btn" onclick="quickAddPType()">+</button></h2>${simpleListTable(state.programTypes, 'programTypes')}</div>
+  <div class="card"><h2>الطلبات الإدارية <button class="plus-btn" onclick="quickAddAdminRequest()">+</button></h2>${simpleListTable(state.adminRequestsList, 'adminRequestsList')}</div>
+
+  <div class="card"><h2>المدربون <button class="plus-btn" onclick="quickAddTrainer()">+</button></h2>
+    <table><thead><tr><th>الاسم</th><th>الجوال</th><th></th></tr></thead><tbody>
+    ${state.trainers.map(t=>`<tr><td>${escapeHtml(t.name)}</td><td>${escapeHtml(t.phone||'')}</td>
+      <td><button class="icon-btn danger" onclick="deleteFromList('trainers','${t.id}')">🗑️</button></td></tr>`).join('') || `<tr><td colspan="3" class="empty-state">لا يوجد مدربون</td></tr>`}
+    </tbody></table>
+  </div>
+
+  <div class="card"><h2>المدارس والمشرفون <button class="plus-btn" onclick="quickAddSchoolSettings()">+</button></h2>
+    ${state.schools.map(s=>`
+      <div style="border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <strong>${escapeHtml(s.name)} <span class="badge">${escapeHtml(s.level)}</span></strong>
+          <div><button class="icon-btn" title="إضافة مشرف" onclick="quickAddSupervisorSettings('${s.id}')">➕</button>
+          <button class="icon-btn danger" title="حذف المدرسة" onclick="deleteFromList('schools','${s.id}')">🗑️</button></div>
+        </div>
+        <table style="margin-top:8px;"><thead><tr><th>المشرف</th><th>الجوال</th><th>الإيميل</th><th></th></tr></thead><tbody>
+        ${s.supervisors.map(sv=>`<tr><td>${escapeHtml(sv.name)}</td><td>${escapeHtml(sv.phone||'')}</td><td>${escapeHtml(sv.email||'')}</td>
+          <td><button class="icon-btn danger" onclick="deleteSupervisor('${s.id}','${sv.id}')">🗑️</button></td></tr>`).join('') || `<tr><td colspan="4" class="helper">لا يوجد مشرفون</td></tr>`}
+        </tbody></table>
+      </div>`).join('') || `<div class="empty-state">لا توجد مدارس</div>`}
+  </div>`;
+
+  document.getElementById('set_saveOrg').onclick=async ()=>{
+    state.orgName=document.getElementById('set_orgName').value.trim();
+    state.printHeader.line1=document.getElementById('set_ph1').value;
+    state.printHeader.line2=document.getElementById('set_ph2').value;
+    state.printHeader.line3=document.getElementById('set_ph3').value;
+    const file=document.getElementById('set_logo').files[0];
+    if(file){ state.logo = await fileToDataUrl(file); }
+    await saveState(); toast('تم الحفظ'); render();
+  };
+}
+function simpleListTable(list, key){
+  if(!list.length) return `<div class="empty-state">لا توجد عناصر</div>`;
+  return `<table><thead><tr><th>الاسم</th><th></th></tr></thead><tbody>
+    ${list.map(i=>`<tr><td>${escapeHtml(i.name)}</td><td><button class="icon-btn danger" onclick="deleteFromList('${key}','${i.id}')">🗑️</button></td></tr>`).join('')}
+  </tbody></table>`;
+}
+async function deleteFromList(key, id){
+  if(!confirm('هل تريد الحذف؟')) return;
+  state[key] = state[key].filter(x=>x.id!==id);
+  await saveState(); render();
+}
+async function deleteSupervisor(schoolId, svId){
+  if(!confirm('هل تريد حذف المشرف؟')) return;
+  const sch=state.schools.find(s=>s.id===schoolId);
+  if(sch){ sch.supervisors = sch.supervisors.filter(x=>x.id!==svId); await saveState(); render(); }
+}
+function quickAddSchoolSettings(){ quickAddSchool(); }
+function quickAddSupervisorSettings(schoolId){
+  const sch=state.schools.find(s=>s.id===schoolId);
+  openModal('إضافة مشرف لمدرسة: '+sch.name, [
+    {name:'name', label:'اسم المشرف', required:true},{name:'phone', label:'رقم الجوال'},{name:'email', label:'البريد الإلكتروني'},
+  ], async v=>{ sch.supervisors.push({id:uid(), name:v.name, phone:v.phone, email:v.email}); await saveState(); render(); });
+}
+async function acceptTrainerRequest(id){
+  const r = state.trainerRequests.find(x=>x.id===id); if(!r) return;
+  r.status='accepted';
+  const order = {
+    id:uid(), serial: state.nextSerial++, createdAt:Date.now(),
+    title:r.title, fieldId: state.fields[0]?state.fields[0].id:'', participantsCount:'',
+    date:r.date, timeFrom:r.timeFrom, timeTo:r.timeTo, programTypeId: state.programTypes[0]?state.programTypes[0].id:'',
+    schoolId:r.schoolId, supervisorId:'', trainerId:r.trainerId, requesterNote:r.note||'', adminNote:'مضاف من ترشيح مدرب',
+    adminRequests:[], completionStatus:'', notDoneReason:'', supervisorRating:0, schoolRating:0, studentsRating:0, recommendSchool:''
+  };
+  state.orders.push(order);
+  state.notifications.push({id:uid(), trainerId:r.trainerId, message:`تم قبول طلبك: ${r.title} — أضيف إلى برامجك المستقبلية.`, read:false, createdAt:Date.now()});
+  await saveState(); toast('تم قبول الطلب وإضافته للبرامج'); render();
+}
+async function rejectTrainerRequest(id){
+  const r = state.trainerRequests.find(x=>x.id===id); if(!r) return;
+  r.status='rejected';
+  state.notifications.push({id:uid(), trainerId:r.trainerId, message:`تم رفض طلبك: ${r.title}.`, read:false, createdAt:Date.now()});
+  await saveState(); toast('تم رفض الطلب'); render();
+}
+
+/* ============ Init ============ */
+(async function init(){ await loadState(); render(); })();
+</script>
+</body>
+</html>

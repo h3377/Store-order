@@ -1,0 +1,9 @@
+{
+  "name": "task-order-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "نظام أوامر التكليف - Live service with shared persistent data via Upstash Redis via Vercel Marketplace",
+  "dependencies": {
+    "@upstash/redis": "^1.38.0"
+  }
+}
