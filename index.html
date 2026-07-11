@@ -3,57 +3,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>نظام أوامر التكليف</title>
+<title>نظام طلبات الفعاليات والمبادرات</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --maroon-950:#3a0a15;
-    --maroon-900:#5c0f22;
-    --maroon-800:#7a1230;
-    --maroon-700:#8f1a3a;
-    --maroon-600:#a3264a;
-    --maroon-100:#f6e6ea;
-    --maroon-50:#fbf3f4;
-    --gold:#c9a24b;
-    --red:#c0273f;
-    --ink:#2a1116;
-    --line:#e6ccd2;
-    --white:#ffffff;
+    --maroon-950:#3a0a15; --maroon-900:#5c0f22; --maroon-800:#7a1230; --maroon-700:#8f1a3a; --maroon-600:#a3264a;
+    --maroon-100:#f6e6ea; --maroon-50:#fbf3f4; --gold:#c9a24b; --red:#c0273f; --ink:#2a1116; --line:#e6ccd2; --white:#ffffff;
     --font-body:'Sakkal Majalla','Tajawal','Cairo',sans-serif;
     --font-head:'29LT Bukra','Cairo',sans-serif;
-    --radius:10px;
-    --shadow:0 4px 18px rgba(58,10,21,.10);
+    --radius:10px; --shadow:0 4px 18px rgba(58,10,21,.10);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{
-    font-family:var(--font-body);
-    background:var(--maroon-50);
-    color:var(--ink);
-    min-height:100vh;
-    background-image: linear-gradient(var(--line) 1px, transparent 1px);
-    background-size: 100% 34px;
-  }
+  body{font-family:var(--font-body); font-size:17px; background:var(--maroon-50); color:var(--ink); min-height:100vh;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px); background-size: 100% 34px;}
   #app{display:flex; min-height:100vh;}
-  #sidebar{
-    width:250px; flex:0 0 250px;
-    background:linear-gradient(180deg,var(--maroon-900),var(--maroon-950));
-    color:var(--white);
-    display:flex; flex-direction:column;
-    position:sticky; top:0; height:100vh;
-  }
+  #sidebar{width:250px; flex:0 0 250px; background:linear-gradient(180deg,var(--maroon-900),var(--maroon-950)); color:var(--white);
+    display:flex; flex-direction:column; position:sticky; top:0; height:100vh;}
   .brand{display:flex; align-items:center; gap:10px; padding:20px 16px; border-bottom:1px solid rgba(255,255,255,.12);}
-  .brand img{width:42px;height:42px;object-fit:contain;border-radius:8px;background:#fff;}
+  .brand img{width:42px;height:42px;object-fit:contain;}
   .brand .logo-placeholder{width:42px;height:42px;border-radius:8px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px;}
-  .brand-name{font-family:var(--font-head);font-weight:800;font-style:italic;font-size:16px;line-height:1.3;}
+  .brand-name{font-family:var(--font-head);font-weight:800;font-style:italic;font-size:15px;line-height:1.3;}
   .brand-sub{font-size:11px;opacity:.75;margin-top:2px;}
   nav.mainnav{flex:1; padding:14px 10px; display:flex; flex-direction:column; gap:4px; overflow-y:auto;}
-  nav.mainnav button{all:unset; cursor:pointer; display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:8px; font-size:14px; color:rgba(255,255,255,.88); transition:background .15s;}
+  nav.mainnav button{all:unset; cursor:pointer; display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:8px; font-size:13.5px; color:rgba(255,255,255,.88); transition:background .15s;}
   nav.mainnav button .ic{font-size:17px; width:20px; text-align:center;}
   nav.mainnav button:hover{background:rgba(255,255,255,.08);}
   nav.mainnav button.active{background:var(--gold); color:var(--maroon-950); font-weight:700;}
-  .sidebar-foot{padding:14px; font-size:11px; opacity:.6; border-top:1px solid rgba(255,255,255,.12);}
+  .sidebar-foot{padding:14px; font-size:11px; opacity:.85; border-top:1px solid rgba(255,255,255,.12); display:flex; flex-direction:column; gap:8px;}
+  .sidebar-foot button{all:unset; cursor:pointer; background:rgba(255,255,255,.12); color:#fff; padding:7px 10px; border-radius:6px; font-size:12px; text-align:center;}
+  .sidebar-foot button:hover{background:rgba(255,255,255,.22);}
   #main{flex:1; display:flex; flex-direction:column; min-width:0;}
   header.topbar{background:var(--white); border-bottom:2px solid var(--maroon-800); padding:16px 26px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:5; box-shadow:var(--shadow);}
   header.topbar h1{font-family:var(--font-head); font-style:italic; font-weight:800; color:var(--maroon-800); font-size:21px; margin:0;}
@@ -61,53 +41,65 @@
   .content{padding:24px 26px 60px; flex:1;}
   .card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; margin-bottom:20px;}
   .card h2{font-family:var(--font-head); font-style:italic; color:var(--maroon-800); font-size:17px; margin:0 0 14px; padding-bottom:10px; border-bottom:2px solid var(--maroon-100); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
-  .card h3.sub-h{font-family:var(--font-head); font-style:italic; color:var(--maroon-800); font-size:15px; margin:18px 0 8px;}
-  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px;}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; margin-bottom:14px;}
   .field{display:flex; flex-direction:column; gap:6px;}
   .field label{font-size:12.5px; font-weight:700; color:var(--maroon-800);}
   .field .row-inline{display:flex; gap:6px;}
-  input,select,textarea{font-family:var(--font-body); font-size:14px; padding:9px 10px; border:1.5px solid var(--line); border-radius:7px; background:#fff; color:var(--ink); width:100%;}
+  input,select,textarea{font-family:var(--font-body); font-size:15px; padding:9px 10px; border:1.5px solid var(--line); border-radius:7px; background:#fff; color:var(--ink); width:100%;}
   input:focus,select:focus,textarea:focus{outline:none; border-color:var(--maroon-600);}
   input:disabled, select:disabled{background:#f2eaec; color:#a98d94;}
   textarea{resize:vertical; min-height:64px;}
-  .btn{all:unset; cursor:pointer; font-family:var(--font-body); font-size:13.5px; font-weight:700; padding:9px 16px; border-radius:7px; text-align:center; display:inline-flex; align-items:center; gap:6px;}
+  .btn{all:unset; cursor:pointer; font-family:var(--font-body); font-size:14px; font-weight:700; padding:9px 16px; border-radius:7px; text-align:center; display:inline-flex; align-items:center; gap:6px;}
   .btn-primary{background:var(--maroon-800); color:#fff;}
   .btn-primary:hover{background:var(--maroon-900);}
   .btn-outline{background:#fff; color:var(--maroon-800); border:1.5px solid var(--maroon-800);}
   .btn-outline:hover{background:var(--maroon-100);}
-  .btn-gold{background:var(--gold); color:var(--maroon-950);}
+  .btn-lg{padding:14px 22px; font-size:15px;}
   .btn-sm{padding:6px 10px; font-size:12.5px;}
   .icon-btn{all:unset; cursor:pointer; width:30px; height:30px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:15px; background:var(--maroon-100); color:var(--maroon-800);}
   .icon-btn:hover{background:var(--maroon-800); color:#fff;}
   .icon-btn.danger:hover{background:#a3263a;}
   .plus-btn{all:unset; cursor:pointer; width:34px; height:34px; border-radius:7px; flex:0 0 auto; background:var(--maroon-800); color:#fff; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center;}
   .plus-btn:hover{background:var(--maroon-900);}
-  table{width:100%; border-collapse:collapse; font-size:13px;}
-  thead th{background:var(--maroon-800); color:#fff; padding:9px 7px; text-align:right; font-family:var(--font-head); font-weight:700; font-style:italic; font-size:12px;}
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  thead th{background:var(--maroon-800); color:#fff; padding:9px 7px; text-align:right; font-family:var(--font-head); font-weight:700; font-style:italic; font-size:12.5px;}
   tbody td{padding:8px 7px; border-bottom:1px solid var(--line); vertical-align:middle;}
   tbody tr:hover{background:var(--maroon-50);}
   .actions-cell{display:flex; gap:4px; flex-wrap:wrap;}
   .badge{display:inline-block; padding:3px 9px; border-radius:20px; background:var(--maroon-100); color:var(--maroon-800); font-size:11.5px; font-weight:700;}
-  .badge.busy{background:#f4c9d1;color:#7a1230;}
   .badge.ok{background:#d9f0dd;color:#1e6b34;}
   .badge.bad{background:#f7d6d6;color:#8f1a1a;}
   .empty-state{text-align:center; padding:40px 10px; color:#946; opacity:.65;}
   .checkbox-list{display:flex; flex-wrap:wrap; gap:10px;}
-  .checkbox-chip{display:flex; align-items:center; gap:6px; border:1.5px solid var(--line); border-radius:20px; padding:6px 12px; font-size:13px; cursor:pointer;}
+  .checkbox-chip{display:flex; align-items:center; gap:6px; border:1.5px solid var(--line); border-radius:20px; padding:6px 12px; font-size:13.5px; cursor:pointer;}
   .checkbox-chip input{width:auto;}
   .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px;}
-  .stat-box{background:linear-gradient(135deg,var(--maroon-800),var(--maroon-900)); color:#fff; border-radius:var(--radius); padding:18px; text-align:center;}
-  .stat-box .num{font-size:28px; font-weight:800; font-family:var(--font-head); font-style:italic;}
-  .stat-box .lbl{font-size:12.5px; opacity:.85; margin-top:4px;}
+  .stat-box{background:#fff; border:2px solid var(--maroon-800); border-radius:12px; padding:16px; text-align:center;}
+  .stat-box .num{font-size:26px; font-weight:800; font-family:var(--font-head); font-style:italic; color:var(--maroon-800);}
+  .stat-box .lbl{font-size:12.5px; color:#7a5560; margin-top:4px;}
   .tabs{display:flex; gap:6px; margin-bottom:16px; border-bottom:2px solid var(--maroon-100); flex-wrap:wrap;}
-  .tab-btn{all:unset; cursor:pointer; padding:9px 18px; font-size:13.5px; font-weight:700; color:#8a5a66; border-bottom:3px solid transparent;}
+  .tab-btn{all:unset; cursor:pointer; padding:9px 18px; font-size:14px; font-weight:700; color:#8a5a66; border-bottom:3px solid transparent;}
   .tab-btn.active{color:var(--maroon-800); border-bottom-color:var(--maroon-800);}
   .helper{font-size:11.5px; color:#8a6470; margin-top:2px;}
   .divider{height:1px; background:var(--line); margin:16px 0;}
-  .supervisor-info{background:var(--maroon-50); border:1px dashed var(--maroon-100); border-radius:8px; padding:10px; font-size:12.5px; display:flex; gap:16px; flex-wrap:wrap;}
-  .notif{background:var(--maroon-50); border-right:4px solid var(--maroon-800); padding:10px 12px; border-radius:6px; margin-bottom:8px; font-size:13px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .supervisor-info{background:var(--maroon-50); border:1px dashed var(--maroon-100); border-radius:8px; padding:10px; font-size:13px; display:flex; gap:16px; flex-wrap:wrap;}
+  .notif{background:var(--maroon-50); border-right:4px solid var(--maroon-800); padding:10px 12px; border-radius:6px; margin-bottom:8px; font-size:13.5px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
   .notif.unread{background:#fdf0e6; border-right-color:var(--gold);}
   .chart-wrap{margin-top:10px; overflow-x:auto;}
+  .star{transition:color .1s;}
+
+  /* Login gate */
+  .gate-wrap{min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,var(--maroon-900),var(--maroon-950)); padding:20px;}
+  .gate-card{background:#fff; border-radius:16px; padding:40px 34px; width:100%; max-width:480px; box-shadow:0 20px 60px rgba(0,0,0,.35); text-align:center;}
+  .gate-card h1{font-family:var(--font-head); font-style:italic; color:var(--maroon-800); font-size:22px; margin:6px 0 4px;}
+  .gate-card p{color:#7a5560; font-size:13.5px; margin-bottom:24px;}
+  .role-options{display:flex; flex-direction:column; gap:12px;}
+  .role-btn{all:unset; cursor:pointer; border:2px solid var(--maroon-100); border-radius:12px; padding:16px; display:flex; align-items:center; gap:14px; transition:.15s;}
+  .role-btn:hover{border-color:var(--maroon-800); background:var(--maroon-50);}
+  .role-btn .ric{font-size:26px;}
+  .role-btn .rtxt{text-align:right;}
+  .role-btn .rtitle{font-weight:800; color:var(--maroon-800); font-size:15px;}
+  .role-btn .rdesc{font-size:12px; color:#8a6470;}
 
   /* Modal */
   .modal-overlay{position:fixed; inset:0; background:rgba(42,17,22,.55); display:none; align-items:center; justify-content:center; z-index:100; padding:20px; overflow-y:auto;}
@@ -115,7 +107,6 @@
   .modal-box{background:#fff; border-radius:12px; width:100%; max-width:460px; padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.3); max-height:90vh; overflow-y:auto;}
   .modal-box h3{margin:0 0 16px; font-family:var(--font-head); font-style:italic; color:var(--maroon-800);}
   .modal-actions{display:flex; justify-content:flex-end; gap:8px; margin-top:18px;}
-  .star{transition:color .1s;}
 
   .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--maroon-900); color:#fff; padding:11px 22px; border-radius:24px; font-size:13.5px; box-shadow:var(--shadow); z-index:200; opacity:0; transition:opacity .25s, bottom .25s; pointer-events:none; max-width:90vw; text-align:center;}
   .toast.show{opacity:1; bottom:34px;}
@@ -128,17 +119,21 @@
   }
   .print-doc{font-family:var(--font-body); color:var(--ink); border-bottom:4px solid var(--maroon-800); padding-bottom:16px;}
   .print-brand-head{display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid var(--maroon-800); padding-bottom:10px; margin-bottom:14px;}
-  .print-logo img{width:64px;height:64px;object-fit:contain;}
-  .print-logo-placeholder{width:64px;height:64px;border-radius:8px;background:var(--maroon-100);display:flex;align-items:center;justify-content:center;font-size:26px;}
-  .print-org-lines{text-align:right; font-weight:800; color:var(--maroon-900); line-height:1.7; font-size:14px;}
-  .print-title-bar{background:var(--maroon-100); color:var(--maroon-900); text-align:center; font-family:var(--font-head); font-style:italic; font-weight:800; padding:10px; border-radius:6px; margin-bottom:12px; font-size:16px;}
-  .print-daterange{display:flex; gap:14px; margin-bottom:14px;}
+  .print-logo img{width:66px;height:66px;object-fit:contain; background:transparent;}
+  .print-logo-placeholder{width:66px;height:66px;border-radius:8px;background:var(--maroon-100);display:flex;align-items:center;justify-content:center;font-size:26px;}
+  .print-org-lines{text-align:right; font-weight:800; color:var(--maroon-900); line-height:1.7; font-size:15px;}
+  .print-title-bar{background:var(--maroon-100); color:var(--maroon-900); text-align:center; font-family:var(--font-head); font-style:italic; font-weight:800; padding:11px; border-radius:6px; margin-bottom:12px; font-size:17px;}
+  .print-daterange{display:flex; gap:14px; margin-bottom:14px; justify-content:center;}
   .dr-item{display:flex; border-radius:6px; overflow:hidden; border:1px solid var(--line);}
   .dr-label{background:var(--red); color:#fff; padding:6px 14px; font-size:12.5px; font-weight:700;}
   .dr-value{background:#eee; padding:6px 14px; font-size:12.5px;}
   .print-table{width:100%; border-collapse:collapse; margin-top:10px;}
-  .print-table td, .print-table th{border:1px solid var(--line); padding:7px 9px; font-size:12.5px;}
-  .print-table th{background:var(--maroon-800); color:#fff; text-align:right;}
+  .print-table td, .print-table th{border:1px solid var(--line); padding:7px 9px; font-size:13px;}
+  .print-table th{background:var(--maroon-800); color:#fff; text-align:right; font-weight:800;}
+  .print-stat-grid{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
+  .print-stat-box{border:2px solid var(--maroon-800); border-radius:10px; padding:10px 16px; text-align:center; flex:1; min-width:120px;}
+  .print-stat-box .n{font-weight:800; color:var(--maroon-800); font-size:17px;}
+  .print-stat-box .l{font-size:11px; color:#7a5560;}
 
   @media (max-width:860px){
     #sidebar{position:fixed; right:0; z-index:50; transform:translateX(100%); transition:transform .2s;}
@@ -148,84 +143,70 @@
 </style>
 </head>
 <body>
-<div id="app">
-  <aside id="sidebar">
-    <div class="brand">
-      <div id="logoSlot"><div class="logo-placeholder">🕌</div></div>
-      <div>
-        <div class="brand-name" id="orgNameDisplay">إدارة الفعاليات</div>
-        <div class="brand-sub">نظام أوامر التكليف</div>
-      </div>
-    </div>
-    <nav class="mainnav" id="mainNav"></nav>
-    <div class="sidebar-foot">تصميم عنابي × أبيض — نُظّم بمسطرة</div>
-  </aside>
-  <div id="main">
-    <header class="topbar">
-      <div>
-        <h1 id="pageTitle">الصفحة الرئيسية</h1>
-        <div class="sub" id="pageSub">نظرة عامة على البرنامج</div>
-      </div>
-      <div id="topbarActions"></div>
-    </header>
-    <div class="content" id="content"></div>
-  </div>
-</div>
+<div id="rootWrap"></div>
 <div id="printArea"></div>
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modalOverlay"><div class="modal-box" id="modalBox"></div></div>
 
 <script>
 /* ============ Storage & State ============ */
-const STORAGE_KEY = 'taklief-app-state-v2';
+const STORAGE_KEY = 'taklief-app-state-v3';
 let state = null;
-
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
 function defaultState(){
   return {
-    orgName:'إدارة الفعاليات',
-    logo:'',
+    orgName:'إدارة الفعاليات', logo:'',
     printHeader:{ line1:'مؤسسة عيد الخيرية', line2:'مركز عيد الثقافي', line3:'قسم البرامج المجتمعية' },
     nextSerial:1,
     fields:[
-      {id:uid(), name:'طلب إداري'},{id:uid(), name:'ثقافي إجتماعي صحي'},
-      {id:uid(), name:'البرامج القيمية الترفيهية'},{id:uid(), name:'ثقافي تنافسي'},
-      {id:uid(), name:'ثقافي تطوير معرفي'},{id:uid(), name:'البرامج القيمية - المصلى المتنقل'},
+      {id:uid(), name:'طلب إداري'},{id:uid(), name:'ثقافي إجتماعي صحي'},{id:uid(), name:'البرامج القيمية الترفيهية'},
+      {id:uid(), name:'ثقافي تنافسي'},{id:uid(), name:'ثقافي تطوير معرفي'},{id:uid(), name:'البرامج القيمية - المصلى المتنقل'},
       {id:uid(), name:'البرامج القيمية'},{id:uid(), name:'الأنشطة النوعية'},
     ],
-    programTypes:[
-      {id:uid(), name:'حملات'},{id:uid(), name:'مدارك'},{id:uid(), name:'مواهب ومسابقات'},{id:uid(), name:'صحبة'},
-    ],
+    programTypes:[{id:uid(), name:'حملات'},{id:uid(), name:'مدارك'},{id:uid(), name:'مواهب ومسابقات'},{id:uid(), name:'صحبة'}],
     schools:[
       {id:uid(), name:'مدرسة الشمال الابتدائية', level:'ابتدائي', supervisors:[{id:uid(), name:'أ. خالد المري', phone:'55511111', email:'khaled@example.com'}]},
       {id:uid(), name:'مدرسة عبدالله بن زيد آل محمود', level:'إعدادي', supervisors:[{id:uid(), name:'أ. سعد العبدالله', phone:'55522222', email:'saad@example.com'}]},
       {id:uid(), name:'مدرسة اليرموك الإعدادية', level:'إعدادي', supervisors:[{id:uid(), name:'أ. محمد الكواري', phone:'55533333', email:'mohd@example.com'}]},
     ],
-    trainers:[
-      {id:uid(), name:'أ. أحمد النعيمي', phone:'55011122'},
-      {id:uid(), name:'أ. فيصل السليطي', phone:'55033344'},
-    ],
+    trainers:[{id:uid(), name:'أ. أحمد النعيمي', phone:'55011122'},{id:uid(), name:'أ. فيصل السليطي', phone:'55033344'}],
     adminRequestsList:[
-      {id:uid(), name:'توفير سيارة'},{id:uid(), name:'توفير مندوب لإيصال المدرب'},
-      {id:uid(), name:'حجز مخيم'},{id:uid(), name:'حجز استراحة المؤسسة'},{id:uid(), name:'توفير مقر مركز عيد الثقافي'},
+      {id:uid(), name:'توفير سيارة'},{id:uid(), name:'توفير مندوب لإيصال المدرب'},{id:uid(), name:'حجز مخيم'},
+      {id:uid(), name:'حجز استراحة المؤسسة'},{id:uid(), name:'توفير مقر مركز عيد الثقافي'},
     ],
-    orders:[],
-    trainerRequests:[],
-    notifications:[],
-    tasks:[]
+    orders:[], trainerRequests:[], notifications:[], tasks:[]
   };
 }
+/* ══════════════════════════════════════════════════════════════════
+   ⚠️ تحذير لأي أداة ذكاء اصطناعي أو مطوّر يعدّل هذا الملف ⚠️
+   ══════════════════════════════════════════════════════════════════
+   هذا الموقع منشور فعليًا (Live) على Vercel، والدالتان أدناه
+   (loadState و saveState) متصلتان بخادم حقيقي عبر:  fetch('/api/state')
+   وهذا هو ما يجعل البيانات محفوظة ومشتركة بين كل المستخدمين.
 
+   ✘ لا تستبدل fetch('/api/state') بـ window.storage.get/set إطلاقًا
+     (window.storage تعمل فقط داخل معاينة claude.ai ولا تعمل على
+     الموقع المنشور فعليًا — استخدامها هنا سيوقف الحفظ تمامًا).
+   ✘ لا تستخدم localStorage أو sessionStorage كبديل أيضًا
+     (بيانات محلية للمتصفح فقط، غير مشتركة بين المستخدمين).
+   ✔ إن احتجت تغيير منطق التطبيق (البيانات، الحقول، الواجهة) عدّل
+     بحرية في أي مكان آخر من الملف، فقط لا تلمس آلية الحفظ نفسها.
+   ══════════════════════════════════════════════════════════════════ */
 async function loadState(){
   try{
     const r=await fetch('/api/state');
     const j=await r.json();
-    if(j&&j.value){ state=j.value;
+    if(j&&j.value){
+      state=j.value;
       if(!state.printHeader) state.printHeader={line1:'مؤسسة عيد الخيرية',line2:'مركز عيد الثقافي',line3:'قسم البرامج المجتمعية'};
       if(!state.trainerRequests) state.trainerRequests=[];
       if(!state.notifications) state.notifications=[];
-      return; }
+      // migrate old single trainerId -> trainerIds array
+      state.orders.forEach(o=>{ if(!o.trainerIds){ o.trainerIds = o.trainerId ? [o.trainerId] : []; } });
+      state.trainerRequests.forEach(r=>{ if(!r.trainerId && r.trainerIds && r.trainerIds[0]) r.trainerId=r.trainerIds[0]; });
+      return;
+    }
   }catch(e){ console.error('تعذر تحميل البيانات من الخادم:',e); }
   state = defaultState();
   await saveState();
@@ -234,40 +215,32 @@ let saving=false, pendingSave=false;
 async function saveState(){
   if(saving){ pendingSave=true; return; }
   saving=true;
-  try{ await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)}); }
-  catch(e){ console.error('save error', e); }
+  try{ await fetch('/api/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)}); }catch(e){ console.error('save error', e); }
   saving=false;
   if(pendingSave){ pendingSave=false; saveState(); }
 }
+/* ══════════ نهاية منطقة الحفظ — لا تُعدَّل ══════════ */
 
-/* ============ Navigation ============ */
+/* ============ Roles & Navigation ============ */
 const PAGES = [
-  {id:'home', label:'الصفحة الرئيسية', icon:'🏠'},
-  {id:'order', label:'أمر التكليف', icon:'📋'},
-  {id:'admin', label:'الإداريات (اليومية)', icon:'🗓️'},
-  {id:'reports', label:'التقارير', icon:'📄'},
-  {id:'stats', label:'الإحصائيات', icon:'📊'},
-  {id:'tasks', label:'المهام', icon:'✅'},
-  {id:'trainerPortal', label:'بوابة منفذ البرنامج', icon:'🧑‍🏫'},
-  {id:'settings', label:'الإعدادات والقوائم', icon:'⚙️'},
+  {id:'home', label:'الصفحة الرئيسية', icon:'🏠', roles:['admin','user']},
+  {id:'order', label:'طلبات الفعاليات والمبادرات', icon:'📋', roles:['admin','user']},
+  {id:'admin', label:'الإداريات (اليومية)', icon:'🗓️', roles:['admin','user']},
+  {id:'reports', label:'التقارير', icon:'📄', roles:['admin','user']},
+  {id:'stats', label:'الإحصائيات', icon:'📊', roles:['admin','user']},
+  {id:'tasks', label:'المهام', icon:'✅', roles:['admin','user']},
+  {id:'trainerPortal', label:'بوابة مقدم الفعالية', icon:'🧑‍🏫', roles:['admin','user','trainer']},
+  {id:'settings', label:'الإعدادات والقوائم', icon:'⚙️', roles:['admin']},
 ];
+let currentRole=null;      // 'admin' | 'user' | 'trainer'
 let currentPage='home';
 let orderSubTab='new';
 let editingOrderId=null;
 let loggedTrainerId=null;
 let trainerPortalTab='upcoming';
 
-function renderNav(){
-  const nav = document.getElementById('mainNav');
-  nav.innerHTML='';
-  PAGES.forEach(p=>{
-    const b=document.createElement('button');
-    b.className = p.id===currentPage ? 'active':'';
-    b.innerHTML = `<span class="ic">${p.icon}</span><span>${p.label}</span>`;
-    b.onclick=()=>{ currentPage=p.id; if(p.id==='order'){editingOrderId=null;} render(); };
-    nav.appendChild(b);
-  });
-}
+function visiblePages(){ return PAGES.filter(p=>p.roles.includes(currentRole)); }
+
 function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
@@ -278,15 +251,11 @@ function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, m=>({'&':'
 function fileToDataUrl(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
 function todayStr(){ return new Date().toISOString().slice(0,10); }
 
-/* ============ Modal helper (generic simple fields) ============ */
+/* ============ Modal helper ============ */
 function openModal(title, fieldsConfig, onSubmit){
-  const overlay=document.getElementById('modalOverlay');
-  const box=document.getElementById('modalBox');
+  const overlay=document.getElementById('modalOverlay'); const box=document.getElementById('modalBox');
   box.innerHTML = `<h3>${title}</h3><div id="modalFields" class="grid"></div>
-    <div class="modal-actions">
-      <button class="btn btn-outline" id="modalCancel">إلغاء</button>
-      <button class="btn btn-primary" id="modalSave">حفظ</button>
-    </div>`;
+    <div class="modal-actions"><button class="btn btn-outline" id="modalCancel">إلغاء</button><button class="btn btn-primary" id="modalSave">حفظ</button></div>`;
   const fc = box.querySelector('#modalFields');
   fieldsConfig.forEach(f=>{
     const wrap=document.createElement('div'); wrap.className='field';
@@ -300,20 +269,14 @@ function openModal(title, fieldsConfig, onSubmit){
   box.querySelector('#modalSave').onclick=async ()=>{
     const values={};
     fieldsConfig.forEach(f=>{ values[f.name]=document.getElementById('mf_'+f.name).value.trim(); });
-    const missingReq = fieldsConfig.some(f=>f.required && !values[f.name]);
-    if(missingReq){ toast('يرجى تعبئة الحقول المطلوبة'); return; }
+    if(fieldsConfig.some(f=>f.required && !values[f.name])){ toast('يرجى تعبئة الحقول المطلوبة'); return; }
     await onSubmit(values);
     overlay.classList.remove('open');
   };
 }
-
-/* ============ Star rating helper ============ */
 function starRatingHtml(name, val){
-  val = Number(val)||0;
-  let stars='';
-  for(let i=1;i<=10;i++){
-    stars += `<span class="star" data-name="${name}" data-val="${i}" style="cursor:pointer;font-size:19px;color:${i<=val?'var(--gold)':'#ddd'}">★</span>`;
-  }
+  val = Number(val)||0; let stars='';
+  for(let i=1;i<=10;i++){ stars += `<span class="star" data-name="${name}" data-val="${i}" style="cursor:pointer;font-size:19px;color:${i<=val?'var(--gold)':'#ddd'}">★</span>`; }
   return `<div id="stars_${name}">${stars}</div><input type="hidden" id="${name}_val" value="${val}"><div class="helper">التقييم الحالي: <span id="${name}_lbl">${val}</span> / 10</div>`;
 }
 function wireStars(container){
@@ -322,56 +285,128 @@ function wireStars(container){
       const name=s.dataset.name, val=Number(s.dataset.val);
       document.getElementById(name+'_val').value = val;
       const lbl=document.getElementById(name+'_lbl'); if(lbl) lbl.textContent=val;
-      container.querySelectorAll(`.star[data-name="${name}"]`).forEach(st=>{
-        st.style.color = Number(st.dataset.val)<=val ? 'var(--gold)':'#ddd';
-      });
+      container.querySelectorAll(`.star[data-name="${name}"]`).forEach(st=>{ st.style.color = Number(st.dataset.val)<=val ? 'var(--gold)':'#ddd'; });
     };
   });
 }
 
 /* ============ Scheduling conflict helpers ============ */
-function parseDT(dateStr, timeStr){
-  if(!dateStr) return null;
-  return new Date(dateStr+'T'+(timeStr||'00:00')+':00');
-}
-function trainerConflict(trainerId, date, timeFrom, timeTo, excludeOrderId){
+function parseDT(dateStr, timeStr){ if(!dateStr) return null; return new Date(dateStr+'T'+(timeStr||'00:00')+':00'); }
+function trainerConflictSingle(trainerId, date, timeFrom, timeTo, excludeOrderId){
   if(!trainerId || !date) return null;
-  const newStart = parseDT(date, timeFrom||'00:00');
-  const newEnd = parseDT(date, timeTo||timeFrom||'23:59');
+  const newStart = parseDT(date, timeFrom||'00:00'), newEnd = parseDT(date, timeTo||timeFrom||'23:59');
   const bufferMs = 90*60*1000;
   return state.orders.find(o=>{
     if(o.id===excludeOrderId) return false;
-    if(o.trainerId!==trainerId) return false;
+    if(!(o.trainerIds||[]).includes(trainerId)) return false;
     if(o.date!==date) return false;
-    const exStart = parseDT(o.date, o.timeFrom||'00:00');
-    const exEnd = parseDT(o.date, o.timeTo||o.timeFrom||'23:59');
-    const winStart = new Date(exStart.getTime()-bufferMs);
-    const winEnd = new Date(exEnd.getTime()+bufferMs);
+    const exStart = parseDT(o.date, o.timeFrom||'00:00'), exEnd = parseDT(o.date, o.timeTo||o.timeFrom||'23:59');
+    const winStart = new Date(exStart.getTime()-bufferMs), winEnd = new Date(exEnd.getTime()+bufferMs);
     return newStart < winEnd && newEnd > winStart;
   }) || null;
+}
+function anyTrainerConflict(trainerIds, date, timeFrom, timeTo, excludeOrderId){
+  for(const tId of (trainerIds||[])){
+    const c = trainerConflictSingle(tId, date, timeFrom, timeTo, excludeOrderId);
+    if(c) return {trainerId:tId, order:c};
+  }
+  return null;
 }
 function schoolSameDay(schoolId, date, excludeOrderId){
   if(!schoolId||!date) return null;
   return state.orders.find(o=> o.id!==excludeOrderId && o.schoolId===schoolId && o.date===date) || null;
 }
 
-/* ============ Render dispatcher ============ */
+/* ============ Root render ============ */
+function renderRoot(){
+  const root=document.getElementById('rootWrap');
+  if(!currentRole){ renderGate(root); return; }
+  if(currentRole==='trainer' && !loggedTrainerId){ renderTrainerLoginOnly(root); return; }
+  renderAppShell(root);
+}
+function renderGate(root){
+  root.innerHTML = `<div class="gate-wrap"><div class="gate-card">
+    <div style="font-size:34px;">🕌</div>
+    <h1>نظام طلبات الفعاليات والمبادرات</h1>
+    <p>اختر نوع الدخول للمتابعة</p>
+    <div class="role-options">
+      <button class="role-btn" id="g_admin"><span class="ric">🛡️</span><span class="rtxt"><div class="rtitle">مدير نظام</div><div class="rdesc">صلاحية كاملة على جميع الصفحات والإعدادات</div></span></button>
+      <button class="role-btn" id="g_user"><span class="ric">👤</span><span class="rtxt"><div class="rtitle">مستخدم</div><div class="rdesc">إدارة الفعاليات والتقارير دون الوصول للإعدادات</div></span></button>
+      <button class="role-btn" id="g_trainer"><span class="ric">🧑‍🏫</span><span class="rtxt"><div class="rtitle">مقدم فعالية</div><div class="rdesc">عرض فعالياتك وتقييمها وتقديم ترشيحات جديدة فقط</div></span></button>
+    </div>
+  </div></div>`;
+  document.getElementById('g_admin').onclick=()=>{ currentRole='admin'; currentPage='home'; renderRoot(); };
+  document.getElementById('g_user').onclick=()=>{ currentRole='user'; currentPage='home'; renderRoot(); };
+  document.getElementById('g_trainer').onclick=()=>{ currentRole='trainer'; renderRoot(); };
+}
+function renderTrainerLoginOnly(root){
+  root.innerHTML = `<div class="gate-wrap"><div class="gate-card">
+    <div style="font-size:34px;">🧑‍🏫</div>
+    <h1>دخول مقدم الفعالية</h1>
+    <p>اختر اسمك للمتابعة إلى فعالياتك الخاصة فقط</p>
+    <div class="field" style="text-align:right;"><select id="tp_login2">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
+    <div style="margin-top:16px; display:flex; gap:10px; justify-content:center;">
+      <button class="btn btn-outline" id="tp_back">رجوع</button>
+      <button class="btn btn-primary btn-lg" id="tp_enter">دخول</button>
+    </div>
+  </div></div>`;
+  document.getElementById('tp_back').onclick=()=>{ currentRole=null; renderRoot(); };
+  document.getElementById('tp_enter').onclick=()=>{ loggedTrainerId=document.getElementById('tp_login2').value; trainerPortalTab='upcoming'; renderRoot(); };
+}
+
+function renderAppShell(root){
+  root.innerHTML = `
+  <div id="app">
+    <aside id="sidebar">
+      <div class="brand">
+        <div id="logoSlot"><div class="logo-placeholder">🕌</div></div>
+        <div><div class="brand-name" id="orgNameDisplay">إدارة الفعاليات</div><div class="brand-sub">نظام طلبات الفعاليات والمبادرات</div></div>
+      </div>
+      <nav class="mainnav" id="mainNav"></nav>
+      <div class="sidebar-foot">
+        <div>الدور الحالي: ${currentRole==='admin'?'مدير نظام':currentRole==='user'?'مستخدم':'مقدم فعالية'}</div>
+        <button id="switchRoleBtn">تبديل الدور / خروج</button>
+      </div>
+    </aside>
+    <div id="main">
+      <header class="topbar">
+        <div><h1 id="pageTitle"></h1><div class="sub" id="pageSub"></div></div>
+        <div id="topbarActions"></div>
+      </header>
+      <div class="content" id="content"></div>
+    </div>
+  </div>`;
+  document.getElementById('switchRoleBtn').onclick=()=>{ currentRole=null; loggedTrainerId=null; renderRoot(); };
+  if(currentRole==='trainer'){ currentPage='trainerPortal'; }
+  else if(!visiblePages().find(p=>p.id===currentPage)){ currentPage='home'; }
+  render();
+}
+
+/* ============ Page render dispatcher ============ */
+function renderNav(){
+  const nav = document.getElementById('mainNav'); nav.innerHTML='';
+  visiblePages().forEach(p=>{
+    const b=document.createElement('button');
+    b.className = p.id===currentPage ? 'active':'';
+    b.innerHTML = `<span class="ic">${p.icon}</span><span>${p.label}</span>`;
+    b.onclick=()=>{ currentPage=p.id; if(p.id==='order'){editingOrderId=null;} render(); };
+    nav.appendChild(b);
+  });
+}
 function render(){
   renderNav();
   const titleMap={home:['الصفحة الرئيسية','نظرة عامة على البرنامج'],
-    order:['أمر التكليف','إنشاء ومتابعة أوامر التكليف'],
+    order:['طلبات الفعاليات والمبادرات','إنشاء ومتابعة أوامر التكليف'],
     admin:['الإداريات','المتابعة اليومية للفعاليات'],
-    reports:['التقارير','تقارير المدربين والمدارس والساعات'],
+    reports:['التقارير','تقارير مقدمي الفعاليات والمدارس والساعات'],
     stats:['الإحصائيات','تصنيفات وأعداد البرامج'],
     tasks:['المهام','قائمة المهام الإدارية'],
-    trainerPortal:['بوابة منفذ البرنامج','دخول المدرب لمتابعة برامجه وتقييمها'],
+    trainerPortal:['بوابة مقدم الفعالية','متابعة فعالياتك وتقييمها'],
     settings:['الإعدادات والقوائم','إدارة القوائم المنسدلة والشعار وطلبات الترشيح']};
   document.getElementById('pageTitle').textContent = titleMap[currentPage][0];
   document.getElementById('pageSub').textContent = titleMap[currentPage][1];
   document.getElementById('topbarActions').innerHTML='';
-
-  const c = document.getElementById('content');
-  c.innerHTML='';
+  const c = document.getElementById('content'); c.innerHTML='';
   if(currentPage==='home') renderHome(c);
   else if(currentPage==='order') renderOrderPage(c);
   else if(currentPage==='admin') renderAdminPage(c);
@@ -380,40 +415,33 @@ function render(){
   else if(currentPage==='tasks') renderTasksPage(c);
   else if(currentPage==='trainerPortal') renderTrainerPortalPage(c);
   else if(currentPage==='settings') renderSettingsPage(c);
-
   document.getElementById('orgNameDisplay').textContent = state.orgName || 'إدارة الفعاليات';
-  const logoSlot=document.getElementById('logoSlot');
-  logoSlot.innerHTML = state.logo ? `<img src="${state.logo}">` : `<div class="logo-placeholder">🕌</div>`;
+  document.getElementById('logoSlot').innerHTML = state.logo ? `<img src="${state.logo}">` : `<div class="logo-placeholder">🕌</div>`;
 }
 
 /* ============ Home ============ */
 function renderHome(c){
   const totalOrders = state.orders.length;
-  const thisMonth = state.orders.filter(o=>{
-    if(!o.date) return false;
-    const d=new Date(o.date), now=new Date();
-    return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
-  }).length;
+  const thisMonth = state.orders.filter(o=>{ if(!o.date) return false; const d=new Date(o.date), now=new Date(); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); }).length;
   const totalParticipants = state.orders.reduce((s,o)=>s+(Number(o.participantsCount)||0),0);
   const pendingReq = state.trainerRequests.filter(r=>r.status==='pending').length;
-
   c.innerHTML = `
   <div class="stat-grid" style="margin-bottom:20px;">
-    <div class="stat-box"><div class="num">${totalOrders}</div><div class="lbl">إجمالي أوامر التكليف</div></div>
+    <div class="stat-box"><div class="num">${totalOrders}</div><div class="lbl">إجمالي طلبات الفعاليات</div></div>
     <div class="stat-box"><div class="num">${thisMonth}</div><div class="lbl">فعاليات هذا الشهر</div></div>
     <div class="stat-box"><div class="num">${state.schools.length}</div><div class="lbl">عدد المدارس</div></div>
-    <div class="stat-box"><div class="num">${state.trainers.length}</div><div class="lbl">عدد المدربين</div></div>
-    <div class="stat-box"><div class="num">${totalParticipants}</div><div class="lbl">إجمالي المشاركين</div></div>
+    <div class="stat-box"><div class="num">${state.trainers.length}</div><div class="lbl">عدد مقدمي الفعاليات</div></div>
+    <div class="stat-box"><div class="num">${totalParticipants}</div><div class="lbl">إجمالي المستهدفين</div></div>
     <div class="stat-box"><div class="num">${pendingReq}</div><div class="lbl">طلبات ترشيح بانتظار الرد</div></div>
   </div>
-  <div class="card"><h2>أحدث أوامر التكليف</h2>${ordersTableHtml(state.orders.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,6))}</div>
+  <div class="card"><h2>أحدث الطلبات</h2>${ordersTableHtml(state.orders.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,6))}</div>
   <div class="card">
     <h2>بيانات المؤسسة</h2>
     <div class="grid">
       <div class="field"><label>اسم الجهة</label><input id="homeOrgName" value="${escapeHtml(state.orgName||'')}"></div>
-      <div class="field"><label>شعار الجهة</label><input id="homeLogo" type="file" accept="image/*"></div>
+      <div class="field"><label>شعار الجهة (يفضل صورة بخلفية شفافة PNG)</label><input id="homeLogo" type="file" accept="image/*"></div>
     </div>
-    <div style="margin-top:12px;"><button class="btn btn-primary" id="saveOrgBtn">حفظ</button></div>
+    <button class="btn btn-primary" id="saveOrgBtn">حفظ</button>
   </div>`;
   document.getElementById('saveOrgBtn').onclick=async ()=>{
     state.orgName = document.getElementById('homeOrgName').value.trim();
@@ -423,69 +451,59 @@ function renderHome(c){
   };
 }
 
-/* ============ Order table (screen, with actions) ============ */
+function trainerNames(order){
+  return (order.trainerIds||[]).map(id=>{ const t=state.trainers.find(x=>x.id===id); return t?t.name:''; }).filter(Boolean).join('، ');
+}
+function trainerPhones(order){
+  return (order.trainerIds||[]).map(id=>{ const t=state.trainers.find(x=>x.id===id); return t?t.phone:''; }).filter(Boolean).join('، ');
+}
+
+/* ============ Order tables ============ */
 function ordersTableHtml(list){
-  if(!list.length) return `<div class="empty-state">لا توجد أوامر تكليف بعد</div>`;
-  return `<table><thead><tr>
-    <th>م</th><th>العنوان</th><th>التاريخ</th><th>المجال</th><th>المدرسة</th><th>المدرب</th><th>الإنجاز</th><th>إجراءات</th>
-  </tr></thead><tbody>
+  if(!list.length) return `<div class="empty-state">لا توجد طلبات بعد</div>`;
+  return `<table><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>المجال</th><th>المدرسة</th><th>مقدم المبادرة</th><th>الإنجاز</th><th>إجراءات</th></tr></thead><tbody>
   ${list.map(o=>{
     const field = state.fields.find(f=>f.id===o.fieldId);
     const school = state.schools.find(s=>s.id===o.schoolId);
-    const trainer = state.trainers.find(t=>t.id===o.trainerId);
-    const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>'
-      : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : '<span class="badge">—</span>';
+    const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>' : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : '<span class="badge">—</span>';
     return `<tr>
-      <td><span class="badge">${o.serial}</span></td>
-      <td>${escapeHtml(o.title)}</td>
-      <td>${o.date||''}</td>
-      <td>${field?escapeHtml(field.name):''}</td>
-      <td>${school?escapeHtml(school.name):''}</td>
-      <td>${trainer?escapeHtml(trainer.name):''}</td>
+      <td><span class="badge">${o.serial}</span></td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td>
+      <td>${field?escapeHtml(field.name):''}</td><td>${school?escapeHtml(school.name):''}</td><td>${escapeHtml(trainerNames(o))}</td>
       <td>${statusBadge}</td>
       <td class="actions-cell">
         <button class="icon-btn" title="تعديل" onclick="editOrder('${o.id}')">✏️</button>
         <button class="icon-btn" title="تقييم وإنجاز" onclick="openEvaluationModal('${o.id}')">📝</button>
-        <button class="icon-btn" title="طباعة / حفظ PDF" onclick="printOrder('${o.id}')">🖨️</button>
+        <button class="icon-btn" title="طباعة نسخة الجهة الطالبة" onclick="printOrderSchoolCopy('${o.id}')">🏫🖨️</button>
+        <button class="icon-btn" title="طباعة نسخة الإدارة (كاملة)" onclick="printOrderAdminCopy('${o.id}')">🏢🖨️</button>
         <button class="icon-btn" title="إرسال بالبريد" onclick="emailOrder('${o.id}')">✉️</button>
         <button class="icon-btn danger" title="حذف" onclick="deleteOrder('${o.id}')">🗑️</button>
       </td>
     </tr>`;
-  }).join('')}
-  </tbody></table>`;
+  }).join('')}</tbody></table>`;
 }
-/* Print-safe version: no actions column */
 function ordersTableHtmlPrint(list){
   if(!list.length) return `<div class="empty-state">لا توجد بيانات ضمن هذه المعايير</div>`;
-  return `<table class="print-table"><thead><tr>
-    <th>م</th><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>المدرسة</th><th>المدرب</th><th>الإنجاز</th>
-  </tr></thead><tbody>
+  return `<table class="print-table"><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>المدرسة</th><th>مقدم المبادرة</th><th>الإنجاز</th></tr></thead><tbody>
   ${list.map(o=>{
     const school = state.schools.find(s=>s.id===o.schoolId);
-    const trainer = state.trainers.find(t=>t.id===o.trainerId);
-    return `<tr>
-      <td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td>
-      <td>${school?escapeHtml(school.name):''}</td><td>${trainer?escapeHtml(trainer.name):''}</td>
-      <td>${o.completionStatus||'—'}</td>
-    </tr>`;
-  }).join('')}
-  </tbody></table>`;
+    return `<tr><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td>
+      <td>${school?escapeHtml(school.name):''}</td><td>${escapeHtml(trainerNames(o))}</td><td>${o.completionStatus||'—'}</td></tr>`;
+  }).join('')}</tbody></table>`;
 }
 
-/* ============ Order Page ============ */
+/* ============ Order Page (طلبات الفعاليات والمبادرات) ============ */
 function renderOrderPage(c){
   c.innerHTML = `
   <div class="tabs">
-    <button class="tab-btn ${orderSubTab==='new'?'active':''}" id="tabNew">أمر تكليف جديد</button>
-    <button class="tab-btn ${orderSubTab==='list'?'active':''}" id="tabList">كل الأوامر</button>
+    <button class="tab-btn ${orderSubTab==='new'?'active':''}" id="tabNew">فعاليات ومبادرات جديدة</button>
+    <button class="tab-btn ${orderSubTab==='list'?'active':''}" id="tabList">كل الطلبات</button>
   </div>
   <div id="orderSubContent"></div>`;
   document.getElementById('tabNew').onclick=()=>{orderSubTab='new'; editingOrderId=null; render();};
   document.getElementById('tabList').onclick=()=>{orderSubTab='list'; render();};
-
   const sub = document.getElementById('orderSubContent');
   if(orderSubTab==='list'){
-    sub.innerHTML = `<div class="card"><h2>كل أوامر التكليف</h2>${ordersTableHtml(state.orders.slice().sort((a,b)=>b.serial-a.serial))}</div>`;
+    sub.innerHTML = `<div class="card"><h2>كل طلبات الفعاليات والمبادرات</h2>${ordersTableHtml(state.orders.slice().sort((a,b)=>b.serial-a.serial))}</div>`;
     return;
   }
   renderOrderForm(sub);
@@ -493,25 +511,32 @@ function renderOrderPage(c){
 
 function renderOrderForm(sub){
   const editing = editingOrderId ? state.orders.find(o=>o.id===editingOrderId) : null;
+  const selectedTrainerIds = editing ? (editing.trainerIds||[]) : [];
 
   sub.innerHTML = `
   <div class="card">
-    <h2>${editing? 'تعديل أمر التكليف رقم '+editing.serial : 'أمر تكليف جديد — تسلسل رقم '+state.nextSerial}</h2>
-    <div class="grid">
-      <div class="field"><label>عنوان الفعالية</label><input id="f_title" value="${editing?escapeHtml(editing.title):''}"></div>
-      <div class="field"><label>مجال الفعالية</label>
+    <h2>${editing? 'تعديل فعاليات ومبادرات — رقم '+editing.serial : 'فعاليات ومبادرات — تسلسل رقم '+state.nextSerial}</h2>
+
+    <div class="grid" style="grid-template-columns:1fr 1fr;">
+      <div class="field"><label>مجال المبادرة</label>
         <div class="row-inline"><select id="f_field">${state.fields.map(f=>`<option value="${f.id}" ${editing&&editing.fieldId===f.id?'selected':''}>${escapeHtml(f.name)}</option>`).join('')}</select>
         <button class="plus-btn" title="إضافة مجال جديد" onclick="quickAddField()">+</button></div>
       </div>
-      <div class="field"><label>عدد المشاركين</label><input id="f_count" type="number" min="0" value="${editing?editing.participantsCount:''}"></div>
-      <div class="field"><label>تاريخ الفعالية</label><input id="f_date" type="date" value="${editing?editing.date:''}"></div>
-      <div class="field"><label>وقت الفعالية من</label><input id="f_timeFrom" type="time" value="${editing?editing.timeFrom:''}"></div>
-      <div class="field"><label>وقت الفعالية إلى</label><input id="f_timeTo" type="time" value="${editing?editing.timeTo:''}"></div>
-      <div class="field"><label>نوع البرنامج</label>
+      <div class="field"><label>مسار المبادرة</label>
         <div class="row-inline"><select id="f_ptype">${state.programTypes.map(p=>`<option value="${p.id}" ${editing&&editing.programTypeId===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('')}</select>
-        <button class="plus-btn" title="إضافة نوع برنامج" onclick="quickAddPType()">+</button></div>
+        <button class="plus-btn" title="إضافة مسار جديد" onclick="quickAddPType()">+</button></div>
       </div>
-      <div class="field"><label>مكان الفعالية (المدرسة)</label>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(4,1fr);">
+      <div class="field"><label>عنوان المبادرة</label><input id="f_title" value="${editing?escapeHtml(editing.title):''}"></div>
+      <div class="field"><label>تاريخ المبادرة</label><input id="f_date" type="date" value="${editing?editing.date:''}"></div>
+      <div class="field"><label>وقت المبادرة من</label><input id="f_timeFrom" type="time" value="${editing?editing.timeFrom:''}"></div>
+      <div class="field"><label>وقت المبادرة إلى</label><input id="f_timeTo" type="time" value="${editing?editing.timeTo:''}"></div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="field"><label>مكان المبادرة</label>
         <div class="row-inline"><select id="f_school">${state.schools.map(s=>`<option value="${s.id}" ${editing&&editing.schoolId===s.id?'selected':''}>${escapeHtml(s.name)} — ${escapeHtml(s.level)}</option>`).join('')}</select>
         <button class="plus-btn" title="إضافة مدرسة" onclick="quickAddSchool()">+</button></div>
       </div>
@@ -519,13 +544,20 @@ function renderOrderForm(sub){
         <div class="row-inline"><select id="f_supervisor"></select>
         <button class="plus-btn" title="إضافة مشرف لهذه المدرسة" onclick="quickAddSupervisor()">+</button></div>
       </div>
-      <div class="field"><label>مقدم البرنامج / المدرب</label>
-        <div class="row-inline"><select id="f_trainer"></select>
-        <button class="plus-btn" title="إضافة مدرب" onclick="quickAddTrainer()">+</button></div>
-        <div class="helper">المدربون المشغولون بفارق أقل من ساعة ونصف عن فعالية أخرى في نفس اليوم يظهرون كـ"مشغول" ولا يمكن اختيارهم.</div>
-      </div>
+      <div class="field"><label>عدد المستهدفين</label><input id="f_count" type="number" min="0" value="${editing?editing.participantsCount:''}"></div>
     </div>
-    <div id="supervisorInfo" class="supervisor-info" style="margin-top:12px;"></div>
+
+    <div id="supervisorInfo" class="supervisor-info" style="margin-bottom:14px;"></div>
+
+    <div class="field" style="margin-bottom:14px;">
+      <label style="display:flex;justify-content:space-between;align-items:center;">
+        <span>مقدم المبادرة (يمكن اختيار أكثر من مقدّم)</span>
+        <button class="plus-btn" style="width:28px;height:28px;font-size:15px;" title="إضافة مقدم مبادرة" onclick="quickAddTrainer()">+</button>
+      </label>
+      <div class="checkbox-list" id="trainerChipList"></div>
+      <div class="helper">مقدّمو المبادرة المشغولون بفارق أقل من ساعة ونصف عن فعالية أخرى في نفس اليوم يظهرون كـ"مشغول" ولا يمكن اختيارهم.</div>
+    </div>
+
     <div class="divider"></div>
     <div class="grid">
       <div class="field"><label>ملاحظة الجهة الطالبة</label><textarea id="f_reqNote">${editing?escapeHtml(editing.requesterNote||''):''}</textarea></div>
@@ -542,7 +574,7 @@ function renderOrderForm(sub){
     </div>
     <div class="divider"></div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn btn-primary" id="saveOrderBtn">${editing?'حفظ التعديلات':'حفظ أمر التكليف'}</button>
+      <button class="btn btn-primary" id="saveOrderBtn">${editing?'حفظ التعديلات':'حفظ الطلب'}</button>
       ${editing?'<button class="btn btn-outline" id="cancelEditBtn">إلغاء التعديل</button>':''}
     </div>
   </div>`;
@@ -551,15 +583,19 @@ function renderOrderForm(sub){
   function currentTimeFrom(){ return document.getElementById('f_timeFrom').value; }
   function currentTimeTo(){ return document.getElementById('f_timeTo').value; }
 
-  function refreshTrainerOptions(){
+  function refreshTrainerChips(){
     const date = currentDate(), tf=currentTimeFrom(), tt=currentTimeTo();
-    const sel = document.getElementById('f_trainer');
-    const prevVal = sel.value || (editing?editing.trainerId:'');
-    sel.innerHTML = state.trainers.map(t=>{
-      const conflict = date ? trainerConflict(t.id, date, tf, tt, editing?editing.id:null) : null;
-      const busy = !!conflict;
-      return `<option value="${t.id}" ${busy?'disabled':''} ${prevVal===t.id?'selected':''}>${escapeHtml(t.name)} — ${escapeHtml(t.phone||'')}${busy?' (مشغول في هذا الوقت)':''}</option>`;
-    }).join('');
+    const box = document.getElementById('trainerChipList');
+    const previouslyChecked = Array.from(box.querySelectorAll('input:checked')).map(i=>i.value);
+    const checkedSet = new Set(previouslyChecked.length ? previouslyChecked : selectedTrainerIds);
+    box.innerHTML = state.trainers.map(t=>{
+      const conflict = date ? trainerConflictSingle(t.id, date, tf, tt, editing?editing.id:null) : null;
+      const busy = !!conflict && !checkedSet.has(t.id);
+      const checked = checkedSet.has(t.id);
+      return `<label class="checkbox-chip" style="${busy?'opacity:.45;':''}">
+        <input type="checkbox" value="${t.id}" ${checked?'checked':''} ${busy?'disabled':''}> ${escapeHtml(t.name)}${busy?' (مشغول)':''}
+      </label>`;
+    }).join('') || '<span class="helper">لا يوجد مقدمو مبادرات بعد</span>';
   }
   function refreshSupervisors(){
     const schId = document.getElementById('f_school').value;
@@ -573,15 +609,12 @@ function renderOrderForm(sub){
     const sch = state.schools.find(s=>s.id===schId);
     const svId = document.getElementById('f_supervisor').value;
     const sv = sch? sch.supervisors.find(s=>s.id===svId):null;
-    const box=document.getElementById('supervisorInfo');
-    box.innerHTML = sv ? `<span>📱 ${escapeHtml(sv.phone||'-')}</span><span>✉️ ${escapeHtml(sv.email||'-')}</span><span>🏫 المرحلة: ${escapeHtml(sch.level)}</span>`
-      : `<span>اختر مدرسة ومشرف لعرض بياناته</span>`;
+    document.getElementById('supervisorInfo').innerHTML = sv ? `<span>📱 ${escapeHtml(sv.phone||'-')}</span><span>✉️ ${escapeHtml(sv.email||'-')}</span><span>🏫 المرحلة: ${escapeHtml(sch.level)}</span>` : `<span>اختر مدرسة ومشرف لعرض بياناته</span>`;
   }
   document.getElementById('f_school').addEventListener('change', refreshSupervisors);
   document.getElementById('f_supervisor').addEventListener('change', updateSupervisorInfo);
-  ['f_date','f_timeFrom','f_timeTo'].forEach(id=>document.getElementById(id).addEventListener('change', refreshTrainerOptions));
-  refreshSupervisors();
-  refreshTrainerOptions();
+  ['f_date','f_timeFrom','f_timeTo'].forEach(id=>document.getElementById(id).addEventListener('change', refreshTrainerChips));
+  refreshSupervisors(); refreshTrainerChips();
 
   const reqBox = document.getElementById('adminReqList');
   function renderReqChips(){
@@ -592,12 +625,8 @@ function renderOrderForm(sub){
     reqBox.querySelectorAll('input[type=checkbox]').forEach(cb=>{
       cb.addEventListener('change', ()=>{
         if(!cb.checked) return;
-        const date = currentDate();
-        if(!date) return;
-        const conflictOrder = state.orders.find(o=>{
-          if(editing && o.id===editing.id) return false;
-          return o.date===date && (o.adminRequests||[]).includes(cb.value);
-        });
+        const date = currentDate(); if(!date) return;
+        const conflictOrder = state.orders.find(o=> (!editing || o.id!==editing.id) && o.date===date && (o.adminRequests||[]).includes(cb.value));
         if(conflictOrder){
           const ok = confirm(`تنبيه: هذا الطلب الإداري "${state.adminRequestsList.find(r=>r.id===cb.value)?.name||''}" مطلوب مسبقًا لبرنامج آخر (${conflictOrder.title}) في نفس التاريخ. قد يكون هناك تداخل. هل تريد المواصلة؟`);
           if(!ok){ cb.checked=false; }
@@ -611,33 +640,27 @@ function renderOrderForm(sub){
 
   document.getElementById('saveOrderBtn').onclick=async ()=>{
     const title=document.getElementById('f_title').value.trim();
-    if(!title){ toast('يرجى إدخال عنوان الفعالية'); return; }
-    const date=document.getElementById('f_date').value;
-    const timeFrom=document.getElementById('f_timeFrom').value;
-    const timeTo=document.getElementById('f_timeTo').value;
-    const trainerId=document.getElementById('f_trainer').value;
+    if(!title){ toast('يرجى إدخال عنوان المبادرة'); return; }
+    const date=document.getElementById('f_date').value, timeFrom=document.getElementById('f_timeFrom').value, timeTo=document.getElementById('f_timeTo').value;
     const schoolId=document.getElementById('f_school').value;
+    const trainerIds = Array.from(document.getElementById('trainerChipList').querySelectorAll('input:checked')).map(i=>i.value);
 
-    if(trainerId && date){
-      const conflict = trainerConflict(trainerId, date, timeFrom, timeTo, editing?editing.id:null);
-      if(conflict){
-        toast('لا يمكن اختيار هذا المدرب: لديه فعالية أخرى في نفس اليوم ولم يمر ساعة ونصف على وقتها.');
-        return;
-      }
+    if(trainerIds.length && date){
+      const conflict = anyTrainerConflict(trainerIds, date, timeFrom, timeTo, editing?editing.id:null);
+      if(conflict){ toast('لا يمكن اختيار أحد مقدمي المبادرة: لديه فعالية أخرى في نفس اليوم ولم يمر ساعة ونصف على وقتها.'); return; }
     }
     if(schoolId && date){
       const schConf = schoolSameDay(schoolId, date, editing?editing.id:null);
       if(schConf){
-        const ok = confirm(`تنبيه: توجد فعالية أخرى مجدولة في نفس المدرسة بنفس التاريخ (أمر رقم ${schConf.serial} - ${schConf.title}). هل ترغب بالمتابعة؟`);
+        const ok = confirm(`تنبيه: توجد فعالية أخرى مجدولة في نفس المدرسة بنفس التاريخ (رقم ${schConf.serial} - ${schConf.title}). هل ترغب بالمتابعة؟`);
         if(!ok) return;
       }
     }
-
     const checkedReqs = Array.from(reqBox.querySelectorAll('input:checked')).map(i=>i.value);
     const orderData = {
       title, fieldId: document.getElementById('f_field').value, participantsCount: document.getElementById('f_count').value,
       date, timeFrom, timeTo, programTypeId: document.getElementById('f_ptype').value,
-      schoolId, supervisorId: document.getElementById('f_supervisor').value, trainerId,
+      schoolId, supervisorId: document.getElementById('f_supervisor').value, trainerIds,
       requesterNote: document.getElementById('f_reqNote').value, adminNote: document.getElementById('f_adminNote').value,
       adminRequests: checkedReqs,
     };
@@ -648,28 +671,26 @@ function renderOrderForm(sub){
       state.orders.push(orderData);
     }
     await saveState();
-    toast(editing?'تم حفظ التعديلات':'تم حفظ أمر التكليف');
+    toast(editing?'تم حفظ التعديلات':'تم حفظ الطلب');
     editingOrderId=null; orderSubTab='list'; render();
   };
 }
 
 function editOrder(id){ editingOrderId=id; orderSubTab='new'; currentPage='order'; render(); }
 async function deleteOrder(id){
-  if(!confirm('هل تريد حذف أمر التكليف هذا؟')) return;
+  if(!confirm('هل تريد حذف هذا الطلب؟')) return;
   state.orders = state.orders.filter(o=>o.id!==id);
   await saveState(); toast('تم الحذف'); render();
 }
 
-/* ============ Evaluation modal (خاص بمنفذ البرنامج) ============ */
+/* ============ Evaluation modal ============ */
 function openEvaluationModal(orderId){
   const o = state.orders.find(x=>x.id===orderId); if(!o) return;
   const overlay=document.getElementById('modalOverlay'); const box=document.getElementById('modalBox');
   box.innerHTML = `
     <h3>تقييم وإنجاز: ${escapeHtml(o.title)}</h3>
-    <div class="field" style="margin-bottom:12px;">
-      <label>حالة الإنجاز</label>
-      <select id="ev_status">
-        <option value="">-- اختر --</option>
+    <div class="field" style="margin-bottom:12px;"><label>حالة الإنجاز</label>
+      <select id="ev_status"><option value="">-- اختر --</option>
         <option value="تم" ${o.completionStatus==='تم'?'selected':''}>تم الإنجاز</option>
         <option value="لم يتم" ${o.completionStatus==='لم يتم'?'selected':''}>لم يتم الإنجاز</option>
       </select>
@@ -680,17 +701,14 @@ function openEvaluationModal(orderId){
     <div class="field" style="margin-bottom:12px;"><label>تقييم مشرف المدرسة (0-10)</label>${starRatingHtml('ev_sup', o.supervisorRating)}</div>
     <div class="field" style="margin-bottom:12px;"><label>تقييم المدرسة (0-10)</label>${starRatingHtml('ev_sch', o.schoolRating)}</div>
     <div class="field" style="margin-bottom:12px;"><label>تقييم تفاعل الطلاب (0-10)</label>${starRatingHtml('ev_stu', o.studentsRating)}</div>
-    <div class="field" style="margin-bottom:6px;">
-      <label>هل ترشح المدرسة لفعاليات قادمة؟</label>
-      <select id="ev_recommend">
-        <option value="">-- اختر --</option>
+    <div class="field" style="margin-bottom:6px;"><label>هل ترشح المدرسة لفعاليات قادمة؟</label>
+      <select id="ev_recommend"><option value="">-- اختر --</option>
         <option value="نعم" ${o.recommendSchool==='نعم'?'selected':''}>نعم</option>
         <option value="لا" ${o.recommendSchool==='لا'?'selected':''}>لا</option>
       </select>
     </div>
     <div class="modal-actions"><button class="btn btn-outline" id="ev_cancel">إلغاء</button><button class="btn btn-primary" id="ev_save">حفظ التقييم</button></div>`;
-  overlay.classList.add('open');
-  wireStars(box);
+  overlay.classList.add('open'); wireStars(box);
   document.getElementById('ev_status').onchange=(e)=>{ document.getElementById('ev_reasonWrap').style.display = e.target.value==='لم يتم' ? 'flex':'none'; };
   document.getElementById('ev_cancel').onclick=()=>overlay.classList.remove('open');
   document.getElementById('ev_save').onclick=async ()=>{
@@ -706,13 +724,13 @@ function openEvaluationModal(orderId){
 
 /* quick-add helpers */
 function quickAddField(){
-  openModal('إضافة مجال فعالية جديد', [{name:'name', label:'اسم المجال', required:true}], async v=>{
+  openModal('إضافة مجال مبادرة جديد', [{name:'name', label:'اسم المجال', required:true}], async v=>{
     const item={id:uid(), name:v.name}; state.fields.push(item); await saveState(); render();
     setTimeout(()=>{ const s=document.getElementById('f_field'); if(s) s.value=item.id; },0);
   });
 }
 function quickAddPType(){
-  openModal('إضافة نوع برنامج جديد', [{name:'name', label:'اسم النوع', required:true}], async v=>{
+  openModal('إضافة مسار مبادرة جديد', [{name:'name', label:'اسم المسار', required:true}], async v=>{
     const item={id:uid(), name:v.name}; state.programTypes.push(item); await saveState(); render();
     setTimeout(()=>{ const s=document.getElementById('f_ptype'); if(s) s.value=item.id; },0);
   });
@@ -721,8 +739,7 @@ function quickAddSchool(){
   openModal('إضافة مدرسة جديدة', [
     {name:'name', label:'اسم المدرسة', required:true},
     {name:'level', label:'المرحلة الدراسية', type:'select', options:[
-      {value:'ابتدائي',label:'ابتدائي'},{value:'إعدادي',label:'إعدادي'},{value:'ثانوي',label:'ثانوي'},
-      {value:'مركز خاص',label:'مركز خاص'},{value:'غير ذلك',label:'غير ذلك'}]},
+      {value:'ابتدائي',label:'ابتدائي'},{value:'إعدادي',label:'إعدادي'},{value:'ثانوي',label:'ثانوي'},{value:'مركز خاص',label:'مركز خاص'},{value:'غير ذلك',label:'غير ذلك'}]},
   ], async v=>{
     const item={id:uid(), name:v.name, level:v.level, supervisors:[]};
     state.schools.push(item); await saveState(); render();
@@ -745,9 +762,8 @@ function quickAddSupervisor(){
   });
 }
 function quickAddTrainer(){
-  openModal('إضافة مدرب جديد', [{name:'name', label:'اسم المدرب', required:true},{name:'phone', label:'رقم الجوال'}], async v=>{
-    const item={id:uid(), name:v.name, phone:v.phone}; state.trainers.push(item); await saveState(); render();
-    setTimeout(()=>{ const s=document.getElementById('f_trainer'); if(s) s.value=item.id; },0);
+  openModal('إضافة مقدم مبادرة جديد', [{name:'name', label:'الاسم', required:true},{name:'phone', label:'رقم الجوال'}], async v=>{
+    state.trainers.push({id:uid(), name:v.name, phone:v.phone}); await saveState(); render();
   });
 }
 function quickAddAdminRequest(){
@@ -760,8 +776,8 @@ function quickAddAdminRequest(){
 function buildPrintHeader(titleText, from, to){
   const ph = state.printHeader || {line1:'',line2:'',line3:''};
   let html = `<div class="print-doc"><div class="print-brand-head">
-    <div class="print-logo">${state.logo?`<img src="${state.logo}">`:'<div class="print-logo-placeholder">🕌</div>'}</div>
     <div class="print-org-lines"><div>${escapeHtml(ph.line1)}</div><div>${escapeHtml(ph.line2)}</div><div>${escapeHtml(ph.line3)}</div></div>
+    <div class="print-logo">${state.logo?`<img src="${state.logo}">`:'<div class="print-logo-placeholder">🕌</div>'}</div>
   </div>
   <div class="print-title-bar">${escapeHtml(titleText)}</div>`;
   if(from!==undefined){
@@ -774,46 +790,51 @@ function buildPrintHeader(titleText, from, to){
 }
 function doPrint(html){
   document.getElementById('printArea').innerHTML = html + `</div>`;
-  document.body.classList.add('printing');
-  window.print();
+  document.body.classList.add('printing'); window.print();
 }
 window.onafterprint = ()=>{ document.body.classList.remove('printing'); };
 
-function orderPrintBody(o){
+function orderPrintBody(o, opts){
+  opts = opts||{};
   const field = state.fields.find(f=>f.id===o.fieldId);
   const school = state.schools.find(s=>s.id===o.schoolId);
   const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
-  const trainer = state.trainers.find(t=>t.id===o.trainerId);
   const ptype = state.programTypes.find(p=>p.id===o.programTypeId);
   const reqs = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean);
-  return `<table class="print-table">
-      <tr><th>عنوان الفعالية</th><td>${escapeHtml(o.title)}</td></tr>
-      <tr><th>مجال الفعالية</th><td>${field?escapeHtml(field.name):''}</td></tr>
-      <tr><th>نوع البرنامج</th><td>${ptype?escapeHtml(ptype.name):''}</td></tr>
-      <tr><th>عدد المشاركين</th><td>${o.participantsCount||''}</td></tr>
-      <tr><th>تاريخ الفعالية</th><td>${o.date||''}</td></tr>
-      <tr><th>وقت الفعالية</th><td>${o.timeFrom||''} — ${o.timeTo||''}</td></tr>
-      <tr><th>مكان الفعالية</th><td>${school?escapeHtml(school.name)+' ('+escapeHtml(school.level)+')':''}</td></tr>
+  let rows = `
+      <tr><th>عنوان المبادرة</th><td>${escapeHtml(o.title)}</td></tr>
+      <tr><th>مجال المبادرة</th><td>${field?escapeHtml(field.name):''}</td></tr>
+      <tr><th>مسار المبادرة</th><td>${ptype?escapeHtml(ptype.name):''}</td></tr>
+      <tr><th>عدد المستهدفين</th><td>${o.participantsCount||''}</td></tr>
+      <tr><th>تاريخ المبادرة</th><td>${o.date||''}</td></tr>
+      <tr><th>وقت المبادرة</th><td>${o.timeFrom||''} — ${o.timeTo||''}</td></tr>
+      <tr><th>مكان المبادرة</th><td>${school?escapeHtml(school.name)+' ('+escapeHtml(school.level)+')':''}</td></tr>
       <tr><th>المشرف</th><td>${supervisor?escapeHtml(supervisor.name)+' — '+escapeHtml(supervisor.phone||'')+' — '+escapeHtml(supervisor.email||''):''}</td></tr>
-      <tr><th>مقدم البرنامج / المدرب</th><td>${trainer?escapeHtml(trainer.name)+' — '+escapeHtml(trainer.phone||''):''}</td></tr>
-      <tr><th>ملاحظة الجهة الطالبة</th><td>${escapeHtml(o.requesterNote||'')}</td></tr>
-      <tr><th>ملاحظة الإدارة</th><td>${escapeHtml(o.adminNote||'')}</td></tr>
-      <tr><th>الطلبات الإدارية</th><td>${reqs.join('، ')||'—'}</td></tr>
-      <tr><th>حالة الإنجاز</th><td>${o.completionStatus||'—'}${o.completionStatus==='لم يتم'&&o.notDoneReason?(' — السبب: '+escapeHtml(o.notDoneReason)):''}</td></tr>
-    </table>`;
+      <tr><th>مقدم المبادرة</th><td>${escapeHtml(trainerNames(o))||''}</td></tr>`;
+  if(opts.showRequesterNote!==false) rows += `<tr><th>ملاحظة الجهة الطالبة</th><td>${escapeHtml(o.requesterNote||'')}</td></tr>`;
+  if(opts.showAdminNote!==false) rows += `<tr><th>ملاحظة الإدارة</th><td>${escapeHtml(o.adminNote||'')}</td></tr>`;
+  if(opts.showAdminNote!==false) rows += `<tr><th>الطلبات الإدارية</th><td>${reqs.join('، ')||'—'}</td></tr>`;
+  rows += `<tr><th>حالة الإنجاز</th><td>${o.completionStatus||'—'}${o.completionStatus==='لم يتم'&&o.notDoneReason?(' — السبب: '+escapeHtml(o.notDoneReason)):''}</td></tr>`;
+  return `<table class="print-table">${rows}</table>`;
 }
-function printOrder(id){ const o=state.orders.find(x=>x.id===id); if(o) doPrint(buildPrintHeader('أمر تكليف رقم '+o.serial) + orderPrintBody(o)); }
+function printOrderSchoolCopy(id){
+  const o=state.orders.find(x=>x.id===id); if(!o) return;
+  doPrint(buildPrintHeader('نسخة الجهة الطالبة — طلب رقم '+o.serial) + orderPrintBody(o, {showAdminNote:false}));
+}
+function printOrderAdminCopy(id){
+  const o=state.orders.find(x=>x.id===id); if(!o) return;
+  doPrint(buildPrintHeader('نسخة الإدارة (كاملة) — طلب رقم '+o.serial) + orderPrintBody(o, {}));
+}
 function emailOrder(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
   const field = state.fields.find(f=>f.id===o.fieldId);
   const school = state.schools.find(s=>s.id===o.schoolId);
-  const trainer = state.trainers.find(t=>t.id===o.trainerId);
-  const subject = `أمر تكليف رقم ${o.serial} — ${o.title}`;
-  const body = `عنوان الفعالية: ${o.title}\nالمجال: ${field?field.name:''}\nالتاريخ: ${o.date||''}\nالوقت: ${o.timeFrom||''} - ${o.timeTo||''}\nالمدرسة: ${school?school.name:''}\nالمدرب: ${trainer?trainer.name:''}\nملاحظة الإدارة: ${o.adminNote||''}`;
+  const subject = `طلب رقم ${o.serial} — ${o.title}`;
+  const body = `عنوان المبادرة: ${o.title}\nالمجال: ${field?field.name:''}\nالتاريخ: ${o.date||''}\nالوقت: ${o.timeFrom||''} - ${o.timeTo||''}\nالمدرسة: ${school?school.name:''}\nمقدم المبادرة: ${trainerNames(o)}\nملاحظة الإدارة: ${o.adminNote||''}`;
   window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
-/* ============ Admin (Daily) Page — new column layout ============ */
+/* ============ Admin (Daily) Page ============ */
 function dailyReportTable(list){
   if(!list.length) return `<div class="empty-state">لا توجد فعاليات ضمن هذه الفترة</div>`;
   return `<table class="print-table"><thead><tr>
@@ -823,14 +844,10 @@ function dailyReportTable(list){
   ${list.map((o,i)=>{
     const school = state.schools.find(s=>s.id===o.schoolId);
     const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
-    const trainer = state.trainers.find(t=>t.id===o.trainerId);
     const reqs = (o.adminRequests||[]).map(id=>{const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:'';}).filter(Boolean).join('، ');
-    return `<tr>
-      <td>${i+1}</td><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td>
+    return `<tr><td>${i+1}</td><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td>
       <td>${school?escapeHtml(school.name):''}</td><td>${supervisor?escapeHtml(supervisor.phone||''):''}</td>
-      <td>${o.participantsCount||''}</td><td>${trainer?escapeHtml(trainer.name):''}</td><td>${trainer?escapeHtml(trainer.phone||''):''}</td>
-      <td>${reqs||'—'}</td>
-    </tr>`;
+      <td>${o.participantsCount||''}</td><td>${escapeHtml(trainerNames(o))}</td><td>${escapeHtml(trainerPhones(o))}</td><td>${reqs||'—'}</td></tr>`;
   }).join('')}</tbody></table>`;
 }
 function renderAdminPage(c){
@@ -842,24 +859,17 @@ function renderAdminPage(c){
       <div class="field"><label>من تاريخ</label><input id="adm_from" type="date" value="${today}"></div>
       <div class="field"><label>إلى تاريخ</label><input id="adm_to" type="date" value="${today}"></div>
     </div>
-    <div style="margin-top:10px;"><button class="btn btn-primary" id="adm_filter">عرض</button>
-    <button class="btn btn-outline" id="adm_print">🖨️ طباعة / حفظ PDF</button></div>
+    <button class="btn btn-primary" id="adm_filter">عرض</button>
+    <button class="btn btn-outline" id="adm_print">🖨️ طباعة / حفظ PDF</button>
   </div>
   <div class="card" id="adm_results"></div>`;
-
   function getList(){
     const from=document.getElementById('adm_from').value, to=document.getElementById('adm_to').value;
     return {list: state.orders.filter(o=> (!from || o.date>=from) && (!to || o.date<=to)).sort((a,b)=> (a.date||'').localeCompare(b.date||'')), from, to};
   }
-  function doFilter(){
-    const {list}=getList();
-    document.getElementById('adm_results').innerHTML = `<h2>النتائج (${list.length})</h2>` + dailyReportTable(list);
-  }
+  function doFilter(){ const {list}=getList(); document.getElementById('adm_results').innerHTML = `<h2>النتائج (${list.length})</h2>` + dailyReportTable(list); }
   document.getElementById('adm_filter').onclick=doFilter;
-  document.getElementById('adm_print').onclick=()=>{
-    const {list, from, to}=getList();
-    doPrint(buildPrintHeader('تقرير الفعاليات اليومية', from, to) + dailyReportTable(list));
-  };
+  document.getElementById('adm_print').onclick=()=>{ const {list, from, to}=getList(); doPrint(buildPrintHeader('جدول الفعاليات خلال فترة', from, to) + dailyReportTable(list)); };
   doFilter();
 }
 
@@ -867,9 +877,9 @@ function renderAdminPage(c){
 function renderReportsPage(c){
   c.innerHTML = `
   <div class="tabs">
-    <button class="tab-btn active" id="rt_trainer">تقرير مدرب</button>
+    <button class="tab-btn active" id="rt_trainer">تقرير مقدم فعالية</button>
     <button class="tab-btn" id="rt_school">تقرير مدرسة</button>
-    <button class="tab-btn" id="rt_hours">تقرير ساعات منفذي البرنامج</button>
+    <button class="tab-btn" id="rt_hours">تقرير ساعات مقدمي الفعالية</button>
   </div>
   <div id="reportContent"></div>`;
   let mode='trainer';
@@ -881,38 +891,36 @@ function renderReportsPage(c){
 
   function drawTrainer(){
     const box=document.getElementById('reportContent');
-    box.innerHTML = `<div class="card">
-      <h2>تقرير مدرب</h2>
+    box.innerHTML = `<div class="card"><h2>تقرير مقدم فعالية</h2>
       <div class="grid">
-        <div class="field"><label>المدرب</label><select id="rp_trainer">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>مقدم الفعالية</label><select id="rp_trainer">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
         <div class="field"><label>من تاريخ</label><input id="rp_from" type="date"></div>
         <div class="field"><label>إلى تاريخ</label><input id="rp_to" type="date"></div>
       </div>
-      <div style="margin-top:10px;"><button class="btn btn-primary" id="rp_go">عرض الجدول</button>
-      <button class="btn btn-outline" id="rp_print">🖨️ طباعة / حفظ PDF</button></div>
+      <button class="btn btn-primary" id="rp_go">عرض الجدول</button>
+      <button class="btn btn-outline" id="rp_print">🖨️ طباعة / حفظ PDF</button>
       <div id="rp_result" style="margin-top:16px;"></div>
     </div>`;
     function gen(){
       const tId=document.getElementById('rp_trainer').value;
       const from=document.getElementById('rp_from').value, to=document.getElementById('rp_to').value;
-      const list = state.orders.filter(o=>o.trainerId===tId && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      const list = state.orders.filter(o=>(o.trainerIds||[]).includes(tId) && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
       const trainer=state.trainers.find(t=>t.id===tId);
-      return {list, title:`جدول المدرب: ${trainer?trainer.name:''}`, from, to};
+      return {list, title:`جدول مقدم الفعالية: ${trainer?trainer.name:''}`, from, to};
     }
     document.getElementById('rp_go').onclick=()=>{ document.getElementById('rp_result').innerHTML = ordersTableHtmlPrint(gen().list); };
     document.getElementById('rp_print').onclick=()=>{ const {list,title,from,to}=gen(); doPrint(buildPrintHeader(title, from, to) + ordersTableHtmlPrint(list)); };
   }
   function drawSchool(){
     const box=document.getElementById('reportContent');
-    box.innerHTML = `<div class="card">
-      <h2>تقرير مدرسة</h2>
+    box.innerHTML = `<div class="card"><h2>تقرير مدرسة</h2>
       <div class="grid">
         <div class="field"><label>المدرسة</label><select id="rp_school">${state.schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select></div>
         <div class="field"><label>من تاريخ</label><input id="rp_from2" type="date"></div>
         <div class="field"><label>إلى تاريخ</label><input id="rp_to2" type="date"></div>
       </div>
-      <div style="margin-top:10px;"><button class="btn btn-primary" id="rp_go2">عرض الجدول</button>
-      <button class="btn btn-outline" id="rp_print2">🖨️ طباعة / حفظ PDF</button></div>
+      <button class="btn btn-primary" id="rp_go2">عرض الجدول</button>
+      <button class="btn btn-outline" id="rp_print2">🖨️ طباعة / حفظ PDF</button>
       <div id="rp_result2" style="margin-top:16px;"></div>
     </div>`;
     function gen(){
@@ -927,34 +935,27 @@ function renderReportsPage(c){
   }
   function drawHours(){
     const box=document.getElementById('reportContent');
-    box.innerHTML = `<div class="card">
-      <h2>تقرير ساعات منفذي البرنامج</h2>
+    box.innerHTML = `<div class="card"><h2>تقرير ساعات مقدمي الفعالية</h2>
       <div class="grid">
-        <div class="field"><label>المدرب</label><select id="hr_trainer">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>مقدم الفعالية</label><select id="hr_trainer">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
         <div class="field"><label>من تاريخ</label><input id="hr_from" type="date"></div>
         <div class="field"><label>إلى تاريخ</label><input id="hr_to" type="date"></div>
       </div>
-      <div style="margin-top:10px;"><button class="btn btn-primary" id="hr_go">احتساب الساعات</button>
-      <button class="btn btn-outline" id="hr_print">🖨️ طباعة / حفظ PDF</button></div>
+      <button class="btn btn-primary" id="hr_go">احتساب الساعات</button>
+      <button class="btn btn-outline" id="hr_print">🖨️ طباعة / حفظ PDF</button>
       <div id="hr_result" style="margin-top:16px;"></div>
     </div>`;
     function gen(){
       const tId=document.getElementById('hr_trainer').value;
       const from=document.getElementById('hr_from').value, to=document.getElementById('hr_to').value;
-      const list = state.orders.filter(o=>o.trainerId===tId && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      const list = state.orders.filter(o=>(o.trainerIds||[]).includes(tId) && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
       let totalHours=0;
-      const rows = list.map(o=>{
-        let hrs=0;
-        if(o.timeFrom && o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); hrs = Math.max(0,(e-s)/3600000); }
-        totalHours += hrs;
-        return {o, hrs};
-      });
+      const rows = list.map(o=>{ let hrs=0; if(o.timeFrom && o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); hrs = Math.max(0,(e-s)/3600000); } totalHours+=hrs; return {o,hrs}; });
       const trainer=state.trainers.find(t=>t.id===tId);
       const table = `<table class="print-table"><thead><tr><th>م</th><th>عنوان الفعالية</th><th>التاريخ</th><th>الوقت</th><th>عدد الساعات</th></tr></thead><tbody>
         ${rows.map(r=>`<tr><td>${r.o.serial}</td><td>${escapeHtml(r.o.title)}</td><td>${r.o.date||''}</td><td>${r.o.timeFrom||''}-${r.o.timeTo||''}</td><td>${r.hrs.toFixed(1)}</td></tr>`).join('') || '<tr><td colspan="5" class="empty-state">لا توجد بيانات</td></tr>'}
-        </tbody></table>
-        <div style="margin-top:10px;font-weight:800;color:var(--maroon-800);">إجمالي الساعات: ${totalHours.toFixed(1)} ساعة</div>`;
-      return {table, title:`تقرير ساعات المدرب: ${trainer?trainer.name:''}`, from, to};
+        </tbody></table><div style="margin-top:10px;font-weight:800;color:var(--maroon-800);">إجمالي الساعات: ${totalHours.toFixed(1)} ساعة</div>`;
+      return {table, title:`تقرير ساعات مقدم الفعالية: ${trainer?trainer.name:''}`, from, to};
     }
     document.getElementById('hr_go').onclick=()=>{ document.getElementById('hr_result').innerHTML = gen().table; };
     document.getElementById('hr_print').onclick=()=>{ const {table,title,from,to}=gen(); doPrint(buildPrintHeader(title, from, to) + table); };
@@ -981,16 +982,12 @@ function renderStatsPage(c){
   c.innerHTML = `
   <div class="card">
     <h2>تقرير تصنيفيات</h2>
-    <div class="grid">
-      <div class="field"><label>من تاريخ</label><input id="st_from" type="date"></div>
-      <div class="field"><label>إلى تاريخ</label><input id="st_to" type="date"></div>
-    </div>
-    <div style="margin-top:10px;"><button class="btn btn-primary" id="st_go">احتساب</button></div>
+    <div class="grid"><div class="field"><label>من تاريخ</label><input id="st_from" type="date"></div><div class="field"><label>إلى تاريخ</label><input id="st_to" type="date"></div></div>
+    <button class="btn btn-primary" id="st_go">احتساب</button>
   </div>
   <div id="st_field_card" class="card" style="display:none;"></div>
   <div id="st_type_card" class="card" style="display:none;"></div>
   <div id="st_level_card" class="card" style="display:none;"></div>`;
-
   function compute(){
     const from=document.getElementById('st_from').value, to=document.getElementById('st_to').value;
     const inRange = state.orders.filter(o=>(!from||o.date>=from) && (!to||o.date<=to));
@@ -1012,45 +1009,30 @@ function renderStatsPage(c){
     });
     return {byField, byType, byLevel, from, to};
   }
-  function tableFrom(arr){
-    return `<table class="print-table"><thead><tr><th>البند</th><th>عدد البرامج</th><th>عدد المشاركين</th><th>عدد المدارس</th></tr></thead><tbody>
-      ${arr.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.programs}</td><td>${x.participants}</td><td>${x.schools}</td></tr>`).join('')}
-    </tbody></table>`;
-  }
-  function tableLevel(arr){
-    return `<table class="print-table"><thead><tr><th>المرحلة</th><th>عدد البرامج المنفذة</th></tr></thead><tbody>
-      ${arr.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.programs}</td></tr>`).join('')}
-    </tbody></table>`;
-  }
+  function tableFrom(arr){ return `<table class="print-table"><thead><tr><th>البند</th><th>عدد البرامج</th><th>عدد المشاركين</th><th>عدد المدارس</th></tr></thead><tbody>
+      ${arr.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.programs}</td><td>${x.participants}</td><td>${x.schools}</td></tr>`).join('')}</tbody></table>`; }
+  function tableLevel(arr){ return `<table class="print-table"><thead><tr><th>المرحلة</th><th>عدد البرامج المنفذة</th></tr></thead><tbody>
+      ${arr.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.programs}</td></tr>`).join('')}</tbody></table>`; }
 
   document.getElementById('st_go').onclick=()=>{
     const {byField, byType, byLevel, from, to} = compute();
-
     const fCard=document.getElementById('st_field_card'); fCard.style.display='block';
-    fCard.innerHTML = `<h2>البند — حسب مجال الفعالية <button class="btn btn-outline btn-sm" id="pr_field">🖨️ طباعة منفصلة</button></h2>
-      ${tableFrom(byField)} ${svgBarChart(byField.map(x=>({name:x.name, value:x.programs})))}`;
-    document.getElementById('pr_field').onclick=()=>doPrint(buildPrintHeader('تقرير التصنيفيات — حسب البند (مجال الفعالية)', from, to) + tableFrom(byField));
-
+    fCard.innerHTML = `<h2>البند — حسب مجال المبادرة <button class="btn btn-outline btn-sm" id="pr_field">🖨️ طباعة منفصلة</button></h2>${tableFrom(byField)} ${svgBarChart(byField.map(x=>({name:x.name, value:x.programs})))}`;
+    document.getElementById('pr_field').onclick=()=>doPrint(buildPrintHeader('تقرير التصنيفيات — البند', from, to) + tableFrom(byField));
     const tCard=document.getElementById('st_type_card'); tCard.style.display='block';
-    tCard.innerHTML = `<h2>حسب نوع البرنامج <button class="btn btn-outline btn-sm" id="pr_type">🖨️ طباعة منفصلة</button></h2>
-      ${tableFrom(byType)} ${svgBarChart(byType.map(x=>({name:x.name, value:x.programs})))}`;
+    tCard.innerHTML = `<h2>حسب نوع البرنامج (مسار المبادرة) <button class="btn btn-outline btn-sm" id="pr_type">🖨️ طباعة منفصلة</button></h2>${tableFrom(byType)} ${svgBarChart(byType.map(x=>({name:x.name, value:x.programs})))}`;
     document.getElementById('pr_type').onclick=()=>doPrint(buildPrintHeader('تقرير التصنيفيات — حسب نوع البرنامج', from, to) + tableFrom(byType));
-
     const lCard=document.getElementById('st_level_card'); lCard.style.display='block';
-    lCard.innerHTML = `<h2>حسب نوع المرحلة الدراسية للمدارس <button class="btn btn-outline btn-sm" id="pr_level">🖨️ طباعة منفصلة</button></h2>
-      ${tableLevel(byLevel)} ${svgBarChart(byLevel.map(x=>({name:x.name, value:x.programs})))}`;
+    lCard.innerHTML = `<h2>حسب نوع المرحلة الدراسية للمدارس <button class="btn btn-outline btn-sm" id="pr_level">🖨️ طباعة منفصلة</button></h2>${tableLevel(byLevel)} ${svgBarChart(byLevel.map(x=>({name:x.name, value:x.programs})))}`;
     document.getElementById('pr_level').onclick=()=>doPrint(buildPrintHeader('تقرير التصنيفيات — حسب المرحلة الدراسية', from, to) + tableLevel(byLevel));
   };
 }
 
 /* ============ Tasks Page ============ */
 function renderTasksPage(c){
-  c.innerHTML = `
-  <div class="card"><h2>إضافة مهمة</h2>
-    <div class="grid"><div class="field"><label>عنوان المهمة</label><input id="tk_title"></div>
-    <div class="field"><label>تاريخ الاستحقاق</label><input id="tk_due" type="date"></div></div>
-    <div style="margin-top:10px;"><button class="btn btn-primary" id="tk_add">إضافة</button></div>
-  </div>
+  c.innerHTML = `<div class="card"><h2>إضافة مهمة</h2>
+    <div class="grid"><div class="field"><label>عنوان المهمة</label><input id="tk_title"></div><div class="field"><label>تاريخ الاستحقاق</label><input id="tk_due" type="date"></div></div>
+    <button class="btn btn-primary" id="tk_add">إضافة</button></div>
   <div class="card"><h2>قائمة المهام</h2><div id="tk_list"></div></div>`;
   function drawList(){
     const box=document.getElementById('tk_list');
@@ -1076,20 +1058,15 @@ async function deleteTask(id){ state.tasks = state.tasks.filter(x=>x.id!==id); a
 /* ============ Trainer Portal ============ */
 function renderTrainerPortalPage(c){
   if(!loggedTrainerId){
-    c.innerHTML = `<div class="card">
-      <h2>دخول منفذ البرنامج</h2>
-      <div class="helper" style="margin-bottom:10px;">هذه بوابة مبسطة لتحديد هويتك دون كلمة مرور؛ للاستخدام الفعلي يفضل ربطها لاحقًا بنظام تسجيل دخول رسمي.</div>
-      <div class="grid">
-        <div class="field"><label>اختر اسمك</label><select id="tp_login">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
-      </div>
-      <div style="margin-top:10px;"><button class="btn btn-primary" id="tp_go">دخول</button></div>
-    </div>`;
+    c.innerHTML = `<div class="card"><h2>دخول مقدم الفعالية</h2>
+      <div class="grid"><div class="field"><label>اختر اسمك</label><select id="tp_login">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div></div>
+      <button class="btn btn-primary" id="tp_go">دخول</button></div>`;
     document.getElementById('tp_go').onclick=()=>{ loggedTrainerId=document.getElementById('tp_login').value; trainerPortalTab='upcoming'; render(); };
     return;
   }
   const trainer = state.trainers.find(t=>t.id===loggedTrainerId);
   const today = todayStr();
-  const myOrders = state.orders.filter(o=>o.trainerId===loggedTrainerId);
+  const myOrders = state.orders.filter(o=>(o.trainerIds||[]).includes(loggedTrainerId));
   const upcoming = myOrders.filter(o=>o.date>=today).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   const past = myOrders.filter(o=>o.date<today).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const myNotifs = state.notifications.filter(n=>n.trainerId===loggedTrainerId).sort((a,b)=>b.createdAt-a.createdAt);
@@ -1098,16 +1075,15 @@ function renderTrainerPortalPage(c){
   c.innerHTML = `
   <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
     <div><strong>مرحباً، ${escapeHtml(trainer?trainer.name:'')}</strong></div>
-    <button class="btn btn-outline btn-sm" id="tp_logout">تسجيل خروج</button>
+    <button class="btn btn-outline btn-sm" id="tp_logout">تبديل الاسم</button>
   </div>
   ${myNotifs.length? `<div class="card"><h2>الإشعارات</h2>${myNotifs.map(n=>`<div class="notif ${n.read?'':'unread'}"><span>${escapeHtml(n.message)}</span>${n.read?'':`<button class="btn btn-sm btn-outline" onclick="markNotifRead('${n.id}')">تمييز كمقروء</button>`}</div>`).join('')}</div>`:''}
   <div class="tabs">
-    <button class="tab-btn ${trainerPortalTab==='upcoming'?'active':''}" id="tp_up">برامجي القادمة</button>
-    <button class="tab-btn ${trainerPortalTab==='past'?'active':''}" id="tp_past">برامجي السابقة</button>
+    <button class="tab-btn ${trainerPortalTab==='upcoming'?'active':''}" id="tp_up">فعالياتي القادمة</button>
+    <button class="tab-btn ${trainerPortalTab==='past'?'active':''}" id="tp_past">فعالياتي السابقة</button>
     <button class="tab-btn ${trainerPortalTab==='newreq'?'active':''}" id="tp_new">تقديم طلب / ترشيح</button>
   </div>
   <div id="tp_content"></div>`;
-
   document.getElementById('tp_logout').onclick=()=>{ loggedTrainerId=null; render(); };
   document.getElementById('tp_up').onclick=()=>{ trainerPortalTab='upcoming'; render(); };
   document.getElementById('tp_past').onclick=()=>{ trainerPortalTab='past'; render(); };
@@ -1115,14 +1091,14 @@ function renderTrainerPortalPage(c){
 
   const box=document.getElementById('tp_content');
   if(trainerPortalTab==='upcoming'){
-    box.innerHTML = `<div class="card"><h2>برامجي القادمة <button class="btn btn-outline btn-sm" id="tp_print_up">🖨️ طباعة</button></h2>${trainerOrdersTable(upcoming)}</div>`;
-    document.getElementById('tp_print_up').onclick=()=>doPrint(buildPrintHeader('برامج قادمة — '+(trainer?trainer.name:'')) + trainerOrdersTablePrint(upcoming));
+    box.innerHTML = `<div class="card"><h2>فعالياتي القادمة <button class="btn btn-outline btn-sm" id="tp_print_up">🖨️ طباعة</button></h2>${trainerOrdersTable(upcoming)}</div>`;
+    document.getElementById('tp_print_up').onclick=()=>doPrint(buildPrintHeader('فعاليات قادمة — '+(trainer?trainer.name:'')) + trainerOrdersTablePrint(upcoming));
   } else if(trainerPortalTab==='past'){
-    box.innerHTML = `<div class="card"><h2>برامجي السابقة <button class="btn btn-outline btn-sm" id="tp_print_past">🖨️ طباعة</button></h2>${trainerOrdersTable(past)}</div>`;
-    document.getElementById('tp_print_past').onclick=()=>doPrint(buildPrintHeader('برامج سابقة — '+(trainer?trainer.name:'')) + trainerOrdersTablePrint(past));
+    box.innerHTML = `<div class="card"><h2>فعالياتي السابقة <button class="btn btn-outline btn-sm" id="tp_print_past">🖨️ طباعة</button></h2>${trainerOrdersTable(past)}</div>`;
+    document.getElementById('tp_print_past').onclick=()=>doPrint(buildPrintHeader('فعاليات سابقة — '+(trainer?trainer.name:'')) + trainerOrdersTablePrint(past));
   } else {
     box.innerHTML = `<div class="card">
-      <h2>تقديم طلب / ترشيح لتنفيذ برنامج</h2>
+      <h2>تقديم طلب / ترشيح لتنفيذ فعالية</h2>
       <div class="grid">
         <div class="field"><label>عنوان الفعالية المقترحة</label><input id="tr_title"></div>
         <div class="field"><label>المدرسة</label><select id="tr_school">${state.schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select></div>
@@ -1130,8 +1106,8 @@ function renderTrainerPortalPage(c){
         <div class="field"><label>من الساعة</label><input id="tr_from" type="time"></div>
         <div class="field"><label>إلى الساعة</label><input id="tr_to" type="time"></div>
       </div>
-      <div class="field" style="margin-top:10px;"><label>ملاحظات</label><textarea id="tr_note"></textarea></div>
-      <div style="margin-top:10px;"><button class="btn btn-primary" id="tr_submit">إرسال الطلب</button></div>
+      <div class="field" style="margin-bottom:14px;"><label>ملاحظات</label><textarea id="tr_note"></textarea></div>
+      <button class="btn btn-primary" id="tr_submit">إرسال الطلب</button>
     </div>
     <div class="card"><h2>طلباتي السابقة</h2>
       ${myRequests.length? `<table><thead><tr><th>العنوان</th><th>المدرسة</th><th>التاريخ</th><th>الحالة</th></tr></thead><tbody>
@@ -1139,16 +1115,14 @@ function renderTrainerPortalPage(c){
           const sch=state.schools.find(s=>s.id===r.schoolId);
           const statusBadge = r.status==='accepted'?'<span class="badge ok">مقبول</span>':r.status==='rejected'?'<span class="badge bad">مرفوض</span>':'<span class="badge">بانتظار الرد</span>';
           return `<tr><td>${escapeHtml(r.title)}</td><td>${sch?escapeHtml(sch.name):''}</td><td>${r.date||''}</td><td>${statusBadge}</td></tr>`;
-        }).join('')}
-      </tbody></table>` : `<div class="empty-state">لا توجد طلبات بعد</div>`}
+        }).join('')}</tbody></table>` : `<div class="empty-state">لا توجد طلبات بعد</div>`}
     </div>`;
     document.getElementById('tr_submit').onclick=async ()=>{
       const title=document.getElementById('tr_title').value.trim();
       const date=document.getElementById('tr_date').value;
-      const timeFrom=document.getElementById('tr_from').value;
-      const timeTo=document.getElementById('tr_to').value;
+      const timeFrom=document.getElementById('tr_from').value, timeTo=document.getElementById('tr_to').value;
       if(!title || !date){ toast('يرجى إدخال عنوان الفعالية والتاريخ على الأقل'); return; }
-      const conflict = trainerConflict(loggedTrainerId, date, timeFrom, timeTo, null);
+      const conflict = trainerConflictSingle(loggedTrainerId, date, timeFrom, timeTo, null);
       if(conflict){ toast('لا يمكن تقديم الطلب: لديك فعالية أخرى مجدولة في نفس اليوم بوقت قريب.'); return; }
       state.trainerRequests.push({ id:uid(), trainerId:loggedTrainerId, title, schoolId:document.getElementById('tr_school').value,
         date, timeFrom, timeTo, note:document.getElementById('tr_note').value, status:'pending', createdAt:Date.now() });
@@ -1157,7 +1131,7 @@ function renderTrainerPortalPage(c){
   }
 }
 function trainerOrdersTable(list){
-  if(!list.length) return `<div class="empty-state">لا توجد برامج</div>`;
+  if(!list.length) return `<div class="empty-state">لا توجد فعاليات</div>`;
   return `<table><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>المدرسة</th><th>الإنجاز</th><th>إجراءات</th></tr></thead><tbody>
     ${list.map(o=>{
       const school=state.schools.find(s=>s.id===o.schoolId);
@@ -1168,16 +1142,15 @@ function trainerOrdersTable(list){
     }).join('')}</tbody></table>`;
 }
 function trainerOrdersTablePrint(list){
-  if(!list.length) return `<div class="empty-state">لا توجد برامج</div>`;
+  if(!list.length) return `<div class="empty-state">لا توجد فعاليات</div>`;
   return `<table class="print-table"><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>المدرسة</th><th>الإنجاز</th></tr></thead><tbody>
-    ${list.map(o=>{
-      const school=state.schools.find(s=>s.id===o.schoolId);
+    ${list.map(o=>{ const school=state.schools.find(s=>s.id===o.schoolId);
       return `<tr><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td><td>${school?escapeHtml(school.name):''}</td><td>${o.completionStatus||'—'}</td></tr>`;
     }).join('')}</tbody></table>`;
 }
 async function markNotifRead(id){ const n=state.notifications.find(x=>x.id===id); if(n){ n.read=true; await saveState(); render(); } }
 
-/* ============ Settings Page ============ */
+/* ============ Settings Page (admin only) ============ */
 function renderSettingsPage(c){
   const pendingReqs = state.trainerRequests.filter(r=>r.status==='pending');
   c.innerHTML = `
@@ -1185,17 +1158,17 @@ function renderSettingsPage(c){
     <h2>بيانات الجهة والشعار وترويسة الطباعة</h2>
     <div class="grid">
       <div class="field"><label>اسم الجهة (للاستخدام الداخلي)</label><input id="set_orgName" value="${escapeHtml(state.orgName||'')}"></div>
-      <div class="field"><label>الشعار</label><input id="set_logo" type="file" accept="image/*"></div>
+      <div class="field"><label>الشعار (يفضّل PNG بخلفية شفافة)</label><input id="set_logo" type="file" accept="image/*"></div>
       <div class="field"><label>سطر ١ في ترويسة الطباعة</label><input id="set_ph1" value="${escapeHtml(state.printHeader.line1)}"></div>
       <div class="field"><label>سطر ٢ في ترويسة الطباعة</label><input id="set_ph2" value="${escapeHtml(state.printHeader.line2)}"></div>
       <div class="field"><label>سطر ٣ في ترويسة الطباعة</label><input id="set_ph3" value="${escapeHtml(state.printHeader.line3)}"></div>
     </div>
-    <div style="margin-top:10px;"><button class="btn btn-primary" id="set_saveOrg">حفظ</button></div>
+    <button class="btn btn-primary" id="set_saveOrg">حفظ</button>
   </div>
 
   <div class="card">
-    <h2>طلبات الترشيح من المدربين ${pendingReqs.length?`<span class="badge busy">${pendingReqs.length} بانتظار الرد</span>`:''}</h2>
-    ${pendingReqs.length? `<table><thead><tr><th>المدرب</th><th>العنوان</th><th>المدرسة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>
+    <h2>طلبات الترشيح من مقدمي الفعاليات ${pendingReqs.length?`<span class="badge" style="background:#f4c9d1;color:#7a1230;">${pendingReqs.length} بانتظار الرد</span>`:''}</h2>
+    ${pendingReqs.length? `<table><thead><tr><th>مقدم الفعالية</th><th>العنوان</th><th>المدرسة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>
       ${pendingReqs.map(r=>{
         const trainer=state.trainers.find(t=>t.id===r.trainerId); const sch=state.schools.find(s=>s.id===r.schoolId);
         return `<tr><td>${trainer?escapeHtml(trainer.name):''}</td><td>${escapeHtml(r.title)}</td><td>${sch?escapeHtml(sch.name):''}</td><td>${r.date||''}</td>
@@ -1204,14 +1177,14 @@ function renderSettingsPage(c){
       }).join('')}</tbody></table>` : `<div class="empty-state">لا توجد طلبات بانتظار الرد</div>`}
   </div>
 
-  <div class="card"><h2>مجالات الفعالية <button class="plus-btn" onclick="quickAddField()">+</button></h2>${simpleListTable(state.fields, 'fields')}</div>
-  <div class="card"><h2>أنواع البرامج <button class="plus-btn" onclick="quickAddPType()">+</button></h2>${simpleListTable(state.programTypes, 'programTypes')}</div>
+  <div class="card"><h2>مجالات المبادرة <button class="plus-btn" onclick="quickAddField()">+</button></h2>${simpleListTable(state.fields, 'fields')}</div>
+  <div class="card"><h2>مسارات المبادرة <button class="plus-btn" onclick="quickAddPType()">+</button></h2>${simpleListTable(state.programTypes, 'programTypes')}</div>
   <div class="card"><h2>الطلبات الإدارية <button class="plus-btn" onclick="quickAddAdminRequest()">+</button></h2>${simpleListTable(state.adminRequestsList, 'adminRequestsList')}</div>
 
-  <div class="card"><h2>المدربون <button class="plus-btn" onclick="quickAddTrainer()">+</button></h2>
+  <div class="card"><h2>مقدمو الفعاليات <button class="plus-btn" onclick="quickAddTrainer()">+</button></h2>
     <table><thead><tr><th>الاسم</th><th>الجوال</th><th></th></tr></thead><tbody>
     ${state.trainers.map(t=>`<tr><td>${escapeHtml(t.name)}</td><td>${escapeHtml(t.phone||'')}</td>
-      <td><button class="icon-btn danger" onclick="deleteFromList('trainers','${t.id}')">🗑️</button></td></tr>`).join('') || `<tr><td colspan="3" class="empty-state">لا يوجد مدربون</td></tr>`}
+      <td><button class="icon-btn danger" onclick="deleteFromList('trainers','${t.id}')">🗑️</button></td></tr>`).join('') || `<tr><td colspan="3" class="empty-state">لا يوجد مقدمو فعاليات</td></tr>`}
     </tbody></table>
   </div>
 
@@ -1270,7 +1243,7 @@ async function acceptTrainerRequest(id){
     id:uid(), serial: state.nextSerial++, createdAt:Date.now(),
     title:r.title, fieldId: state.fields[0]?state.fields[0].id:'', participantsCount:'',
     date:r.date, timeFrom:r.timeFrom, timeTo:r.timeTo, programTypeId: state.programTypes[0]?state.programTypes[0].id:'',
-    schoolId:r.schoolId, supervisorId:'', trainerId:r.trainerId, requesterNote:r.note||'', adminNote:'مضاف من ترشيح مدرب',
+    schoolId:r.schoolId, supervisorId:'', trainerIds:[r.trainerId], requesterNote:r.note||'', adminNote:'مضاف من ترشيح مقدم فعالية',
     adminRequests:[], completionStatus:'', notDoneReason:'', supervisorRating:0, schoolRating:0, studentsRating:0, recommendSchool:''
   };
   state.orders.push(order);
@@ -1285,7 +1258,7 @@ async function rejectTrainerRequest(id){
 }
 
 /* ============ Init ============ */
-(async function init(){ await loadState(); render(); })();
+(async function init(){ await loadState(); renderRoot(); })();
 </script>
 </body>
 </html>
