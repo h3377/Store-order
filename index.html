@@ -6,6 +6,7 @@
 <title>نظام طلبات الفعاليات والمبادرات</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root{
     --maroon-950:#6d0f2b; --maroon-900:#6d0f2b; --maroon-800:#8A1538; --maroon-700:#a83c5b; --maroon-600:#a83c5b;
@@ -16,7 +17,7 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{font-family:var(--font-body); font-size:18px; background:var(--maroon-50); color:var(--ink); min-height:100vh;
+  body{font-family:var(--font-body); font-size:22px; background:var(--maroon-50); color:var(--ink); min-height:100vh;
     background-image: linear-gradient(var(--line) 1px, transparent 1px); background-size: 100% 34px;}
   #app{display:flex; min-height:100vh;}
   #sidebar{width:250px; flex:0 0 250px; background:linear-gradient(180deg,var(--maroon-900),var(--maroon-950)); color:var(--white);
@@ -40,12 +41,12 @@
   header.topbar .sub{font-size:12.5px;color:#7a5560;margin-top:3px;}
   .content{padding:24px 26px 60px; flex:1;}
   .card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; margin-bottom:20px;}
-  .card h2{font-family:var(--font-head); font-style:italic; color:var(--maroon-800); font-size:17px; margin:0 0 14px; padding-bottom:10px; border-bottom:2px solid var(--maroon-100); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .card h2{font-family:var(--font-head); font-style:italic; color:var(--maroon-800); font-size:19px; margin:0 0 14px; padding-bottom:10px; border-bottom:2px solid var(--maroon-100); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
   .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; margin-bottom:14px;}
   .field{display:flex; flex-direction:column; gap:6px;}
-  .field label{font-size:12.5px; font-weight:700; color:var(--maroon-800);}
+  .field label{font-size:14px; font-weight:700; color:var(--maroon-800);}
   .field .row-inline{display:flex; gap:6px;}
-  input,select,textarea{font-family:var(--font-body); font-size:16px; padding:10px 12px; border:1.5px solid var(--line); border-radius:9px; background:#fff; color:var(--ink); width:100%;}
+  input,select,textarea{font-family:var(--font-body); font-size:19px; padding:10px 12px; border:1.5px solid var(--line); border-radius:9px; background:#fff; color:var(--ink); width:100%;}
   input:focus,select:focus,textarea:focus{outline:none; border-color:var(--maroon-600); box-shadow:0 0 0 3px rgba(200,169,81,.18);}
   input:disabled, select:disabled{background:#f2eaec; color:#a98d94;}
   input[type=date], input[type=time]{text-align:right; direction:rtl;}
@@ -62,8 +63,8 @@
   .icon-btn.danger:hover{background:#a3263a;}
   .plus-btn{all:unset; cursor:pointer; width:34px; height:34px; border-radius:7px; flex:0 0 auto; background:var(--maroon-800); color:#fff; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center;}
   .plus-btn:hover{background:var(--maroon-900);}
-  table{width:100%; border-collapse:collapse; font-size:15.5px; font-family:var(--font-body);}
-  thead th{background:var(--maroon-800); color:#fff; padding:12px 13px; text-align:right; font-family:var(--font-body); font-weight:800; font-style:normal; font-size:15.5px;}
+  table{width:100%; border-collapse:collapse; font-size:17px; font-family:var(--font-body);}
+  thead th{background:var(--maroon-800); color:#fff; padding:12px 13px; text-align:right; font-family:var(--font-body); font-weight:800; font-style:normal; font-size:17px;}
   tbody td{padding:12px 13px; border-bottom:1px solid var(--line); vertical-align:middle; line-height:1.6;}
   tbody tr:hover{background:var(--maroon-50);}
   .actions-cell{display:flex; gap:4px; flex-wrap:wrap;}
@@ -176,10 +177,10 @@ function defaultState(){
       {id:uid(), name:'حجز استراحة المؤسسة'},{id:uid(), name:'توفير مقر مركز عيد الثقافي'},
     ],
     users:[
-      {id:uid(), username:'admin', password:'admin123', role:'admin', trainerId:'', displayName:'مدير النظام'},
-      {id:uid(), username:'user', password:'user123', role:'user', trainerId:'', displayName:'مستخدم النظام'},
-      {id:uid(), username:'trainer1', password:'trainer123', role:'trainer', trainerId:window.__seedTrainerIds[0], displayName:'أ. أحمد النعيمي'},
-      {id:uid(), username:'trainer2', password:'trainer123', role:'trainer', trainerId:window.__seedTrainerIds[1], displayName:'أ. فيصل السليطي'},
+      {id:uid(), username:'admin', password:'admin123', role:'admin', trainerId:'', displayName:'مدير النظام', active:true},
+      {id:uid(), username:'user', password:'user123', role:'user', trainerId:'', displayName:'مستخدم النظام', active:true},
+      {id:uid(), username:'trainer1', password:'trainer123', role:'trainer', trainerId:window.__seedTrainerIds[0], displayName:'أ. أحمد النعيمي', active:true},
+      {id:uid(), username:'trainer2', password:'trainer123', role:'trainer', trainerId:window.__seedTrainerIds[1], displayName:'أ. فيصل السليطي', active:true},
     ],
     orders:[], trainerRequests:[], notifications:[], adminNotifications:[], reminderFlags:{}, tasks:[]
   };
@@ -212,13 +213,15 @@ async function loadState(){
       if(!state.reminderFlags) state.reminderFlags={};
       if(!state.users || !state.users.length){
         state.users=[
-          {id:uid(), username:'admin', password:'admin123', role:'admin', trainerId:'', displayName:'مدير النظام'},
-          {id:uid(), username:'user', password:'user123', role:'user', trainerId:'', displayName:'مستخدم النظام'},
+          {id:uid(), username:'admin', password:'admin123', role:'admin', trainerId:'', displayName:'مدير النظام', active:true},
+          {id:uid(), username:'user', password:'user123', role:'user', trainerId:'', displayName:'مستخدم النظام', active:true},
         ];
       }
       // migrate old single trainerId -> trainerIds array
-      state.orders.forEach(o=>{ if(!o.trainerIds){ o.trainerIds = o.trainerId ? [o.trainerId] : []; } });
+      state.orders.forEach(o=>{ if(!o.trainerIds){ o.trainerIds = o.trainerId ? [o.trainerId] : []; } if(!o.status){ o.status='active'; } if(o.evaluatedBy===undefined){ o.evaluatedBy=''; } });
       state.trainerRequests.forEach(r=>{ if(!r.trainerId && r.trainerIds && r.trainerIds[0]) r.trainerId=r.trainerIds[0]; });
+      state.users.forEach(u=>{ if(u.active===undefined) u.active=true; });
+      state.tasks.forEach(t=>{ if(!t.status){ t.status = t.done ? 'مكتملة' : 'لم تبدأ'; } if(!t.priority){ t.priority='متوسطة'; } });
       return;
     }
   }catch(e){ console.error('load error', e); }
@@ -245,6 +248,8 @@ const PAGES = [
   {id:'home', label:'الصفحة الرئيسية', icon:'🏠', roles:['admin','user']},
   {id:'order', label:'طلبات الفعاليات والمبادرات', icon:'📋', roles:['admin','user']},
   {id:'admin', label:'الإداريات (اليومية)', icon:'🗓️', roles:['admin','user']},
+  {id:'results', label:'النتائج', icon:'🏁', roles:['admin','user']},
+  {id:'distributions', label:'التوزيعات', icon:'🗂️', roles:['admin','user']},
   {id:'reports', label:'التقارير', icon:'📄', roles:['admin','user']},
   {id:'stats', label:'الإحصائيات', icon:'📊', roles:['admin','user']},
   {id:'tasks', label:'المهام', icon:'✅', roles:['admin','user']},
@@ -372,6 +377,7 @@ function doLogin(){
   const p = document.getElementById('lg_pass').value;
   const match = state.users.find(x=>x.username===u && x.password===p);
   if(!match){ document.getElementById('lg_err').style.display='block'; return; }
+  if(match.active===false){ document.getElementById('lg_err').textContent='هذا الحساب معطّل، تواصل مع مدير النظام'; document.getElementById('lg_err').style.display='block'; return; }
   currentUser = match;
   currentRole = match.role;
   loggedTrainerId = match.role==='trainer' ? match.trainerId : null;
@@ -468,6 +474,8 @@ function render(){
     stats:['الإحصائيات','تصنيفات وأعداد البرامج'],
     tasks:['المهام','قائمة المهام الإدارية'],
     trainerPortal:['بوابة مقدم الفعالية','متابعة فعالياتك وتقييمها'],
+    results:['النتائج','إدخال وعرض نتائج وتقييمات الفعاليات'],
+    distributions:['التوزيعات','فعاليات كل مقدم مبادرة خلال أسبوع/شهر/سنة'],
     approvals:['الموافقات','مراجعة طلبات تنفيذ المبادرات المقدَّمة من مقدمي الفعاليات'],
     settings:['الإعدادات والقوائم','إدارة القوائم المنسدلة والشعار']};
   document.getElementById('pageTitle').textContent = titleMap[currentPage][0];
@@ -482,6 +490,8 @@ function render(){
   else if(currentPage==='stats') renderStatsPage(c);
   else if(currentPage==='tasks') renderTasksPage(c);
   else if(currentPage==='trainerPortal') renderTrainerPortalPage(c);
+  else if(currentPage==='results') renderResultsPage(c);
+  else if(currentPage==='distributions') renderDistributionsPage(c);
   else if(currentPage==='approvals') renderApprovalsPage(c);
   else if(currentPage==='settings') renderSettingsPage(c);
   document.getElementById('orgNameDisplay').textContent = state.orgName || 'إدارة الفعاليات';
@@ -494,6 +504,10 @@ function renderHome(c){
   const thisMonth = state.orders.filter(o=>{ if(!o.date) return false; const d=new Date(o.date), now=new Date(); return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear(); }).length;
   const totalParticipants = state.orders.reduce((s,o)=>s+(Number(o.participantsCount)||0),0);
   const pendingReq = state.trainerRequests.filter(r=>r.status==='pending').length;
+  const today = todayStr();
+  const tasksNotStarted = state.tasks.filter(t=>t.status==='لم تبدأ').length;
+  const tasksInProgress = state.tasks.filter(t=>t.status==='قيد التنفيذ').length;
+  const tasksOverdue = state.tasks.filter(t=>t.due && t.due<today && t.status!=='مكتملة').length;
   c.innerHTML = `
   <div class="stat-grid" style="margin-bottom:20px;">
     <div class="stat-box"><div class="num">${totalOrders}</div><div class="lbl">إجمالي طلبات الفعاليات</div></div>
@@ -502,6 +516,11 @@ function renderHome(c){
     <div class="stat-box"><div class="num">${state.trainers.length}</div><div class="lbl">عدد مقدمي الفعاليات</div></div>
     <div class="stat-box"><div class="num">${totalParticipants}</div><div class="lbl">إجمالي المستهدفين</div></div>
     <div class="stat-box"><div class="num">${pendingReq}</div><div class="lbl">طلبات ترشيح بانتظار الرد</div></div>
+  </div>
+  <div class="stat-grid" style="margin-bottom:20px;">
+    <div class="stat-box"><div class="num">${tasksNotStarted}</div><div class="lbl">مهام لم تبدأ بعد</div></div>
+    <div class="stat-box"><div class="num">${tasksInProgress}</div><div class="lbl">مهام قيد التنفيذ</div></div>
+    <div class="stat-box" style="${tasksOverdue?'border-color:#9e2b2b;':''}"><div class="num" style="${tasksOverdue?'color:#9e2b2b;':''}">${tasksOverdue}</div><div class="lbl">⚠️ مهام متأخرة عن الاستحقاق</div></div>
   </div>
   <div class="card"><h2>أحدث الطلبات</h2>${ordersTableHtml(state.orders.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,6))}</div>
   <div class="card">
@@ -530,18 +549,21 @@ function trainerPhones(order){
 /* ============ Order tables ============ */
 function ordersTableHtml(list){
   if(!list.length) return `<div class="empty-state">لا توجد طلبات بعد</div>`;
-  return `<table><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>المجال</th><th>المدرسة</th><th>مقدم المبادرة</th><th>الإنجاز</th><th>إجراءات</th></tr></thead><tbody>
+  return `<table><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>المجال</th><th>المدرسة</th><th>مقدم المبادرة</th><th>الإنجاز</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>
   ${list.map(o=>{
     const field = state.fields.find(f=>f.id===o.fieldId);
     const school = state.schools.find(s=>s.id===o.schoolId);
     const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>' : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : '<span class="badge">—</span>';
-    return `<tr>
+    const orderStatusBadge = o.status==='cancelled' ? '<span class="badge bad">ملغاة</span>' : o.status==='postponed' ? '<span class="badge busy">مؤجّلة</span>' : '<span class="badge ok">نشطة</span>';
+    return `<tr style="${o.status==='cancelled'?'opacity:.6;':''}">
       <td><span class="badge">${o.serial}</span></td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td>
       <td>${field?escapeHtml(field.name):''}</td><td>${school?escapeHtml(school.name):''}</td><td>${escapeHtml(trainerNames(o))}</td>
-      <td>${statusBadge}</td>
+      <td>${statusBadge}</td><td>${orderStatusBadge}</td>
       <td class="actions-cell">
         <button class="icon-btn" title="تعديل" onclick="editOrder('${o.id}')">✏️</button>
         <button class="icon-btn" title="تقييم وإنجاز" onclick="openEvaluationModal('${o.id}')">📝</button>
+        <button class="icon-btn" title="ترحيل / تأجيل" onclick="openPostponeModal('${o.id}')">⏩</button>
+        <button class="icon-btn" title="${o.status==='cancelled'?'إلغاء الإلغاء':'إلغاء الفعالية'}" onclick="toggleCancelOrder('${o.id}')">${o.status==='cancelled'?'↩️':'❌'}</button>
         <button class="icon-btn" title="طباعة نسخة الجهة الطالبة" onclick="printOrderSchoolCopy('${o.id}')">🏫🖨️</button>
         <button class="icon-btn" title="طباعة نسخة الإدارة (كاملة)" onclick="printOrderAdminCopy('${o.id}')">🏢🖨️</button>
         <button class="icon-btn" title="إرسال بالبريد" onclick="emailOrder('${o.id}')">✉️</button>
@@ -561,8 +583,27 @@ function ordersTableHtmlPrint(list){
 }
 
 /* ============ Order Page (طلبات الفعاليات والمبادرات) ============ */
+function getWeekBounds(d){
+  const dt = new Date(d+'T00:00:00');
+  const dow = dt.getDay(); // 0=Sun
+  const start = new Date(dt); start.setDate(dt.getDate()-dow);
+  const end = new Date(start); end.setDate(start.getDate()+6);
+  const fmt=(x)=>x.toISOString().slice(0,10);
+  return {start:fmt(start), end:fmt(end)};
+}
 function renderOrderPage(c){
+  const today = todayStr();
+  const {start:wkStart, end:wkEnd} = getWeekBounds(today);
+  const activeOrders = state.orders.filter(o=>o.status!=='cancelled');
+  const thisWeek = activeOrders.filter(o=>o.date>=wkStart && o.date<=wkEnd);
+  const evaluatedThisWeek = thisWeek.filter(o=>o.completionStatus);
+  const notEvaluatedToDate = activeOrders.filter(o=>o.date && o.date<today && !o.completionStatus);
   c.innerHTML = `
+  <div class="stat-grid" style="margin-bottom:18px;">
+    <div class="stat-box"><div class="num">${thisWeek.length}</div><div class="lbl">عدد الفعاليات خلال الأسبوع</div></div>
+    <div class="stat-box"><div class="num">${evaluatedThisWeek.length}</div><div class="lbl">فعاليات قُيّمت خلال الأسبوع</div></div>
+    <div class="stat-box"><div class="num">${notEvaluatedToDate.length}</div><div class="lbl">فعاليات لم تُقيَّم حتى تاريخه</div></div>
+  </div>
   <div class="tabs">
     <button class="tab-btn ${orderSubTab==='new'?'active':''}" id="tabNew">فعاليات ومبادرات جديدة</button>
     <button class="tab-btn ${orderSubTab==='list'?'active':''}" id="tabList">كل الطلبات</button>
@@ -584,7 +625,7 @@ function renderOrderForm(sub){
 
   sub.innerHTML = `
   <div class="card">
-    <h2>${editing? 'تعديل فعاليات ومبادرات — رقم '+editing.serial : 'فعاليات ومبادرات — تسلسل رقم '+state.nextSerial}</h2>
+    <h2>${editing? 'تعديل فعاليات ومبادرات — رقم '+editing.serial : 'فعاليات ومبادرات'}</h2>
 
     <div class="grid" style="grid-template-columns:minmax(160px,240px) minmax(160px,240px); gap:14px;">
       <div class="field"><label>مجال المبادرة</label>
@@ -739,7 +780,7 @@ function renderOrderForm(sub){
     if(editing){ Object.assign(editing, orderData); }
     else {
       orderData.id = uid(); orderData.serial = state.nextSerial++; orderData.createdAt = Date.now();
-      orderData.completionStatus=''; orderData.notDoneReason=''; orderData.supervisorRating=0; orderData.schoolRating=0; orderData.studentsRating=0; orderData.recommendSchool='';
+      orderData.completionStatus=''; orderData.notDoneReason=''; orderData.supervisorRating=0; orderData.schoolRating=0; orderData.studentsRating=0; orderData.recommendSchool=''; orderData.evaluatedBy=''; orderData.status='active';
       state.orders.push(orderData);
     }
     await saveState();
@@ -754,13 +795,40 @@ async function deleteOrder(id){
   state.orders = state.orders.filter(o=>o.id!==id);
   await saveState(); toast('تم الحذف'); render();
 }
+async function toggleCancelOrder(id){
+  const o = state.orders.find(x=>x.id===id); if(!o) return;
+  if(o.status==='cancelled'){
+    if(!confirm('هل تريد التراجع عن إلغاء هذه الفعالية؟')) return;
+    o.status='active'; await saveState(); toast('تم التراجع عن الإلغاء'); render(); return;
+  }
+  if(!confirm('هل تريد إلغاء هذه الفعالية؟ ستبقى مسجلة لكن بحالة "ملغاة".')) return;
+  o.status='cancelled'; await saveState(); toast('تم إلغاء الفعالية'); render();
+}
+function openPostponeModal(id){
+  const o = state.orders.find(x=>x.id===id); if(!o) return;
+  openModal('ترحيل / تأجيل: '+o.title, [
+    {name:'date', label:'التاريخ الجديد', type:'date', required:true},
+    {name:'timeFrom', label:'من الساعة', type:'time'},
+    {name:'timeTo', label:'إلى الساعة', type:'time'},
+  ], async v=>{
+    const oldDate=o.date, oldFrom=o.timeFrom, oldTo=o.timeTo;
+    o.date=v.date; if(v.timeFrom) o.timeFrom=v.timeFrom; if(v.timeTo) o.timeTo=v.timeTo;
+    o.status='postponed';
+    o.adminNote = (o.adminNote?o.adminNote+' | ':'') + `تم ترحيلها من ${oldDate} (${oldFrom||''}-${oldTo||''}) إلى ${o.date} (${o.timeFrom||''}-${o.timeTo||''})`;
+    await saveState(); toast('تم ترحيل الفعالية'); render();
+  });
+  setTimeout(()=>{ const f=document.getElementById('mf_date'); if(f) f.value=o.date; const tf=document.getElementById('mf_timeFrom'); if(tf) tf.value=o.timeFrom||''; const tt=document.getElementById('mf_timeTo'); if(tt) tt.value=o.timeTo||''; },0);
+}
 
 /* ============ Evaluation modal ============ */
 function openEvaluationModal(orderId){
   const o = state.orders.find(x=>x.id===orderId); if(!o) return;
   const overlay=document.getElementById('modalOverlay'); const box=document.getElementById('modalBox');
+  const evalByLabel = o.evaluatedBy==='trainer' ? '🧑‍🏫 تم إدخال هذا التقييم من قبل مقدم الفعالية'
+    : o.evaluatedBy==='admin' ? '🛡️ تم إدخال هذا التقييم من الإدارة' : '';
   box.innerHTML = `
     <h3>تقييم وإنجاز: ${escapeHtml(o.title)}</h3>
+    ${evalByLabel?`<div class="helper" style="background:var(--maroon-50);padding:8px 10px;border-radius:6px;margin-bottom:12px;font-weight:700;">${evalByLabel}</div>`:''}
     <div class="field" style="margin-bottom:12px;"><label>حالة الإنجاز</label>
       <select id="ev_status"><option value="">-- اختر --</option>
         <option value="تم" ${o.completionStatus==='تم'?'selected':''}>تم الإنجاز</option>
@@ -790,6 +858,7 @@ function openEvaluationModal(orderId){
     o.schoolRating = Number(document.getElementById('ev_sch_val').value)||0;
     o.studentsRating = Number(document.getElementById('ev_stu_val').value)||0;
     o.recommendSchool = document.getElementById('ev_recommend').value;
+    o.evaluatedBy = currentRole==='trainer' ? 'trainer' : 'admin';
     o.evaluatedAt = Date.now();
     if(currentRole==='trainer'){
       const tName = escapeHtml(trainerNames(o) || (state.trainers.find(t=>t.id===loggedTrainerId)||{}).name || '');
@@ -810,9 +879,36 @@ function quickAddUser(){
     {name:'trainerId', label:'ربط بمقدم فعالية (فقط إن كان الدور مقدم فعالية)', type:'select', options:[{value:'', label:'— بدون —'}, ...state.trainers.map(t=>({value:t.id, label:t.name}))]},
   ], async v=>{
     if(state.users.some(u=>u.username===v.username)){ toast('اسم المستخدم مستخدم بالفعل'); return; }
-    state.users.push({id:uid(), username:v.username, password:v.password, role:v.role, trainerId:v.role==='trainer'?v.trainerId:'', displayName:v.displayName});
+    state.users.push({id:uid(), username:v.username, password:v.password, role:v.role, trainerId:v.role==='trainer'?v.trainerId:'', displayName:v.displayName, active:true});
     await saveState(); toast('تم إضافة المستخدم'); render();
   });
+}
+function editUser(id){
+  const u = state.users.find(x=>x.id===id); if(!u) return;
+  openModal('تعديل مستخدم: '+u.displayName, [
+    {name:'displayName', label:'الاسم الظاهر', required:true},
+    {name:'username', label:'اسم المستخدم', required:true},
+    {name:'password', label:'كلمة المرور', required:true},
+    {name:'role', label:'الدور', type:'select', options:[
+      {value:'admin', label:'مدير نظام'},{value:'user', label:'مستخدم'},{value:'trainer', label:'مقدم فعالية'}]},
+    {name:'trainerId', label:'ربط بمقدم فعالية (فقط إن كان الدور مقدم فعالية)', type:'select', options:[{value:'', label:'— بدون —'}, ...state.trainers.map(t=>({value:t.id, label:t.name}))]},
+  ], async v=>{
+    if(state.users.some(x=>x.id!==id && x.username===v.username)){ toast('اسم المستخدم مستخدم بالفعل'); return; }
+    Object.assign(u, {username:v.username, password:v.password, role:v.role, trainerId:v.role==='trainer'?v.trainerId:'', displayName:v.displayName});
+    await saveState(); toast('تم حفظ التعديلات'); render();
+  });
+  setTimeout(()=>{
+    const f=document.getElementById('mf_displayName'); if(f) f.value=u.displayName||'';
+    const un=document.getElementById('mf_username'); if(un) un.value=u.username||'';
+    const pw=document.getElementById('mf_password'); if(pw) pw.value=u.password||'';
+    const rl=document.getElementById('mf_role'); if(rl) rl.value=u.role;
+    const tr=document.getElementById('mf_trainerId'); if(tr) tr.value=u.trainerId||'';
+  },0);
+}
+async function toggleUserActive(id){
+  const u = state.users.find(x=>x.id===id); if(!u) return;
+  u.active = !(u.active!==false);
+  await saveState(); toast(u.active?'تم تفعيل المستخدم':'تم تعطيل المستخدم'); render();
 }
 
 function quickAddField(){
@@ -1056,15 +1152,64 @@ function renderReportsPage(c){
     <button class="tab-btn" id="rt_school">تقرير مدرسة</button>
     <button class="tab-btn" id="rt_hours">تقرير ساعات مقدمي الفعالية</button>
     <button class="tab-btn" id="rt_eval">تقرير التقييمات</button>
+    <button class="tab-btn" id="rt_general">تقرير عام</button>
   </div>
   <div id="reportContent"></div>`;
   let mode='trainer';
-  const tabs = {trainer:'rt_trainer', school:'rt_school', hours:'rt_hours', eval:'rt_eval'};
+  const tabs = {trainer:'rt_trainer', school:'rt_school', hours:'rt_hours', eval:'rt_eval', general:'rt_general'};
   function setActive(){ Object.entries(tabs).forEach(([k,id])=>document.getElementById(id).classList.toggle('active', mode===k)); }
   document.getElementById('rt_trainer').onclick=()=>{mode='trainer'; drawTrainer(); setActive();};
   document.getElementById('rt_school').onclick=()=>{mode='school'; drawSchool(); setActive();};
   document.getElementById('rt_hours').onclick=()=>{mode='hours'; drawHours(); setActive();};
   document.getElementById('rt_eval').onclick=()=>{mode='eval'; drawEval(); setActive();};
+  document.getElementById('rt_general').onclick=()=>{mode='general'; drawGeneral(); setActive();};
+
+  function drawGeneral(){
+    const box=document.getElementById('reportContent');
+    box.innerHTML = `<div class="card"><h2>تقرير عام</h2>
+      <div class="grid">
+        <div class="field"><label>البيانات</label><select id="gn_type">
+          <option value="orders">كل طلبات الفعاليات والمبادرات</option>
+          <option value="schools">المدارس</option>
+          <option value="trainers">مقدمو الفعاليات</option>
+          <option value="tasks">المهام</option>
+        </select></div>
+        <div class="field"><label>من تاريخ</label><input id="gn_from" type="date"></div>
+        <div class="field"><label>إلى تاريخ</label><input id="gn_to" type="date"></div>
+      </div>
+      <button class="btn btn-primary" id="gn_go">عرض</button>
+      <button class="btn btn-outline" id="gn_print">🖨️ طباعة</button>
+      <button class="btn btn-outline" id="gn_excel">📊 استخراج إكسل</button>
+      <div id="gn_result" style="margin-top:16px;"></div>
+    </div>`;
+    function gen(){
+      const type=document.getElementById('gn_type').value, from=document.getElementById('gn_from').value, to=document.getElementById('gn_to').value;
+      if(type==='orders'){
+        const list = state.orders.filter(o=>(!from||o.date>=from)&&(!to||o.date<=to));
+        return {headers:['م','العنوان','التاريخ','المدرسة','مقدم المبادرة','الإنجاز'],
+          rows:list.map(o=>{const s=state.schools.find(x=>x.id===o.schoolId); return [o.serial, o.title, o.date||'', s?s.name:'', trainerNames(o), o.completionStatus||'—'];})};
+      }
+      if(type==='schools'){
+        return {headers:['اسم المدرسة','المرحلة','عدد المشرفين'], rows:state.schools.map(s=>[s.name, s.level, s.supervisors.length])};
+      }
+      if(type==='trainers'){
+        return {headers:['الاسم','الجوال','عدد الفعاليات'], rows:state.trainers.map(t=>[t.name, t.phone||'', state.orders.filter(o=>(o.trainerIds||[]).includes(t.id)).length])};
+      }
+      const list = state.tasks.filter(t=>(!from||(t.due&&t.due>=from))&&(!to||(t.due&&t.due<=to)));
+      return {headers:['المهمة','البدء','الاستحقاق','الأولوية','الحالة'], rows:list.map(t=>[t.title, t.start||'', t.due||'', t.priority||'', t.status||''])};
+    }
+    function tableOf(headers, rows){
+      return `<table><thead><tr>${headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>
+        ${rows.length?rows.map(r=>`<tr>${r.map(c=>`<td>${escapeHtml(String(c))}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}" class="empty-state">لا توجد بيانات</td></tr>`}
+      </tbody></table>`;
+    }
+    document.getElementById('gn_go').onclick=()=>{ const {headers,rows}=gen(); document.getElementById('gn_result').innerHTML = tableOf(headers,rows); };
+    document.getElementById('gn_print').onclick=()=>{
+      const {headers,rows}=gen(); const from=document.getElementById('gn_from').value, to=document.getElementById('gn_to').value;
+      doPrintDoc(buildReportDoc({titleAr:'تقرير عام', subtitle:`من ${from||'—'} إلى ${to||'—'}`, headers, rows:rows.map(r=>r.map(escapeHtml))}), true, 'A4');
+    };
+    document.getElementById('gn_excel').onclick=()=>{ const {headers,rows}=gen(); exportToExcel('تقرير_عام.xlsx', headers, rows); };
+  }
 
   function drawEval(){
     const box=document.getElementById('reportContent');
@@ -1217,6 +1362,28 @@ function svgBarChart(items){
   }).join('');
   return `<div class="chart-wrap"><svg viewBox="0 0 ${maxW+180} ${height+10}" style="width:100%;max-width:560px;height:auto;">${bars}</svg></div>`;
 }
+const DONUT_COLORS = ['#8A1538','#C8A951','#1d5e86','#1e6b34','#a83c5b','#6d0f2b','#8a6470','#c0273f'];
+function svgDonutChart(items){
+  const total = items.reduce((s,i)=>s+i.value,0) || 1;
+  const cx=90, cy=90, r=70, sw=32;
+  let angle=-90;
+  const circumference = 2*Math.PI*r;
+  const arcs = items.map((it,i)=>{
+    const frac = it.value/total;
+    const dash = frac*circumference;
+    const el = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${DONUT_COLORS[i%DONUT_COLORS.length]}" stroke-width="${sw}"
+      stroke-dasharray="${dash} ${circumference-dash}" stroke-dashoffset="${-angle/360*circumference}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
+    angle += frac*360;
+    return el;
+  }).join('');
+  const legend = items.map((it,i)=>`<div style="display:flex;align-items:center;gap:6px;font-size:12.5px;margin-bottom:4px;">
+    <span style="width:12px;height:12px;border-radius:3px;background:${DONUT_COLORS[i%DONUT_COLORS.length]};display:inline-block;"></span>
+    ${escapeHtml(it.name)} — ${it.value} (${total?Math.round(it.value/total*100):0}%)</div>`).join('');
+  return `<div class="chart-wrap" style="display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+    <svg width="180" height="180" viewBox="0 0 180 180">${arcs}<text x="90" y="96" text-anchor="middle" font-size="18" font-weight="800" fill="#2a1116">${total}</text></svg>
+    <div>${legend}</div>
+  </div>`;
+}
 
 /* ============ Statistics Page ============ */
 function renderStatsPage(c){
@@ -1260,7 +1427,7 @@ function renderStatsPage(c){
     const subtitle = `من ${from||'—'} إلى ${to||'—'}`;
 
     const fCard=document.getElementById('st_field_card'); fCard.style.display='block';
-    fCard.innerHTML = `<h2>البند — حسب مجال المبادرة <button class="btn btn-outline btn-sm" id="pr_field">🖨️ طباعة منفصلة</button></h2>${tableFrom(byField)} ${svgBarChart(byField.map(x=>({name:x.name, value:x.programs})))}`;
+    fCard.innerHTML = `<h2>البند — حسب مجال المبادرة <button class="btn btn-outline btn-sm" id="pr_field">🖨️ طباعة منفصلة</button></h2>${tableFrom(byField)} ${svgDonutChart(byField.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byField.map(x=>({name:x.name, value:x.programs})))}`;
     document.getElementById('pr_field').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير التصنيفيات — البند (مجال المبادرة)', subtitle,
       kpis:[{v:byField.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'},{v:byField.reduce((s,x)=>s+x.participants,0),l:'إجمالي المشاركين'}],
@@ -1270,7 +1437,7 @@ function renderStatsPage(c){
     }), true, 'A4');
 
     const tCard=document.getElementById('st_type_card'); tCard.style.display='block';
-    tCard.innerHTML = `<h2>حسب نوع البرنامج (مسار المبادرة) <button class="btn btn-outline btn-sm" id="pr_type">🖨️ طباعة منفصلة</button></h2>${tableFrom(byType)} ${svgBarChart(byType.map(x=>({name:x.name, value:x.programs})))}`;
+    tCard.innerHTML = `<h2>حسب نوع البرنامج (مسار المبادرة) <button class="btn btn-outline btn-sm" id="pr_type">🖨️ طباعة منفصلة</button></h2>${tableFrom(byType)} ${svgDonutChart(byType.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byType.map(x=>({name:x.name, value:x.programs})))}`;
     document.getElementById('pr_type').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير التصنيفيات — حسب نوع البرنامج', subtitle,
       kpis:[{v:byType.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'},{v:byType.reduce((s,x)=>s+x.participants,0),l:'إجمالي المشاركين'}],
@@ -1280,7 +1447,7 @@ function renderStatsPage(c){
     }), true, 'A4');
 
     const lCard=document.getElementById('st_level_card'); lCard.style.display='block';
-    lCard.innerHTML = `<h2>حسب نوع المرحلة الدراسية للمدارس <button class="btn btn-outline btn-sm" id="pr_level">🖨️ طباعة منفصلة</button></h2>${tableLevel(byLevel)} ${svgBarChart(byLevel.map(x=>({name:x.name, value:x.programs})))}`;
+    lCard.innerHTML = `<h2>حسب نوع المرحلة الدراسية للمدارس <button class="btn btn-outline btn-sm" id="pr_level">🖨️ طباعة منفصلة</button></h2>${tableLevel(byLevel)} ${svgDonutChart(byLevel.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byLevel.map(x=>({name:x.name, value:x.programs})))}`;
     document.getElementById('pr_level').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير التصنيفيات — حسب المرحلة الدراسية', subtitle,
       kpis:[{v:byLevel.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'}],
@@ -1294,29 +1461,164 @@ function renderStatsPage(c){
 /* ============ Tasks Page ============ */
 function renderTasksPage(c){
   c.innerHTML = `<div class="card"><h2>إضافة مهمة</h2>
-    <div class="grid"><div class="field"><label>عنوان المهمة</label><input id="tk_title"></div><div class="field"><label>تاريخ الاستحقاق</label><input id="tk_due" type="date"></div></div>
+    <div class="grid">
+      <div class="field"><label>اسم المهمة</label><input id="tk_title"></div>
+      <div class="field"><label>تاريخ البدء</label><input id="tk_start" type="date"></div>
+      <div class="field"><label>تاريخ الاستحقاق</label><input id="tk_due" type="date"></div>
+      <div class="field"><label>مرتبطة بمنفذ مبادرة</label><select id="tk_trainer"><option value="">— بدون —</option>${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
+      <div class="field"><label>الأولوية</label><select id="tk_priority"><option value="منخفضة">منخفضة</option><option value="متوسطة" selected>متوسطة</option><option value="عالية">عالية</option></select></div>
+      <div class="field"><label>الحالة</label><select id="tk_status"><option value="لم تبدأ" selected>لم تبدأ</option><option value="قيد التنفيذ">قيد التنفيذ</option><option value="مكتملة">مكتملة</option></select></div>
+    </div>
+    <div class="field" style="margin-bottom:14px;"><label>ملاحظات</label><textarea id="tk_notes"></textarea></div>
     <button class="btn btn-primary" id="tk_add">إضافة</button></div>
   <div class="card"><h2>قائمة المهام</h2><div id="tk_list"></div></div>`;
   function drawList(){
     const box=document.getElementById('tk_list');
     if(!state.tasks.length){ box.innerHTML=`<div class="empty-state">لا توجد مهام</div>`; return; }
-    box.innerHTML = `<table><thead><tr><th>✓</th><th>المهمة</th><th>الاستحقاق</th><th></th></tr></thead><tbody>
-      ${state.tasks.slice().sort((a,b)=>a.done-b.done).map(t=>`
-        <tr><td><input type="checkbox" ${t.done?'checked':''} onchange="toggleTask('${t.id}')"></td>
-        <td style="${t.done?'text-decoration:line-through;opacity:.55;':''}">${escapeHtml(t.title)}</td>
-        <td>${t.due||'—'}</td><td><button class="icon-btn danger" onclick="deleteTask('${t.id}')">🗑️</button></td></tr>`).join('')}
+    const today=todayStr();
+    box.innerHTML = `<table><thead><tr><th>المهمة</th><th>البدء</th><th>الاستحقاق</th><th>مرتبطة بـ</th><th>الأولوية</th><th>الحالة</th><th>ملاحظات</th><th></th></tr></thead><tbody>
+      ${state.tasks.slice().sort((a,b)=>(a.due||'').localeCompare(b.due||'')).map(t=>{
+        const trainer=state.trainers.find(x=>x.id===t.trainerId);
+        const overdue = t.due && t.due<today && t.status!=='مكتملة';
+        const prioBadge = t.priority==='عالية'?'<span class="badge bad">عالية</span>':t.priority==='منخفضة'?'<span class="badge">منخفضة</span>':'<span class="badge busy">متوسطة</span>';
+        const statusBadge = t.status==='مكتملة'?'<span class="badge ok">مكتملة</span>':t.status==='قيد التنفيذ'?'<span class="badge busy">قيد التنفيذ</span>':'<span class="badge">لم تبدأ</span>';
+        return `<tr style="${overdue?'background:#fdecec;':''}">
+        <td>${escapeHtml(t.title)}</td><td>${t.start||'—'}</td><td>${t.due||'—'}${overdue?' ⚠️':''}</td>
+        <td>${trainer?escapeHtml(trainer.name):'—'}</td><td>${prioBadge}</td>
+        <td><select onchange="updateTaskStatus('${t.id}', this.value)"><option value="لم تبدأ" ${t.status==='لم تبدأ'?'selected':''}>لم تبدأ</option><option value="قيد التنفيذ" ${t.status==='قيد التنفيذ'?'selected':''}>قيد التنفيذ</option><option value="مكتملة" ${t.status==='مكتملة'?'selected':''}>مكتملة</option></select></td>
+        <td style="max-width:180px;">${escapeHtml(t.notes||'')}</td>
+        <td><button class="icon-btn danger" onclick="deleteTask('${t.id}')">🗑️</button></td></tr>`;
+      }).join('')}
     </tbody></table>`;
   }
   document.getElementById('tk_add').onclick=async ()=>{
     const title=document.getElementById('tk_title').value.trim();
-    if(!title){ toast('أدخل عنوان المهمة'); return; }
-    state.tasks.push({id:uid(), title, due:document.getElementById('tk_due').value, done:false});
-    await saveState(); render();
+    if(!title){ toast('أدخل اسم المهمة'); return; }
+    state.tasks.push({
+      id:uid(), title, start:document.getElementById('tk_start').value, due:document.getElementById('tk_due').value,
+      trainerId:document.getElementById('tk_trainer').value, priority:document.getElementById('tk_priority').value,
+      status:document.getElementById('tk_status').value, notes:document.getElementById('tk_notes').value, done:false
+    });
+    await saveState(); toast('تمت إضافة المهمة'); render();
   };
   drawList();
 }
-async function toggleTask(id){ const t=state.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; await saveState(); render(); } }
+async function updateTaskStatus(id, status){ const t=state.tasks.find(x=>x.id===id); if(t){ t.status=status; t.done=(status==='مكتملة'); await saveState(); render(); } }
+async function toggleTask(id){ const t=state.tasks.find(x=>x.id===id); if(t){ t.done=!t.done; t.status=t.done?'مكتملة':'لم تبدأ'; await saveState(); render(); } }
 async function deleteTask(id){ state.tasks = state.tasks.filter(x=>x.id!==id); await saveState(); render(); }
+
+/* ============ Results Page (النتائج) ============ */
+function renderResultsPage(c){
+  const today = todayStr();
+  c.innerHTML = `
+  <div class="card">
+    <h2>النتائج والتقييمات</h2>
+    <div class="grid">
+      <div class="field"><label>من تاريخ</label><input id="res_from" type="date"></div>
+      <div class="field"><label>إلى تاريخ</label><input id="res_to" type="date"></div>
+      <div class="field"><label>عرض</label><select id="res_filter">
+        <option value="all">الكل</option><option value="evaluated">المقيَّمة فقط</option><option value="notEvaluated">غير المقيَّمة فقط</option>
+      </select></div>
+    </div>
+    <button class="btn btn-primary" id="res_go">عرض</button>
+    <button class="btn btn-outline" id="res_print">🖨️ طباعة</button>
+    <button class="btn btn-outline" id="res_excel">📊 استخراج إكسل</button>
+    <div id="res_result" style="margin-top:16px;"></div>
+  </div>`;
+
+  function getList(){
+    const from=document.getElementById('res_from').value, to=document.getElementById('res_to').value, f=document.getElementById('res_filter').value;
+    let list = state.orders.filter(o=>(!from||o.date>=from) && (!to||o.date<=to));
+    if(f==='evaluated') list=list.filter(o=>o.completionStatus);
+    else if(f==='notEvaluated') list=list.filter(o=>!o.completionStatus);
+    return list.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  }
+  function rowsData(list){
+    return list.map((o,i)=>{
+      const school=state.schools.find(s=>s.id===o.schoolId);
+      const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
+      const reqs = (o.adminRequests||[]).map(id=>{const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:'';}).filter(Boolean).join('، ');
+      const evalSrc = o.evaluatedBy==='trainer' ? 'مقدم الفعالية' : o.evaluatedBy==='admin' ? 'الإدارة' : '—';
+      return {i:i+1, o, school, supervisor, reqs, evalSrc};
+    });
+  }
+  function tableHtml(list){
+    if(!list.length) return `<div class="empty-state">لا توجد بيانات</div>`;
+    const rows = rowsData(list);
+    return `<table><thead><tr><th>م</th><th>أمر التكليف</th><th>عنوان الفعالية</th><th>التاريخ</th><th>الوقت</th><th>المكان</th><th>مقدم البرنامج</th><th>رقم هاتفه</th><th>الطلبات الإدارية للبرنامج</th><th>الإنجاز</th><th>من قيّم؟</th><th></th></tr></thead><tbody>
+      ${rows.map(r=>`<tr>
+        <td>${r.i}</td><td>${r.o.serial}</td><td>${escapeHtml(r.o.title)}</td><td>${r.o.date||''}</td><td>${r.o.timeFrom||''}-${r.o.timeTo||''}</td>
+        <td>${r.school?escapeHtml(r.school.name):''}</td><td>${escapeHtml(trainerNames(r.o))}</td><td>${escapeHtml(trainerPhones(r.o))}</td>
+        <td>${r.reqs||'—'}</td><td>${r.o.completionStatus||'—'}</td><td>${r.evalSrc}</td>
+        <td><button class="icon-btn" title="تقييم / تعديل" onclick="openEvaluationModal('${r.o.id}')">📝</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+  }
+  document.getElementById('res_go').onclick=()=>{ document.getElementById('res_result').innerHTML = tableHtml(getList()); };
+  document.getElementById('res_print').onclick=()=>{
+    const list=getList(); const from=document.getElementById('res_from').value, to=document.getElementById('res_to').value;
+    const rows = rowsData(list).map(r=>[r.i, r.o.serial, escapeHtml(r.o.title), r.o.date||'', (r.o.timeFrom||'')+'-'+(r.o.timeTo||''), r.school?escapeHtml(r.school.name):'', escapeHtml(trainerNames(r.o)), escapeHtml(trainerPhones(r.o)), r.reqs||'—', r.o.completionStatus||'—']);
+    doPrintDoc(buildReportDoc({
+      titleAr:'النتائج والتقييمات', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
+      headers:['م','أمر التكليف','عنوان الفعالية','التاريخ','الوقت','المكان','مقدم البرنامج','رقم هاتفه','الطلبات الإدارية للبرنامج','الإنجاز'],
+      rows
+    }), true, 'A4');
+  };
+  document.getElementById('res_excel').onclick=()=>{
+    const list=getList();
+    const rows = rowsData(list).map(r=>[r.i, r.o.serial, r.o.title, r.o.date||'', (r.o.timeFrom||'')+'-'+(r.o.timeTo||''), r.school?r.school.name:'', trainerNames(r.o), trainerPhones(r.o), r.reqs||'—', r.o.completionStatus||'—', r.evalSrc]);
+    exportToExcel('النتائج.xlsx', ['م','أمر التكليف','عنوان الفعالية','التاريخ','الوقت','المكان','مقدم البرنامج','رقم هاتفه','الطلبات الإدارية للبرنامج','الإنجاز','من قيّم؟'], rows);
+  };
+  document.getElementById('res_go').click();
+}
+
+/* ============ Distributions Page (التوزيعات) ============ */
+function renderDistributionsPage(c){
+  const today = todayStr();
+  c.innerHTML = `
+  <div class="card">
+    <h2>توزيع الفعاليات على مقدمي المبادرة</h2>
+    <div class="grid">
+      <div class="field"><label>الفترة</label><select id="dist_period"><option value="week">أسبوع</option><option value="month">شهر</option><option value="year">سنة</option></select></div>
+      <div class="field"><label>تاريخ ضمن الفترة</label><input id="dist_date" type="date" value="${today}"></div>
+    </div>
+    <button class="btn btn-primary" id="dist_go">عرض</button>
+  </div>
+  <div id="dist_result" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));"></div>`;
+
+  function periodBounds(period, dateStr){
+    const d = new Date(dateStr+'T00:00:00');
+    if(period==='week') return getWeekBounds(dateStr);
+    if(period==='month'){
+      const start = new Date(d.getFullYear(), d.getMonth(), 1);
+      const end = new Date(d.getFullYear(), d.getMonth()+1, 0);
+      return {start:start.toISOString().slice(0,10), end:end.toISOString().slice(0,10)};
+    }
+    const start = new Date(d.getFullYear(),0,1), end = new Date(d.getFullYear(),11,31);
+    return {start:start.toISOString().slice(0,10), end:end.toISOString().slice(0,10)};
+  }
+  function draw(){
+    const period=document.getElementById('dist_period').value, dateStr=document.getElementById('dist_date').value || today;
+    const {start,end} = periodBounds(period, dateStr);
+    const box = document.getElementById('dist_result');
+    box.innerHTML = state.trainers.map(t=>{
+      const list = state.orders.filter(o=>(o.trainerIds||[]).includes(t.id) && o.date>=start && o.date<=end).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      return `<div class="card" style="margin-bottom:0;">
+        <h2 style="font-size:16px;">${escapeHtml(t.name)} <span class="badge">${list.length}</span></h2>
+        ${list.length? list.map(o=>{
+          const school=state.schools.find(s=>s.id===o.schoolId);
+          return `<div style="border-bottom:1px dashed var(--line); padding:8px 0; font-size:13px; line-height:1.8;">
+            <strong>${escapeHtml(o.title)}</strong><br>
+            📅 ${o.date||''} — ⏰ ${o.timeFrom||''}-${o.timeTo||''}<br>
+            🏫 ${school?escapeHtml(school.name):''} — الإنجاز: ${o.completionStatus||'—'}
+          </div>`;
+        }).join('') : `<div class="empty-state" style="padding:16px;">لا توجد فعاليات ضمن هذه الفترة</div>`}
+      </div>`;
+    }).join('') || `<div class="empty-state">لا يوجد مقدمو فعاليات</div>`;
+  }
+  document.getElementById('dist_go').onclick=draw;
+  draw();
+}
 
 /* ============ Trainer Portal ============ */
 function renderTrainerPortalPage(c){
@@ -1588,13 +1890,19 @@ function renderSettingsPage(c){
 
   <div class="card">
     <h2>المستخدمون وحسابات الدخول <button class="plus-btn" onclick="quickAddUser()">+</button></h2>
-    <table><thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>كلمة المرور</th><th>الدور</th><th>مرتبط بمقدم فعالية</th><th></th></tr></thead><tbody>
+    <table><thead><tr><th>الاسم</th><th>اسم المستخدم</th><th>كلمة المرور</th><th>الدور</th><th>مرتبط بمقدم فعالية</th><th>الحالة</th><th></th></tr></thead><tbody>
     ${state.users.map(u=>{
       const t = state.trainers.find(x=>x.id===u.trainerId);
       const roleLabel = u.role==='admin'?'مدير نظام':u.role==='user'?'مستخدم':'مقدم فعالية';
+      const active = u.active!==false;
       return `<tr><td>${escapeHtml(u.displayName||'')}</td><td>${escapeHtml(u.username)}</td><td>${escapeHtml(u.password)}</td><td>${roleLabel}</td><td>${t?escapeHtml(t.name):'—'}</td>
-        <td><button class="icon-btn danger" onclick="deleteFromList('users','${u.id}')">🗑️</button></td></tr>`;
-    }).join('') || `<tr><td colspan="6" class="empty-state">لا يوجد مستخدمون</td></tr>`}
+        <td>${active?'<span class="badge ok">مفعّل</span>':'<span class="badge bad">معطّل</span>'}</td>
+        <td class="actions-cell">
+          <button class="icon-btn" title="تعديل" onclick="editUser('${u.id}')">✏️</button>
+          <button class="icon-btn" title="${active?'تعطيل':'تفعيل'}" onclick="toggleUserActive('${u.id}')">${active?'⏸️':'▶️'}</button>
+          <button class="icon-btn danger" title="حذف" onclick="deleteFromList('users','${u.id}')">🗑️</button>
+        </td></tr>`;
+    }).join('') || `<tr><td colspan="7" class="empty-state">لا يوجد مستخدمون</td></tr>`}
     </tbody></table>
     <div class="helper" style="margin-top:8px;">⚠️ كلمات المرور مخزّنة كنص عادي ضمن بيانات هذا الملف؛ هذا مناسب لتنظيم داخلي بسيط وليس أمانًا حقيقيًا لبيانات حساسة.</div>
   </div>
@@ -1603,19 +1911,28 @@ function renderSettingsPage(c){
   <div class="card"><h2>مسارات المبادرة <button class="plus-btn" onclick="quickAddPType()">+</button></h2>${simpleListTable(state.programTypes, 'programTypes')}</div>
   <div class="card"><h2>الطلبات الإدارية <button class="plus-btn" onclick="quickAddAdminRequest()">+</button></h2>${simpleListTable(state.adminRequestsList, 'adminRequestsList')}</div>
 
-  <div class="card"><h2>مقدمو الفعاليات <button class="plus-btn" onclick="quickAddTrainer()">+</button></h2>
+  <div class="card"><h2>مقدمو الفعاليات
+      <span><button class="btn btn-outline btn-sm" onclick="document.getElementById('trainerImportFile').click()">📥 استيراد إكسل</button>
+      <input type="file" id="trainerImportFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importTrainersExcel(this.files[0])">
+      <button class="plus-btn" onclick="quickAddTrainer()">+</button></span></h2>
+    <div class="helper" style="margin-bottom:8px;">أعمدة الملف المتوقعة: الاسم، الجوال (بهذا الترتيب، مع صف عناوين أول).</div>
     <table><thead><tr><th>الاسم</th><th>الجوال</th><th></th></tr></thead><tbody>
     ${state.trainers.map(t=>`<tr><td>${escapeHtml(t.name)}</td><td>${escapeHtml(t.phone||'')}</td>
-      <td><button class="icon-btn danger" onclick="deleteFromList('trainers','${t.id}')">🗑️</button></td></tr>`).join('') || `<tr><td colspan="3" class="empty-state">لا يوجد مقدمو فعاليات</td></tr>`}
+      <td class="actions-cell"><button class="icon-btn" title="تعديل" onclick="editTrainer('${t.id}')">✏️</button><button class="icon-btn danger" title="حذف" onclick="deleteFromList('trainers','${t.id}')">🗑️</button></td></tr>`).join('') || `<tr><td colspan="3" class="empty-state">لا يوجد مقدمو فعاليات</td></tr>`}
     </tbody></table>
   </div>
 
-  <div class="card"><h2>المدارس والمشرفون <button class="plus-btn" onclick="quickAddSchoolSettings()">+</button></h2>
+  <div class="card"><h2>المدارس والمشرفون
+      <span><button class="btn btn-outline btn-sm" onclick="document.getElementById('schoolImportFile').click()">📥 استيراد إكسل</button>
+      <input type="file" id="schoolImportFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importSchoolsExcel(this.files[0])">
+      <button class="plus-btn" onclick="quickAddSchoolSettings()">+</button></span></h2>
+    <div class="helper" style="margin-bottom:8px;">أعمدة الملف المتوقعة: اسم المدرسة، المرحلة، اسم المشرف، جوال المشرف، إيميل المشرف.</div>
     ${state.schools.map(s=>`
       <div style="border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
           <strong>${escapeHtml(s.name)} <span class="badge">${escapeHtml(s.level)}</span></strong>
-          <div><button class="icon-btn" title="إضافة مشرف" onclick="quickAddSupervisorSettings('${s.id}')">➕</button>
+          <div><button class="icon-btn" title="تعديل" onclick="editSchool('${s.id}')">✏️</button>
+          <button class="icon-btn" title="إضافة مشرف" onclick="quickAddSupervisorSettings('${s.id}')">➕</button>
           <button class="icon-btn danger" title="حذف المدرسة" onclick="deleteFromList('schools','${s.id}')">🗑️</button></div>
         </div>
         <table style="margin-top:8px;"><thead><tr><th>المشرف</th><th>الجوال</th><th>الإيميل</th><th></th></tr></thead><tbody>
@@ -1638,8 +1955,82 @@ function renderSettingsPage(c){
 function simpleListTable(list, key){
   if(!list.length) return `<div class="empty-state">لا توجد عناصر</div>`;
   return `<table><thead><tr><th>الاسم</th><th></th></tr></thead><tbody>
-    ${list.map(i=>`<tr><td>${escapeHtml(i.name)}</td><td><button class="icon-btn danger" onclick="deleteFromList('${key}','${i.id}')">🗑️</button></td></tr>`).join('')}
+    ${list.map(i=>`<tr><td>${escapeHtml(i.name)}</td><td class="actions-cell"><button class="icon-btn" title="تعديل" onclick="editListItem('${key}','${i.id}')">✏️</button><button class="icon-btn danger" title="حذف" onclick="deleteFromList('${key}','${i.id}')">🗑️</button></td></tr>`).join('')}
   </tbody></table>`;
+}
+function editListItem(key, id){
+  const item = state[key].find(x=>x.id===id); if(!item) return;
+  openModal('تعديل: '+item.name, [{name:'name', label:'الاسم', required:true}], async v=>{
+    item.name = v.name; await saveState(); toast('تم الحفظ'); render();
+  });
+  setTimeout(()=>{ const f=document.getElementById('mf_name'); if(f) f.value=item.name; },0);
+}
+function editTrainer(id){
+  const t = state.trainers.find(x=>x.id===id); if(!t) return;
+  openModal('تعديل مقدم مبادرة: '+t.name, [{name:'name', label:'الاسم', required:true},{name:'phone', label:'رقم الجوال'}], async v=>{
+    t.name=v.name; t.phone=v.phone; await saveState(); toast('تم الحفظ'); render();
+  });
+  setTimeout(()=>{ const f=document.getElementById('mf_name'); if(f) f.value=t.name; const p=document.getElementById('mf_phone'); if(p) p.value=t.phone||''; },0);
+}
+function editSchool(id){
+  const s = state.schools.find(x=>x.id===id); if(!s) return;
+  openModal('تعديل مدرسة: '+s.name, [
+    {name:'name', label:'اسم المدرسة', required:true},
+    {name:'level', label:'المرحلة الدراسية', type:'select', options:[
+      {value:'ابتدائي',label:'ابتدائي'},{value:'إعدادي',label:'إعدادي'},{value:'ثانوي',label:'ثانوي'},{value:'مركز خاص',label:'مركز خاص'},{value:'غير ذلك',label:'غير ذلك'}]},
+  ], async v=>{ s.name=v.name; s.level=v.level; await saveState(); toast('تم الحفظ'); render(); });
+  setTimeout(()=>{ const f=document.getElementById('mf_name'); if(f) f.value=s.name; const l=document.getElementById('mf_level'); if(l) l.value=s.level; },0);
+}
+
+/* ---- Excel import (SheetJS) ---- */
+function readExcelFile(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      try{
+        const wb = XLSX.read(e.target.result, {type:'array'});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, {header:1, defval:''});
+        resolve(rows);
+      }catch(err){ reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+async function importTrainersExcel(file){
+  if(!file) return;
+  try{
+    const rows = await readExcelFile(file);
+    let added=0;
+    rows.slice(1).forEach(r=>{
+      const name=(r[0]||'').toString().trim(); const phone=(r[1]||'').toString().trim();
+      if(name){ state.trainers.push({id:uid(), name, phone}); added++; }
+    });
+    await saveState(); toast(`تم استيراد ${added} مقدم فعالية`); render();
+  }catch(e){ toast('تعذّرت قراءة الملف، تأكد من صيغته'); console.error(e); }
+}
+async function importSchoolsExcel(file){
+  if(!file) return;
+  try{
+    const rows = await readExcelFile(file);
+    let added=0;
+    rows.slice(1).forEach(r=>{
+      const name=(r[0]||'').toString().trim(); const level=(r[1]||'غير ذلك').toString().trim();
+      const svName=(r[2]||'').toString().trim(); const svPhone=(r[3]||'').toString().trim(); const svEmail=(r[4]||'').toString().trim();
+      if(!name) return;
+      let sch = state.schools.find(s=>s.name===name);
+      if(!sch){ sch={id:uid(), name, level, supervisors:[]}; state.schools.push(sch); added++; }
+      if(svName) sch.supervisors.push({id:uid(), name:svName, phone:svPhone, email:svEmail});
+    });
+    await saveState(); toast(`تم استيراد ${added} مدرسة`); render();
+  }catch(e){ toast('تعذّرت قراءة الملف، تأكد من صيغته'); console.error(e); }
+}
+function exportToExcel(filename, headers, rows){
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'بيانات');
+  XLSX.writeFile(wb, filename);
 }
 async function deleteFromList(key, id){
   if(!confirm('هل تريد الحذف؟')) return;
@@ -1666,7 +2057,7 @@ async function acceptTrainerRequest(id){
     title:r.title, fieldId: r.fieldId || (state.fields[0]?state.fields[0].id:''), participantsCount:r.participantsCount||'',
     date:r.date, timeFrom:r.timeFrom, timeTo:r.timeTo, programTypeId: r.programTypeId || (state.programTypes[0]?state.programTypes[0].id:''),
     schoolId:r.schoolId, supervisorId:'', trainerIds:[r.trainerId], requesterNote:r.note||'', adminNote:'مضاف من ترشيح مقدم فعالية',
-    adminRequests:[], completionStatus:'', notDoneReason:'', supervisorRating:0, schoolRating:0, studentsRating:0, recommendSchool:''
+    adminRequests:[], completionStatus:'', notDoneReason:'', supervisorRating:0, schoolRating:0, studentsRating:0, recommendSchool:'', evaluatedBy:'', status:'active'
   };
   state.orders.push(order);
   state.notifications.push({id:uid(), trainerId:r.trainerId, message:`تم قبول طلبك: ${r.title} — أضيف إلى برامجك المستقبلية.`, read:false, createdAt:Date.now()});
