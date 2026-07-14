@@ -40,8 +40,8 @@
   header.topbar h1{font-family:var(--font-head); font-style:italic; font-weight:800; color:var(--maroon-800); font-size:21px; margin:0;}
   header.topbar .sub{font-size:12.5px;color:#7a5560;margin-top:3px;}
   .content{padding:24px 26px 60px; flex:1;}
-  .card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:20px; margin-bottom:20px;}
-  .card h2{font-family:var(--font-head); font-style:italic; color:var(--maroon-800); font-size:19px; margin:0 0 14px; padding-bottom:10px; border-bottom:2px solid var(--maroon-100); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:0 20px 20px; margin-bottom:20px; overflow:hidden;}
+  .card h2{font-family:var(--font-body); font-weight:900; color:#fff; background:#12335c; font-size:17px; margin:0 -20px 16px -20px; padding:14px 20px; border-radius:0; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; border-bottom:none;}
   .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; margin-bottom:14px;}
   .field{display:flex; flex-direction:column; gap:6px;}
   .field label{font-size:14px; font-weight:700; color:var(--maroon-800);}
@@ -79,10 +79,10 @@
   .presenter-chip input{width:auto; accent-color:var(--maroon-800);}
   .presenter-chip:has(input:checked){background:var(--maroon-800); border-color:var(--maroon-800); color:#fff; font-weight:800;}
   .presenter-chip:has(input:disabled){opacity:.45;}
-  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px;}
-  .stat-box{background:#fff; border:2px solid var(--maroon-800); border-radius:12px; padding:16px; text-align:center;}
-  .stat-box .num{font-size:26px; font-weight:800; font-family:var(--font-head); font-style:italic; color:var(--maroon-800);}
-  .stat-box .lbl{font-size:12.5px; color:#7a5560; margin-top:4px;}
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px;}
+  .stat-box{background:#fff; border:1.5px solid var(--maroon-800); border-radius:10px; padding:10px; text-align:center;}
+  .stat-box .num{font-size:19px; font-weight:800; font-family:var(--font-head); font-style:italic; color:var(--maroon-800);}
+  .stat-box .lbl{font-size:11px; color:#7a5560; margin-top:2px;}
   .tabs{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; background:var(--maroon-50); padding:8px; border-radius:12px;}
   .tab-btn{all:unset; cursor:pointer; padding:11px 20px; font-size:17px; font-weight:700; color:#8a5a66; border-radius:10px; transition:.15s;}
   .tab-btn:hover{background:var(--maroon-50);}
@@ -625,13 +625,18 @@ function renderOrderPage(c){
   const evaluatedThisWeek = thisWeek.filter(o=>o.completionStatus);
   const notEvaluatedToDate = activeOrders.filter(o=>o.date && o.date<today && !o.completionStatus);
   c.innerHTML = `
-  <div class="stat-grid" style="margin-bottom:18px;">
+  <div class="tabs">
+    <button class="tab-btn ${orderSubTab==='new'?'active':''}" id="tabNew">فعاليات ومبادرات جديدة</button>
+    <button class="tab-btn ${orderSubTab==='list'?'active':''}" id="tabList">كل الطلبات</button>
+  </div>
+  <div id="orderSubContent"></div>
+  <div class="stat-grid" style="margin:18px 0;">
     <div class="stat-box"><div class="num">${thisWeek.length}</div><div class="lbl">عدد الفعاليات خلال الأسبوع</div></div>
     <div class="stat-box"><div class="num">${evaluatedThisWeek.length}</div><div class="lbl">فعاليات قُيّمت خلال الأسبوع</div></div>
     <div class="stat-box"><div class="num">${notEvaluatedToDate.length}</div><div class="lbl">فعاليات لم تُقيَّم حتى تاريخه</div></div>
   </div>
   <div class="card">
-    <h2>توزيع فعاليات مقدمي المبادرة هذا الأسبوع <span class="helper">(${wkStart} إلى ${wkEnd} — تتحدث تلقائيًا كل أسبوع)</span></h2>
+    <h2>توزيع فعاليات مقدمي المبادرة هذا الأسبوع <span class="helper" style="color:#cfe0f2;">(${wkStart} إلى ${wkEnd} — تتحدث تلقائيًا كل أسبوع)</span></h2>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
       ${state.trainers.map(t=>{
         const list = thisWeek.filter(o=>(o.trainerIds||[]).includes(t.id));
@@ -641,12 +646,7 @@ function renderOrderPage(c){
           <div style="margin-top:6px;font-size:13px;color:#7a5560;">${hrs.toFixed(1)} ساعة</div></div>`;
       }).join('') || `<div class="empty-state">لا يوجد مقدمو فعاليات</div>`}
     </div>
-  </div>
-  <div class="tabs">
-    <button class="tab-btn ${orderSubTab==='new'?'active':''}" id="tabNew">فعاليات ومبادرات جديدة</button>
-    <button class="tab-btn ${orderSubTab==='list'?'active':''}" id="tabList">كل الطلبات</button>
-  </div>
-  <div id="orderSubContent"></div>`;
+  </div>`;
   document.getElementById('tabNew').onclick=()=>{orderSubTab='new'; editingOrderId=null; render();};
   document.getElementById('tabList').onclick=()=>{orderSubTab='list'; render();};
   const sub = document.getElementById('orderSubContent');
@@ -697,8 +697,9 @@ function renderOrderForm(sub){
     </div>
 
     <div class="grid" style="grid-template-columns:1.6fr 1.4fr 0.8fr;">
-      <div class="field"><label>مكان المبادرة</label>
-        <div class="row-inline"><select id="f_school">${state.schools.map(s=>`<option value="${s.id}" ${editing&&editing.schoolId===s.id?'selected':''}>${escapeHtml(s.name)} — ${escapeHtml(s.level)}</option>`).join('')}</select>
+      <div class="field"><label>مكان المبادرة (${state.schools.length} مدرسة)</label>
+        <input id="f_schoolSearch" placeholder="🔎 اكتب للبحث عن المدرسة..." style="margin-bottom:6px;">
+        <div class="row-inline"><select id="f_school" size="1">${state.schools.map(s=>`<option value="${s.id}" ${editing&&editing.schoolId===s.id?'selected':''}>${escapeHtml(s.name)} — ${escapeHtml(s.level)}</option>`).join('')}</select>
         <button class="plus-btn" title="إضافة مدرسة" onclick="quickAddSchool()">+</button></div>
       </div>
       <div class="field"><label>المشرف</label>
@@ -776,6 +777,11 @@ function renderOrderForm(sub){
   document.getElementById('f_supervisor').addEventListener('change', updateSupervisorInfo);
   ['f_date','f_timeFrom','f_timeTo'].forEach(id=>document.getElementById(id).addEventListener('change', refreshTrainerChips));
   refreshSupervisors(); refreshTrainerChips();
+  document.getElementById('f_schoolSearch').addEventListener('input', (e)=>{
+    const q = e.target.value.trim();
+    const sel = document.getElementById('f_school');
+    Array.from(sel.options).forEach(opt=>{ opt.style.display = (!q || opt.textContent.includes(q)) ? '' : 'none'; });
+  });
 
   const reqBox = document.getElementById('adminReqList');
   function renderReqChips(){
@@ -1074,7 +1080,6 @@ function buildOrderPrintDoc(o, opts, copyLabel){
   const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
   const ptype = state.programTypes.find(p=>p.id===o.programTypeId);
   const reqs = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean);
-  const statusColor = o.completionStatus==='تم' ? '#0a7c4e' : o.completionStatus==='لم يتم' ? '#c0392b' : '#888';
   let rows = [
     ['عنوان المبادرة', o.title||''],
     ['مجال المبادرة', field?field.name:''],
@@ -1093,9 +1098,10 @@ function buildOrderPrintDoc(o, opts, copyLabel){
   }
   let html = printDocOpen(PRINT_THEME);
   html += printDocHeaderBlock();
-  html += `<div class="title-blk"><div class="title-ar">أمر تكليف رقم ${o.serial} <span style="direction:ltr;display:inline-block;">(No. ${o.serial})</span></div><div class="title-sub">${escapeHtml(copyLabel)} — تاريخ الطباعة: ${todayStr()}</div></div>`;
+  html += `<div style="text-align:center;margin-bottom:6mm;"><div class="title-blk" style="display:inline-block;">
+    <div class="title-ar" style="white-space:nowrap;">أمر تكليف رقم ${o.serial} <span style="direction:ltr;display:inline-block;">(No. ${o.serial})</span></div>
+  </div></div>`;
   html += rows.map(([label,val])=>`<div class="field-row"><span class="f-ar">${escapeHtml(label)} :</span><span class="f-val">${escapeHtml(val)}</span></div>`).join('');
-  html += `<div class="field-row"><span class="f-ar">حالة الإنجاز :</span><span class="f-val" style="color:${statusColor}">${o.completionStatus||'لم تنجز'}${o.completionStatus==='لم يتم'&&o.notDoneReason?(' — السبب: '+escapeHtml(o.notDoneReason)):''}</span></div>`;
   html += printDocFooter();
   html += printDocClose();
   return html;
@@ -1720,6 +1726,7 @@ function renderTrainerPortalPage(c){
   const todaysEvents = myOrders.filter(o=>o.date===today);
   const notEvaluated = myOrders.filter(o=>o.date && o.date<today && !o.completionStatus);
   const myTasks = state.tasks.filter(t=>t.trainerId===loggedTrainerId);
+  const myTasksPending = myTasks.filter(t=>t.status!=='مكتملة').length;
   const myNotifs = state.notifications.filter(n=>n.trainerId===loggedTrainerId).sort((a,b)=>b.createdAt-a.createdAt);
   const myRequests = state.trainerRequests.filter(r=>r.trainerId===loggedTrainerId).sort((a,b)=>b.createdAt-a.createdAt);
   const nearUpcoming = upcoming.filter(o=>{ const d=daysDiff(today,o.date); return d>=0 && d<=2; });
@@ -1747,8 +1754,8 @@ function renderTrainerPortalPage(c){
     <button class="tab-btn ${trainerPortalTab==='daily'?'active':''}" id="tp_daily">فعاليات اليومية</button>
     <button class="tab-btn ${trainerPortalTab==='notEvaluated'?'active':''}" id="tp_notEval">غير مقيَّمة (${notEvaluated.length})</button>
     <button class="tab-btn ${trainerPortalTab==='reports'?'active':''}" id="tp_reports">تقاريري</button>
-    <button class="tab-btn ${trainerPortalTab==='tasks'?'active':''}" id="tp_tasks">مهامي (${myTasks.length})</button>
-    <button class="tab-btn ${trainerPortalTab==='newreq'?'active':''}" id="tp_new">تقديم طلب / ترشيح</button>
+    <button class="tab-btn ${trainerPortalTab==='tasks'?'active':''}" id="tp_tasks">مهامي (${myTasksPending})</button>
+    <button class="tab-btn ${trainerPortalTab==='newreq'?'active':''}" id="tp_new">تقديم طلب / ترشيح${myRequests.filter(r=>r.status==='pending').length?` (${myRequests.filter(r=>r.status==='pending').length})`:''}</button>
   </div>
   <div id="tp_content"></div>`;
   if(currentRole!=='trainer'){ document.getElementById('tp_logout').onclick=()=>{ loggedTrainerId=null; render(); }; }
@@ -1873,6 +1880,10 @@ function renderTrainerPortalPage(c){
         <div class="field"><label>المدرسة المقترحة</label><select id="tr_school">${state.schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select></div>
         <div class="field"><label>عدد المستهدفين</label><input id="tr_count" type="number" min="0"></div>
       </div>
+      <div class="field" style="margin-bottom:14px;">
+        <label>الطلبات الإدارية للبرنامج</label>
+        <div class="checkbox-list">${state.adminRequestsList.map(r=>`<label class="checkbox-chip"><input type="checkbox" value="${r.id}"> ${escapeHtml(r.name)}</label>`).join('') || '<span class="helper">لا توجد طلبات إدارية معرّفة</span>'}</div>
+      </div>
       <div class="field" style="margin-bottom:14px;"><label>ملاحظات</label><textarea id="tr_note"></textarea></div>
       <button class="btn btn-primary" id="tr_submit">إرسال الطلب</button>
     </div>
@@ -1891,9 +1902,10 @@ function renderTrainerPortalPage(c){
       if(!title || !date){ toast('يرجى إدخال عنوان المبادرة والتاريخ على الأقل'); return; }
       const conflict = trainerConflictSingle(loggedTrainerId, date, timeFrom, timeTo, null);
       if(conflict){ toast('لا يمكن تقديم الطلب: لديك فعالية أخرى مجدولة في نفس اليوم بوقت قريب.'); return; }
+      const adminRequests = Array.from(box.querySelectorAll('.checkbox-list input:checked')).map(i=>i.value);
       state.trainerRequests.push({ id:uid(), trainerId:loggedTrainerId, title, schoolId:document.getElementById('tr_school').value,
         fieldId:document.getElementById('tr_field').value, programTypeId:document.getElementById('tr_ptype').value, participantsCount:document.getElementById('tr_count').value,
-        date, timeFrom, timeTo, note:document.getElementById('tr_note').value, status:'pending', createdAt:Date.now() });
+        date, timeFrom, timeTo, note:document.getElementById('tr_note').value, adminRequests, status:'pending', createdAt:Date.now() });
       await saveState(); toast('تم إرسال طلبك بانتظار موافقة مدير النظام'); render();
     };
   }
@@ -2285,7 +2297,7 @@ async function acceptTrainerRequest(id){
     title:r.title, fieldId: r.fieldId || (state.fields[0]?state.fields[0].id:''), participantsCount:r.participantsCount||'',
     date:r.date, timeFrom:r.timeFrom, timeTo:r.timeTo, programTypeId: r.programTypeId || (state.programTypes[0]?state.programTypes[0].id:''),
     schoolId:r.schoolId, supervisorId:'', trainerIds:[r.trainerId], requesterNote:r.note||'', adminNote:'مضاف من ترشيح مقدم فعالية',
-    adminRequests:[], completionStatus:'', notDoneReason:'', supervisorRating:0, schoolRating:0, studentsRating:0, recommendSchool:'', evaluatedBy:'', status:'active'
+    adminRequests:r.adminRequests||[], completionStatus:'', notDoneReason:'', supervisorRating:0, schoolRating:0, studentsRating:0, recommendSchool:'', evaluatedBy:'', status:'active'
   };
   state.orders.push(order);
   state.notifications.push({id:uid(), trainerId:r.trainerId, message:`تم قبول طلبك: ${r.title} — أضيف إلى برامجك المستقبلية.`, read:false, createdAt:Date.now()});
