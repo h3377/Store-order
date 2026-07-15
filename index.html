@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
   :root{
     --maroon-950:#6d0f2b; --maroon-900:#6d0f2b; --maroon-800:#8A1538; --maroon-700:#a83c5b; --maroon-600:#a83c5b;
@@ -590,6 +591,7 @@ function ordersTableHtml(list){
         <button class="icon-btn" title="تقييم وإنجاز" onclick="openEvaluationModal('${o.id}')">📝</button>
         <button class="icon-btn" title="ترحيل / تأجيل" onclick="openPostponeModal('${o.id}')">⏩</button>
         <button class="icon-btn" title="${o.status==='cancelled'?'إلغاء الإلغاء':'إلغاء الفعالية'}" onclick="toggleCancelOrder('${o.id}')">${o.status==='cancelled'?'↩️':'❌'}</button>
+        <button class="icon-btn" title="رمز QR" onclick="openQrCodeModal('${o.id}')">🔲</button>
         <button class="icon-btn" title="طباعة نسخة الجهة الطالبة" onclick="printOrderSchoolCopy('${o.id}')">🏫🖨️</button>
         <button class="icon-btn" title="طباعة نسخة الإدارة (كاملة)" onclick="printOrderAdminCopy('${o.id}')">🏢🖨️</button>
         <button class="icon-btn" title="إرسال بالبريد" onclick="emailOrder('${o.id}')">✉️</button>
@@ -775,7 +777,17 @@ function renderOrderForm(sub){
   }
   document.getElementById('f_school').addEventListener('change', refreshSupervisors);
   document.getElementById('f_supervisor').addEventListener('change', updateSupervisorInfo);
-  ['f_date','f_timeFrom','f_timeTo'].forEach(id=>document.getElementById(id).addEventListener('change', refreshTrainerChips));
+  ['f_date','f_timeTo'].forEach(id=>document.getElementById(id).addEventListener('change', refreshTrainerChips));
+  document.getElementById('f_timeFrom').addEventListener('change', (e)=>{
+    const v = e.target.value;
+    if(v){
+      const [h,m] = v.split(':').map(Number);
+      const d = new Date(2000,0,1,h,m); d.setHours(d.getHours()+1);
+      const hh = String(d.getHours()).padStart(2,'0'), mm = String(d.getMinutes()).padStart(2,'0');
+      document.getElementById('f_timeTo').value = `${hh}:${mm}`;
+    }
+    refreshTrainerChips();
+  });
   refreshSupervisors(); refreshTrainerChips();
   document.getElementById('f_schoolSearch').addEventListener('input', (e)=>{
     const q = e.target.value.trim();
@@ -982,8 +994,9 @@ function quickAddSchool(){
     {name:'name', label:'اسم المدرسة', required:true},
     {name:'level', label:'المرحلة الدراسية', type:'select', options:[
       {value:'ابتدائي',label:'ابتدائي'},{value:'إعدادي',label:'إعدادي'},{value:'ثانوي',label:'ثانوي'},{value:'مركز خاص',label:'مركز خاص'},{value:'غير ذلك',label:'غير ذلك'}]},
+    {name:'email', label:'البريد الإلكتروني للمدرسة (اختياري)'},
   ], async v=>{
-    const item={id:uid(), name:v.name, level:v.level, supervisors:[]};
+    const item={id:uid(), name:v.name, level:v.level, email:v.email||'', supervisors:[]};
     state.schools.push(item); await saveState(); render();
     setTimeout(()=>{ const s=document.getElementById('f_school'); if(s){ s.value=item.id; s.dispatchEvent(new Event('change')); } },0);
   });
@@ -1073,13 +1086,24 @@ function printDocFooter(){
 function printDocClose(){ return `</div></body></html>`; }
 
 /* ---- single-document (order) print: field-row style ---- */
-function buildOrderPrintDoc(o, opts, copyLabel){
+async function generateQRDataUrl(text){
+  try{
+    if(typeof QRCode==='undefined') return '';
+    return await QRCode.toDataURL(text, {width:220, margin:1, color:{dark:'#000000', light:'#ffffff'}});
+  }catch(e){ console.error('QR generation error', e); return ''; }
+}
+function qrTextForOrder(o){
+  const school = state.schools.find(s=>s.id===o.schoolId);
+  return `أمر تكليف رقم ${o.serial}\n${o.title}\nالتاريخ: ${o.date||''} ${o.timeFrom||''}\nالمكان: ${school?school.name:''}`;
+}
+async function buildOrderPrintDoc(o, opts, copyLabel){
   opts = opts||{};
   const field = state.fields.find(f=>f.id===o.fieldId);
   const school = state.schools.find(s=>s.id===o.schoolId);
   const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
   const ptype = state.programTypes.find(p=>p.id===o.programTypeId);
   const reqs = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean);
+  const qrUrl = await generateQRDataUrl(qrTextForOrder(o));
   let rows = [
     ['عنوان المبادرة', o.title||''],
     ['مجال المبادرة', field?field.name:''],
@@ -1098,21 +1122,38 @@ function buildOrderPrintDoc(o, opts, copyLabel){
   }
   let html = printDocOpen(PRINT_THEME);
   html += printDocHeaderBlock();
-  html += `<div style="text-align:center;margin-bottom:6mm;"><div class="title-blk" style="display:inline-block;">
-    <div class="title-ar" style="white-space:nowrap;">أمر تكليف رقم ${o.serial} <span style="direction:ltr;display:inline-block;">(No. ${o.serial})</span></div>
-  </div></div>`;
+  html += `<div style="display:flex;align-items:center;justify-content:center;gap:10mm;margin-bottom:6mm;flex-wrap:wrap;">
+    <div class="title-blk" style="display:inline-block;">
+      <div class="title-ar" style="white-space:nowrap;">أمر تكليف رقم ${o.serial} <span style="direction:ltr;display:inline-block;">(No. ${o.serial})</span></div>
+    </div>
+    ${qrUrl?`<img src="${qrUrl}" style="width:26mm;height:26mm;">`:''}
+  </div>`;
   html += rows.map(([label,val])=>`<div class="field-row"><span class="f-ar">${escapeHtml(label)} :</span><span class="f-val">${escapeHtml(val)}</span></div>`).join('');
   html += printDocFooter();
   html += printDocClose();
   return html;
 }
-function printOrderSchoolCopy(id){
+async function printOrderSchoolCopy(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
-  doPrintDoc(buildOrderPrintDoc(o, {showAdminNote:false}, 'نسخة الجهة الطالبة'), false, 'A4');
+  const html = await buildOrderPrintDoc(o, {showAdminNote:false}, 'نسخة الجهة الطالبة');
+  doPrintDoc(html, false, 'A4');
 }
-function printOrderAdminCopy(id){
+async function printOrderAdminCopy(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
-  doPrintDoc(buildOrderPrintDoc(o, {}, 'نسخة الإدارة (كاملة)'), false, 'A4');
+  const html = await buildOrderPrintDoc(o, {}, 'نسخة الإدارة (كاملة)');
+  doPrintDoc(html, false, 'A4');
+}
+async function openQrCodeModal(id){
+  const o = state.orders.find(x=>x.id===id); if(!o) return;
+  const overlay=document.getElementById('modalOverlay'); const box=document.getElementById('modalBox');
+  box.innerHTML = `<h3>رمز QR — أمر تكليف رقم ${o.serial}</h3><div style="text-align:center;color:#999;">جارٍ التوليد...</div>`;
+  overlay.classList.add('open');
+  const qrUrl = await generateQRDataUrl(qrTextForOrder(o));
+  box.innerHTML = `<h3>رمز QR — أمر تكليف رقم ${o.serial}</h3>
+    <div style="text-align:center;">${qrUrl?`<img src="${qrUrl}" style="width:220px;height:220px;">`:'<div class="empty-state">تعذر توليد الرمز</div>'}</div>
+    <div class="modal-actions"><button class="btn btn-outline" id="qr_close">إغلاق</button></div>`;
+  const closeBtn = document.getElementById('qr_close');
+  if(closeBtn) closeBtn.onclick=()=>overlay.classList.remove('open');
 }
 function emailOrder(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
@@ -2115,17 +2156,26 @@ function renderSettingsPage(c){
       <input type="file" id="schoolImportFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importSchoolsExcel(this.files[0])">
       <button class="plus-btn" onclick="quickAddSchoolSettings()">+</button></span></h2>
     <div class="helper" style="margin-bottom:8px;">أعمدة الملف المتوقعة: اسم المدرسة، المرحلة، اسم المشرف، جوال المشرف، إيميل المشرف (اسم المشرف اختياري — سيُستورد الهاتف/الإيميل حتى لو كان فارغًا).</div>
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; padding:8px; background:var(--maroon-50); border-radius:8px;">
+      <label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="checkbox" id="schoolSelectAll" onchange="document.querySelectorAll('.schoolBulkChk').forEach(c=>c.checked=this.checked)"> تحديد الكل</label>
+      <button class="btn btn-outline btn-sm" onclick="bulkDeleteSchools()">🗑️ حذف المدارس المحددة</button>
+    </div>
     ${state.schools.map(s=>`
       <div style="border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <strong>${escapeHtml(s.name)} <span class="badge">${escapeHtml(s.level)}</span></strong>
+          <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="schoolBulkChk" value="${s.id}"> <strong>${escapeHtml(s.name)}</strong> <span class="badge">${escapeHtml(s.level)}</span></label>
           <div><button class="icon-btn" title="تعديل" onclick="editSchool('${s.id}')">✏️</button>
           <button class="icon-btn" title="إضافة مشرف" onclick="quickAddSupervisorSettings('${s.id}')">➕</button>
           <button class="icon-btn danger" title="حذف المدرسة" onclick="deleteFromList('schools','${s.id}')">🗑️</button></div>
         </div>
-        <table style="margin-top:8px;"><thead><tr><th>المشرف</th><th>الجوال</th><th>الإيميل</th><th></th></tr></thead><tbody>
-        ${s.supervisors.map(sv=>`<tr><td>${escapeHtml(sv.name)}</td><td>${escapeHtml(sv.phone||'')}</td><td>${escapeHtml(sv.email||'')}</td>
-          <td><button class="icon-btn danger" onclick="deleteSupervisor('${s.id}','${sv.id}')">🗑️</button></td></tr>`).join('') || `<tr><td colspan="4" class="helper">لا يوجد مشرفون</td></tr>`}
+        ${s.email?`<div class="helper" style="margin-top:4px;">📧 بريد المدرسة: ${escapeHtml(s.email)}</div>`:''}
+        <div style="display:flex; align-items:center; gap:10px; margin-top:8px;">
+          <label style="display:flex; align-items:center; gap:6px; font-size:12px;"><input type="checkbox" onchange="document.querySelectorAll('.svChk_${s.id}').forEach(c=>c.checked=this.checked)"> تحديد كل المشرفين</label>
+          <button class="btn btn-outline btn-sm" onclick="bulkDeleteSupervisors('${s.id}')">🗑️ حذف المشرفين المحددين</button>
+        </div>
+        <table style="margin-top:8px;"><thead><tr><th></th><th>المشرف</th><th>الجوال</th><th>الإيميل</th><th></th></tr></thead><tbody>
+        ${s.supervisors.map(sv=>`<tr><td><input type="checkbox" class="svChk_${s.id}" value="${sv.id}"></td><td>${escapeHtml(sv.name)}</td><td>${escapeHtml(sv.phone||'')}</td><td>${escapeHtml(sv.email||'')}</td>
+          <td><button class="icon-btn danger" onclick="deleteSupervisor('${s.id}','${sv.id}')">🗑️</button></td></tr>`).join('') || `<tr><td colspan="5" class="helper">لا يوجد مشرفون</td></tr>`}
         </tbody></table>
       </div>`).join('') || `<div class="empty-state">لا توجد مدارس</div>`}
   </div>`;
@@ -2215,8 +2265,9 @@ function editSchool(id){
     {name:'name', label:'اسم المدرسة', required:true},
     {name:'level', label:'المرحلة الدراسية', type:'select', options:[
       {value:'ابتدائي',label:'ابتدائي'},{value:'إعدادي',label:'إعدادي'},{value:'ثانوي',label:'ثانوي'},{value:'مركز خاص',label:'مركز خاص'},{value:'غير ذلك',label:'غير ذلك'}]},
-  ], async v=>{ s.name=v.name; s.level=v.level; await saveState(); toast('تم الحفظ'); render(); });
-  setTimeout(()=>{ const f=document.getElementById('mf_name'); if(f) f.value=s.name; const l=document.getElementById('mf_level'); if(l) l.value=s.level; },0);
+    {name:'email', label:'البريد الإلكتروني للمدرسة (اختياري)'},
+  ], async v=>{ s.name=v.name; s.level=v.level; s.email=v.email||''; await saveState(); toast('تم الحفظ'); render(); });
+  setTimeout(()=>{ const f=document.getElementById('mf_name'); if(f) f.value=s.name; const l=document.getElementById('mf_level'); if(l) l.value=s.level; const em=document.getElementById('mf_email'); if(em) em.value=s.email||''; },0);
 }
 
 /* ---- Excel import (SheetJS) ---- */
@@ -2281,6 +2332,20 @@ async function deleteSupervisor(schoolId, svId){
   if(!confirm('هل تريد حذف المشرف؟')) return;
   const sch=state.schools.find(s=>s.id===schoolId);
   if(sch){ sch.supervisors = sch.supervisors.filter(x=>x.id!==svId); await saveState(); render(); }
+}
+async function bulkDeleteSchools(){
+  const ids = Array.from(document.querySelectorAll('.schoolBulkChk:checked')).map(c=>c.value);
+  if(!ids.length){ toast('لم تحدد أي مدرسة'); return; }
+  if(!confirm(`هل تريد حذف ${ids.length} مدرسة محددة؟`)) return;
+  state.schools = state.schools.filter(s=>!ids.includes(s.id));
+  await saveState(); toast('تم حذف المدارس المحددة'); render();
+}
+async function bulkDeleteSupervisors(schoolId){
+  const ids = Array.from(document.querySelectorAll(`.svChk_${schoolId}:checked`)).map(c=>c.value);
+  if(!ids.length){ toast('لم تحدد أي مشرف'); return; }
+  if(!confirm(`هل تريد حذف ${ids.length} مشرف محدد؟`)) return;
+  const sch = state.schools.find(s=>s.id===schoolId);
+  if(sch){ sch.supervisors = sch.supervisors.filter(sv=>!ids.includes(sv.id)); await saveState(); toast('تم حذف المشرفين المحددين'); render(); }
 }
 function quickAddSchoolSettings(){ quickAddSchool(); }
 function quickAddSupervisorSettings(schoolId){
