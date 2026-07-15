@@ -605,8 +605,8 @@ function ordersTableHtmlPrint(list){
   return `<table class="print-table"><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>المدرسة</th><th>مقدم المبادرة</th><th>الإنجاز</th></tr></thead><tbody>
   ${list.map(o=>{
     const school = state.schools.find(s=>s.id===o.schoolId);
-    return `<tr><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td>
-      <td>${school?escapeHtml(school.name):''}</td><td>${escapeHtml(trainerNames(o))}</td><td>${o.completionStatus||'لم تنجز'}</td></tr>`;
+    return `<tr><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${fullDateStr(o.date)}</td><td>${escapeHtml(fullTimeRange(o.timeFrom,o.timeTo))}</td>
+      <td>${school?escapeHtml(school.name):''}</td><td>${trainerBoxesForOrder(o)}</td><td>${o.completionStatus||'لم تنجز'}</td></tr>`;
   }).join('')}</tbody></table>`;
 }
 
@@ -1046,7 +1046,7 @@ function printDocOpen(theme){
   <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Tajawal',Arial;direction:rtl;background:#f5f7fa;padding:10mm;color:#222;font-size:12pt}
-  .doc{max-width:277mm;margin:0 auto;padding:10mm 14mm;border:1.5px solid ${theme};border-radius:4px;background:#fff;box-sizing:border-box}
+  .doc{width:100%;max-width:100%;margin:0 auto;padding:10mm 14mm;border:1.5px solid ${theme};border-radius:4px;background:#fff;box-sizing:border-box}
   .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid ${theme};padding-bottom:5mm;margin-bottom:5mm;direction:ltr}
   .org-right{text-align:right;direction:rtl;line-height:1.7}
   .org-l1{font-size:15pt;font-weight:900;color:${theme}}
@@ -1061,8 +1061,8 @@ function printDocOpen(theme){
   .kpi-l{font-size:9.5pt;color:#666;margin-top:2px}
   .sec-t{font-size:14pt;font-weight:900;margin:6mm 0 3mm;border-right:5px solid ${theme};padding-right:8px;color:${theme}}
   table{width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:4mm}
-  th{background:${theme};color:#fff;padding:6px 8px;border:1px solid ${theme};text-align:right}
-  td{padding:6px 8px;border:1px solid #dde6f0;text-align:right}
+  th{background:${theme};color:#fff;padding:6px 8px;border:1px solid ${theme};text-align:center}
+  td{padding:6px 8px;border:1px solid #dde6f0;text-align:center}
   tr:nth-child(even) td{background:#f8fafc}
   tfoot td{background:#f0f4f8;font-weight:800}
   .field-row{display:flex;justify-content:space-between;border-bottom:1px dotted #ccc;padding:2.6mm 0;font-size:13pt}
@@ -1084,6 +1084,35 @@ function printDocFooter(){
   return `<div class="ftr">${escapeHtml(ph.line1||'')} — ${escapeHtml(ph.line2||'')} — تمت الطباعة بتاريخ ${todayStr()}</div>`;
 }
 function printDocClose(){ return `</div></body></html>`; }
+/* Name-above / phone-inside box widget for trainer name+phone, used in order print & reports */
+function trainerBoxHtml(name, phone, theme){
+  theme = theme || PRINT_THEME;
+  if(!name && !phone) return '—';
+  return `<div style="display:inline-block;text-align:center;margin:3px;">
+    <div style="background:#fff;display:inline-block;padding:0 6px;font-weight:800;color:${theme};font-size:9.5pt;position:relative;top:7px;z-index:1;white-space:nowrap;">${escapeHtml(name||'')}</div>
+    <div style="border:1.5px solid ${theme};border-radius:6px;padding:11px 12px 5px;min-width:64px;">
+      <div style="color:#1565c0;font-weight:800;font-size:10.5pt;direction:ltr;">${escapeHtml(phone||'-')}</div>
+    </div>
+  </div>`;
+}
+function trainerBoxesForOrder(o, theme){
+  const ids = o.trainerIds||[];
+  if(!ids.length) return '—';
+  return ids.map(id=>{ const t=state.trainers.find(x=>x.id===id); return t?trainerBoxHtml(t.name, t.phone, theme):''; }).filter(Boolean).join(' ') || '—';
+}
+function fullTimeRange(from, to){
+  if(!from && !to) return '';
+  if(from && to) return `من الساعة ${from} إلى الساعة ${to}`;
+  return from ? `من الساعة ${from}` : `إلى الساعة ${to}`;
+}
+function fullDateStr(dateStr){
+  if(!dateStr) return '';
+  try{
+    const d = new Date(dateStr+'T00:00:00');
+    const weekday = d.toLocaleDateString('ar-QA', {weekday:'long'});
+    return `${weekday}، ${dateStr}`;
+  }catch(e){ return dateStr; }
+}
 
 /* ---- single-document (order) print: field-row style ---- */
 async function generateQRDataUrl(text){
@@ -1105,20 +1134,20 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
   const reqs = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean);
   const qrUrl = await generateQRDataUrl(qrTextForOrder(o));
   let rows = [
-    ['عنوان المبادرة', o.title||''],
-    ['مجال المبادرة', field?field.name:''],
-    ['مسار المبادرة', ptype?ptype.name:''],
-    ['عدد المستهدفين', o.participantsCount||''],
-    ['تاريخ المبادرة', o.date||''],
-    ['وقت المبادرة', (o.timeFrom||'')+' — '+(o.timeTo||'')],
-    ['مكان المبادرة', school?(school.name+' ('+school.level+')'):''],
-    ['المشرف', supervisor?(supervisor.name+' — '+(supervisor.phone||'')+' — '+(supervisor.email||'')):''],
-    ['مقدم المبادرة', trainerNames(o)||''],
+    ['عنوان المبادرة', escapeHtml(o.title||'')],
+    ['مجال المبادرة', escapeHtml(field?field.name:'')],
+    ['مسار المبادرة', escapeHtml(ptype?ptype.name:'')],
+    ['عدد المستهدفين', escapeHtml(o.participantsCount||'')],
+    ['تاريخ المبادرة', escapeHtml(fullDateStr(o.date))],
+    ['وقت المبادرة', escapeHtml(fullTimeRange(o.timeFrom, o.timeTo))],
+    ['مكان المبادرة', escapeHtml(school?(school.name+' ('+school.level+')'):'')],
+    ['المشرف', escapeHtml(supervisor?(supervisor.name+' — '+(supervisor.phone||'')+' — '+(supervisor.email||'')):'')],
+    ['مقدم المبادرة', trainerBoxesForOrder(o)],
   ];
-  if(opts.showRequesterNote!==false) rows.push(['ملاحظة الجهة الطالبة', o.requesterNote||'']);
+  if(opts.showRequesterNote!==false) rows.push(['ملاحظة الجهة الطالبة', escapeHtml(o.requesterNote||'')]);
   if(opts.showAdminNote!==false){
-    rows.push(['ملاحظة الإدارة', o.adminNote||'']);
-    rows.push(['الطلبات الإدارية', reqs.join('، ')||'—']);
+    rows.push(['ملاحظة الإدارة', escapeHtml(o.adminNote||'')]);
+    rows.push(['الطلبات الإدارية', escapeHtml(reqs.join('، ')||'—')]);
   }
   let html = printDocOpen(PRINT_THEME);
   html += printDocHeaderBlock();
@@ -1128,7 +1157,7 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
     </div>
     ${qrUrl?`<img src="${qrUrl}" style="width:26mm;height:26mm;">`:''}
   </div>`;
-  html += rows.map(([label,val])=>`<div class="field-row"><span class="f-ar">${escapeHtml(label)} :</span><span class="f-val">${escapeHtml(val)}</span></div>`).join('');
+  html += rows.map(([label,val])=>`<div class="field-row"><span class="f-ar">${escapeHtml(label)} :</span><span class="f-val">${val}</span></div>`).join('');
   html += printDocFooter();
   html += printDocClose();
   return html;
@@ -1169,15 +1198,15 @@ function dailyReportTable(list){
   if(!list.length) return `<div class="empty-state">لا توجد فعاليات ضمن هذه الفترة</div>`;
   return `<table class="print-table"><thead><tr>
     <th>م</th><th>أمر التكليف</th><th>عنوان الفعالية</th><th>التاريخ</th><th>الوقت</th><th>المكان</th>
-    <th>رقم المشرف</th><th>عدد المشاركين</th><th>مقدم البرنامج</th><th>رقم هاتفه</th><th>الطلبات الإدارية للبرنامج</th>
+    <th>رقم المشرف</th><th>عدد المشاركين</th><th>مقدم البرنامج</th><th>الطلبات الإدارية للبرنامج</th>
   </tr></thead><tbody>
   ${list.map((o,i)=>{
     const school = state.schools.find(s=>s.id===o.schoolId);
     const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
     const reqs = (o.adminRequests||[]).map(id=>{const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:'';}).filter(Boolean).join('، ');
-    return `<tr><td>${i+1}</td><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td>
+    return `<tr><td>${i+1}</td><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${fullDateStr(o.date)}</td><td>${escapeHtml(fullTimeRange(o.timeFrom,o.timeTo))}</td>
       <td>${school?escapeHtml(school.name):''}</td><td>${supervisor?escapeHtml(supervisor.phone||''):''}</td>
-      <td>${o.participantsCount||''}</td><td>${escapeHtml(trainerNames(o))}</td><td>${escapeHtml(trainerPhones(o))}</td><td>${reqs||'—'}</td></tr>`;
+      <td>${o.participantsCount||''}</td><td>${trainerBoxesForOrder(o)}</td><td>${reqs||'—'}</td></tr>`;
   }).join('')}</tbody></table>`;
 }
 /* ---- shared multi-record report doc builder (KPI row + one colored table, Duroob style) ---- */
@@ -1255,13 +1284,13 @@ function renderAdminPage(c){
       const school = state.schools.find(s=>s.id===o.schoolId);
       const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
       const reqs = (o.adminRequests||[]).map(id=>{const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:'';}).filter(Boolean).join('، ');
-      return [i+1, o.serial, escapeHtml(o.title), o.date||'', (o.timeFrom||'')+'-'+(o.timeTo||''), school?escapeHtml(school.name):'', supervisor?escapeHtml(supervisor.phone||''):'', o.participantsCount||'', escapeHtml(trainerNames(o)), escapeHtml(trainerPhones(o)), reqs||'—'];
+      return [i+1, o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', supervisor?escapeHtml(supervisor.phone||''):'', o.participantsCount||'', trainerBoxesForOrder(o), reqs||'—'];
     });
     const reqRows = Object.entries(k.reqCounts).map(([id,count])=>{ const r=state.adminRequestsList.find(x=>x.id===id); return `<tr><td>${escapeHtml(r?r.name:id)}</td><td>${count}</td></tr>`; }).join('') || '<tr><td colspan="2" style="text-align:center;color:#999;">لا توجد</td></tr>';
     doPrintDoc(buildReportDoc({
       titleAr:'جدول الفعاليات خلال فترة', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
       kpis:[{v:k.events,l:'عدد الفعاليات'},{v:k.trainers,l:'عدد المدربين'},{v:k.hours.toFixed(1),l:'إجمالي عدد الساعات'},{v:k.schools,l:'عدد المدارس'},{v:k.reqs,l:'عدد الطلبات الإدارية'}],
-      headers:['م','أمر التكليف','عنوان الفعالية','التاريخ','الوقت','المكان','رقم المشرف','عدد المشاركين','مقدم البرنامج','رقم هاتفه','الطلبات الإدارية للبرنامج'],
+      headers:['م','أمر التكليف','عنوان الفعالية','التاريخ','الوقت','المكان','رقم المشرف','عدد المشاركين','مقدم البرنامج','الطلبات الإدارية للبرنامج'],
       rows,
       extraHtml:`<div class="sec-t">توزيع الطلبات الإدارية خلال الفترة</div><table><thead><tr><th>الطلب الإداري</th><th>عدد مرات الطلب</th></tr></thead><tbody>${reqRows}</tbody></table>`
     }), true, 'A4');
@@ -2155,7 +2184,7 @@ function renderSettingsPage(c){
       <span><button class="btn btn-outline btn-sm" onclick="document.getElementById('schoolImportFile').click()">📥 استيراد إكسل</button>
       <input type="file" id="schoolImportFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importSchoolsExcel(this.files[0])">
       <button class="plus-btn" onclick="quickAddSchoolSettings()">+</button></span></h2>
-    <div class="helper" style="margin-bottom:8px;">أعمدة الملف المتوقعة: اسم المدرسة، المرحلة، اسم المشرف، جوال المشرف، إيميل المشرف (اسم المشرف اختياري — سيُستورد الهاتف/الإيميل حتى لو كان فارغًا).</div>
+    <div class="helper" style="margin-bottom:8px;">أعمدة الملف المتوقعة (بهذا الترتيب): اسم المدرسة، المرحلة، البريد الإلكتروني للمدرسة، اسم المشرف، جوال المشرف، إيميل المشرف. (اسم المشرف اختياري — سيُستورد الهاتف/الإيميل حتى لو كان فارغًا).</div>
     <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px; padding:8px; background:var(--maroon-50); border-radius:8px;">
       <label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="checkbox" id="schoolSelectAll" onchange="document.querySelectorAll('.schoolBulkChk').forEach(c=>c.checked=this.checked)"> تحديد الكل</label>
       <button class="btn btn-outline btn-sm" onclick="bulkDeleteSchools()">🗑️ حذف المدارس المحددة</button>
@@ -2302,19 +2331,21 @@ async function importSchoolsExcel(file){
   if(!file) return;
   try{
     const rows = await readExcelFile(file);
-    let added=0, supAdded=0;
+    let added=0, supAdded=0, emailFilled=0;
     rows.slice(1).forEach(r=>{
       const name=(r[0]||'').toString().trim(); const level=(r[1]||'غير ذلك').toString().trim();
-      const svName=(r[2]||'').toString().trim(); const svPhone=(r[3]||'').toString().trim(); const svEmail=(r[4]||'').toString().trim();
+      const schoolEmail=(r[2]||'').toString().trim();
+      const svName=(r[3]||'').toString().trim(); const svPhone=(r[4]||'').toString().trim(); const svEmail=(r[5]||'').toString().trim();
       if(!name) return;
       let sch = state.schools.find(s=>s.name===name);
-      if(!sch){ sch={id:uid(), name, level, supervisors:[]}; state.schools.push(sch); added++; }
+      if(!sch){ sch={id:uid(), name, level, email:schoolEmail, supervisors:[]}; state.schools.push(sch); added++; }
+      else if(schoolEmail && !sch.email){ sch.email = schoolEmail; emailFilled++; }
       if(svName || svPhone || svEmail){
         const already = sch.supervisors.some(sv=> (svPhone && sv.phone===svPhone) || (svName && sv.name===svName && !svPhone) );
         if(!already){ sch.supervisors.push({id:uid(), name:svName||'مشرف (بدون اسم)', phone:svPhone, email:svEmail}); supAdded++; }
       }
     });
-    await saveState(); toast(`تم استيراد ${added} مدرسة جديدة و ${supAdded} مشرف/رقم هاتف`); render();
+    await saveState(); toast(`تم استيراد ${added} مدرسة جديدة، ${supAdded} مشرف، وتحديث بريد ${emailFilled} مدرسة`); render();
   }catch(e){ toast('تعذّرت قراءة الملف، تأكد من صيغته'); console.error(e); }
 }
 function exportToExcel(filename, headers, rows){
