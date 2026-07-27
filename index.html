@@ -1102,7 +1102,7 @@ function printDocOpen(theme, docTitle){
   .kpi-v{font-size:15pt;font-weight:900;color:${theme}}
   .kpi-l{font-size:9.5pt;color:#666;margin-top:2px}
   .sec-t{font-size:14pt;font-weight:900;margin:6mm 0 3mm;border-right:5px solid ${theme};padding-right:8px;color:${theme};font-family:'Cairo','Tajawal',Arial;}
-  table{width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:4mm}
+  table{width:100%;border-collapse:collapse;font-size:14pt;margin-bottom:4mm}
   thead{display:table-header-group}
   tfoot{display:table-footer-group}
   th{background:${theme};color:#fff;padding:6px 8px;border:1px solid ${theme};text-align:right;font-weight:800}
@@ -1134,27 +1134,14 @@ function printDocOpen(theme, docTitle){
   .print-toolbar button:disabled{opacity:.6;cursor:wait}
   @page{margin:10mm 8mm 14mm 8mm;}
   @media print{
-    body{background:#fff;padding:0;font-size:11pt}
-    .doc{margin:0;border:none;padding:4mm 6mm}
+    body{background:#fff;padding:0}
+    .doc{margin:0;border:none}
     .print-toolbar{display:none}
-    .hdr{padding-bottom:3mm;margin-bottom:3mm}
-    .title-blk{margin-bottom:3mm;padding:3mm}
-    .kpi-row{gap:4px;margin-bottom:3mm}
-    .kpi{padding:4px}
-    .kpi-v{font-size:12pt}
-    .sec-t{margin:3mm 0 2mm;font-size:11.5pt}
-    table{font-size:8.5pt;margin-bottom:2mm}
-    th,td{padding:3px 5px}
     tr{page-break-inside:avoid}
     thead{display:table-header-group}
-    .voucher-title-row{margin-bottom:3mm}
-    .field-row{padding:1.5mm 0}
-    .ftr{margin-top:2mm;padding-top:1mm}
     @page{ @bottom-center{ content:"صفحة " counter(page) " من " counter(pages); font-size:8pt; color:#888; } }
   }
-  </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
-  </head><body data-orientation="__ORIENT__" data-pagesize="__PAGESIZE__" data-filename="${escapeHtml(docTitle)}">
+  </style></head><body data-orientation="__ORIENT__" data-pagesize="__PAGESIZE__" data-filename="${escapeHtml(docTitle)}">
   <div class="print-toolbar">
     <button class="pt-print" onclick="window.print()">🖨️ طباعة</button>
     <button class="pt-pdf" onclick="__downloadDocPdf(this)">📄 تنزيل PDF</button>
@@ -1164,25 +1151,10 @@ function printDocOpen(theme, docTitle){
 function __downloadDocPdfScript(){
   return `<script>
   function __downloadDocPdf(btn){
-    if(typeof html2pdf==='undefined'){ window.print(); return; }
-    var orient = document.body.getAttribute('data-orientation')||'portrait';
-    var el = document.querySelector('.doc');
-    var toolbar = document.querySelector('.print-toolbar');
-    var oldDisplay = toolbar.style.display;
-    toolbar.style.display='none';
-    var oldLabel = btn.innerHTML; btn.disabled=true; btn.innerHTML='⏳ جارٍ التجهيز...';
-    var rawName = document.body.getAttribute('data-filename') || document.title || 'مستند';
-    var safeName = rawName.replace(/[\\\\/:*?"<>|]/g, '-').trim() || 'مستند';
-    var fname = safeName + '.pdf';
-    var opt = { margin:0, filename:fname, image:{type:'jpeg',quality:0.98},
-      html2canvas:{scale:2, useCORS:true, backgroundColor:'#ffffff'},
-      jsPDF:{unit:'mm', format:'a4', orientation:orient},
-      pagebreak:{mode:['css','avoid-all']} };
-    html2pdf().set(opt).from(el).save().then(function(){
-      toolbar.style.display=oldDisplay; btn.disabled=false; btn.innerHTML=oldLabel;
-    }).catch(function(){
-      toolbar.style.display=oldDisplay; btn.disabled=false; btn.innerHTML=oldLabel; window.print();
-    });
+    /* Use the browser's native print pipeline (Save as PDF) instead of image-based
+       capture — this preserves correct Arabic text shaping/connectivity and true A4
+       pagination without any shrinking, which canvas-based export cannot guarantee. */
+    window.print();
   }
   <\/script>`;
 }
