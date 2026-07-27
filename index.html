@@ -1078,9 +1078,11 @@ function doPrintDoc(htmlStr, landscape, pageSize){
   if(!w){ toast('يرجى السماح بالنوافذ المنبثقة في المتصفح ثم إعادة المحاولة'); return; }
   w.addEventListener('load', function(){ w.focus(); setTimeout(function(){ URL.revokeObjectURL(url); }, 5000); });
 }
-function printDocOpen(theme){
+function printDocOpen(theme, docTitle){
   theme = theme || PRINT_THEME;
+  docTitle = docTitle || 'مستند';
   return `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+  <title>${escapeHtml(docTitle)}</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@700;800;900&display=swap" rel="stylesheet">
   <style>
   *{box-sizing:border-box;margin:0;padding:0}
@@ -1108,7 +1110,7 @@ function printDocOpen(theme){
   td.num, th.num{text-align:center}
   tr:nth-child(even) td{background:#f8fafc}
   tfoot td{background:#f0f4f8;font-weight:800}
-  .field-row{display:flex;justify-content:space-between;border-bottom:1px dotted #ccc;padding:2.6mm 0;font-size:20pt}
+  .field-row{display:flex;justify-content:space-between;border-bottom:1px dotted #ccc;padding:2.6mm 0;font-size:18pt}
   .f-ar{font-weight:700;color:${theme};min-width:150px}
   .f-val{flex:1;text-align:center;font-weight:400}
   .ftr{border-top:2px solid ${theme};margin-top:5mm;padding-top:2mm;text-align:center;font-size:9.5pt;color:#666}
@@ -1121,7 +1123,7 @@ function printDocOpen(theme){
   .voucher-merged .vm-num{font-size:11pt;font-weight:900;color:${theme};margin-top:2mm;border-top:1px dashed ${theme};padding-top:2mm}
   .org-info-blk{line-height:1.6;font-family:'Cairo','Tajawal',Arial;font-weight:800;color:${theme};font-size:10.5pt}
   .org-info-blk img{max-height:16mm;max-width:36mm;object-fit:contain}
-  .barcode-blk .bc-title{font-size:11pt;font-weight:800;color:${theme};margin-bottom:2mm;font-family:'Cairo','Tajawal',Arial;}
+  .barcode-blk .bc-title{font-size:14pt;font-weight:800;color:${theme};margin-bottom:2mm;font-family:'Cairo','Tajawal',Arial;}
   .barcode-blk img{max-width:60mm;height:auto}
   .barcode-blk .bc-num{font-size:9.5pt;font-weight:800;color:#444;margin-top:1mm;letter-spacing:.5px}
   .bottom-bar{height:4mm;background:${theme};border-radius:2px;margin-top:6mm}
@@ -1152,7 +1154,7 @@ function printDocOpen(theme){
   }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
-  </head><body data-orientation="__ORIENT__" data-pagesize="__PAGESIZE__">
+  </head><body data-orientation="__ORIENT__" data-pagesize="__PAGESIZE__" data-filename="${escapeHtml(docTitle)}">
   <div class="print-toolbar">
     <button class="pt-print" onclick="window.print()">🖨️ طباعة</button>
     <button class="pt-pdf" onclick="__downloadDocPdf(this)">📄 تنزيل PDF</button>
@@ -1164,16 +1166,17 @@ function __downloadDocPdfScript(){
   function __downloadDocPdf(btn){
     if(typeof html2pdf==='undefined'){ window.print(); return; }
     var orient = document.body.getAttribute('data-orientation')||'portrait';
-    var pageSize = (document.body.getAttribute('data-pagesize')||'A4').toLowerCase();
     var el = document.querySelector('.doc');
     var toolbar = document.querySelector('.print-toolbar');
     var oldDisplay = toolbar.style.display;
     toolbar.style.display='none';
     var oldLabel = btn.innerHTML; btn.disabled=true; btn.innerHTML='⏳ جارٍ التجهيز...';
-    var fname = (document.title||'مستند') + '.pdf';
+    var rawName = document.body.getAttribute('data-filename') || document.title || 'مستند';
+    var safeName = rawName.replace(/[\\\\/:*?"<>|]/g, '-').trim() || 'مستند';
+    var fname = safeName + '.pdf';
     var opt = { margin:0, filename:fname, image:{type:'jpeg',quality:0.98},
       html2canvas:{scale:2, useCORS:true, backgroundColor:'#ffffff'},
-      jsPDF:{unit:'mm', format:pageSize, orientation:orient},
+      jsPDF:{unit:'mm', format:'a4', orientation:orient},
       pagebreak:{mode:['css','avoid-all']} };
     html2pdf().set(opt).from(el).save().then(function(){
       toolbar.style.display=oldDisplay; btn.disabled=false; btn.innerHTML=oldLabel;
@@ -1278,7 +1281,7 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
     rows.push(['ملاحظة الإدارة', escapeHtml(o.adminNote||'')]);
     rows.push(['الطلبات الإدارية', escapeHtml(reqs.join('، ')||'—')]);
   }
-  let html = printDocOpen(PRINT_THEME);
+  let html = printDocOpen(PRINT_THEME, o.title || 'أمر تكليف');
   html += printDocHeaderBlock();
   const orgLogo = state.logo ? `<img src="${state.logo}">` : '';
   html += `<div class="voucher-title-row">
@@ -1350,7 +1353,7 @@ function dailyReportTable(list){
 function buildReportDoc(opts){
   // opts: {titleAr, subtitle, kpis:[{v,l}], headers:[...], rows:[[...]], theme}
   const theme = opts.theme || PRINT_THEME;
-  let html = printDocOpen(theme);
+  let html = printDocOpen(theme, opts.titleAr || 'تقرير');
   html += printDocHeaderBlock();
   html += `<div class="title-blk"><div class="title-ar">${escapeHtml(opts.titleAr)}</div><div class="title-sub">${escapeHtml(opts.subtitle||'')}</div></div>`;
   if(opts.kpis && opts.kpis.length){
