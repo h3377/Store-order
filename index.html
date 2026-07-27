@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <style>
   :root{
     --maroon-950:#6d0f2b; --maroon-900:#6d0f2b; --maroon-800:#8A1538; --maroon-700:#a83c5b; --maroon-600:#a83c5b;
@@ -598,9 +599,9 @@ function ordersTableHtml(list){
         <button class="icon-btn" title="تقييم وإنجاز" onclick="openEvaluationModal('${o.id}')">📝</button>
         <button class="icon-btn" title="ترحيل / تأجيل" onclick="openPostponeModal('${o.id}')">⏩</button>
         <button class="icon-btn" title="${o.status==='cancelled'?'إلغاء الإلغاء':'إلغاء الفعالية'}" onclick="toggleCancelOrder('${o.id}')">${o.status==='cancelled'?'↩️':'❌'}</button>
-        <button class="icon-btn" title="رمز QR" onclick="openQrCodeModal('${o.id}')">🔲</button>
-        <button class="icon-btn" title="طباعة نسخة الجهة الطالبة" onclick="printOrderSchoolCopy('${o.id}')">🏫🖨️</button>
-        <button class="icon-btn" title="طباعة نسخة الإدارة (كاملة)" onclick="printOrderAdminCopy('${o.id}')">🏢🖨️</button>
+        <button class="icon-btn" title="الباركود" onclick="openQrCodeModal('${o.id}')">🔲</button>
+        <button class="icon-btn" title="طباعة نسخة الجهة الطالبة / حفظ PDF" onclick="printOrderSchoolCopy('${o.id}')">🏫🖨️</button>
+        <button class="icon-btn" title="طباعة نسخة الإدارة (كاملة) / حفظ PDF" onclick="printOrderAdminCopy('${o.id}')">🏢🖨️</button>
         <button class="icon-btn" title="إرسال بالبريد" onclick="emailOrder('${o.id}')">✉️</button>
         <button class="icon-btn danger" title="حذف" onclick="deleteOrder('${o.id}')">🗑️</button>
       </td>
@@ -1066,13 +1067,16 @@ function quickAddAdminRequest(){
 const PRINT_THEME = '#8A1538';
 function doPrintDoc(htmlStr, landscape, pageSize){
   pageSize = pageSize || 'A4';
-  const pCSS = '@page{size:'+pageSize+' '+(landscape?'landscape':'portrait')+';margin:10mm}';
-  const full = htmlStr.replace('</head>', '<style>'+pCSS+'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head>');
+  const orient = landscape?'landscape':'portrait';
+  const pCSS = '@page{size:'+pageSize+' '+orient+';margin:8mm}';
+  let full = htmlStr.replace('</head>', '<style>'+pCSS+'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head>');
+  full = full.replace('__ORIENT__', orient).replace('__PAGESIZE__', pageSize);
+  full = full.replace('</body></html>', __downloadDocPdfScript()+'</body></html>');
   const blob = new Blob([full], {type:'text/html;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const w = window.open(url, '_blank');
   if(!w){ toast('يرجى السماح بالنوافذ المنبثقة في المتصفح ثم إعادة المحاولة'); return; }
-  w.addEventListener('load', function(){ w.focus(); w.print(); setTimeout(function(){ URL.revokeObjectURL(url); }, 3000); });
+  w.addEventListener('load', function(){ w.focus(); setTimeout(function(){ URL.revokeObjectURL(url); }, 5000); });
 }
 function printDocOpen(theme){
   theme = theme || PRINT_THEME;
@@ -1104,17 +1108,80 @@ function printDocOpen(theme){
   td.num, th.num{text-align:center}
   tr:nth-child(even) td{background:#f8fafc}
   tfoot td{background:#f0f4f8;font-weight:800}
-  .field-row{display:flex;justify-content:space-between;border-bottom:1px dotted #ccc;padding:2.6mm 0;font-size:13pt}
+  .field-row{display:flex;justify-content:space-between;border-bottom:1px dotted #ccc;padding:2.6mm 0;font-size:20pt}
   .f-ar{font-weight:700;color:${theme};min-width:150px}
   .f-val{flex:1;text-align:center;font-weight:400}
   .ftr{border-top:2px solid ${theme};margin-top:5mm;padding-top:2mm;text-align:center;font-size:9.5pt;color:#666}
-  @page{margin:12mm 10mm 16mm 10mm;}
+  .voucher-title-row{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:6mm;border:1px dashed ${theme};border-radius:8px;background:#fff;overflow:hidden}
+  .voucher-title-row>div{flex:1;text-align:center;padding:4mm 6mm;border-left:1px dashed ${theme}}
+  .voucher-title-row>div:last-child{border-left:none}
+  .voucher-merged{background:${theme}0d;flex:0 0 auto;margin:auto;padding:4mm 12mm}
+  .voucher-merged .title-ar{font-size:17pt;margin:0}
+  .voucher-merged .title-en{font-size:9.5pt;color:#555;font-weight:700;letter-spacing:1px;margin-top:1mm}
+  .voucher-merged .vm-num{font-size:11pt;font-weight:900;color:${theme};margin-top:2mm;border-top:1px dashed ${theme};padding-top:2mm}
+  .org-info-blk{line-height:1.6;font-family:'Cairo','Tajawal',Arial;font-weight:800;color:${theme};font-size:10.5pt}
+  .org-info-blk img{max-height:16mm;max-width:36mm;object-fit:contain}
+  .barcode-blk .bc-title{font-size:11pt;font-weight:800;color:${theme};margin-bottom:2mm;font-family:'Cairo','Tajawal',Arial;}
+  .barcode-blk img{max-width:60mm;height:auto}
+  .barcode-blk .bc-num{font-size:9.5pt;font-weight:800;color:#444;margin-top:1mm;letter-spacing:.5px}
+  .bottom-bar{height:4mm;background:${theme};border-radius:2px;margin-top:6mm}
+  .print-toolbar{display:flex;justify-content:center;gap:10px;margin-bottom:6mm;position:sticky;top:0;background:#f5f7fa;padding-top:2mm;z-index:10}
+  .print-toolbar button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-family:'Tajawal',Arial;font-weight:800;font-size:11pt;border:1.5px solid ${theme}}
+  .print-toolbar .pt-print{background:${theme};color:#fff}
+  .print-toolbar .pt-pdf{background:#fff;color:${theme}}
+  .print-toolbar button:disabled{opacity:.6;cursor:wait}
+  @page{margin:10mm 8mm 14mm 8mm;}
   @media print{
-    body{background:#fff;padding:0}
-    .doc{margin:0;border:none}
+    body{background:#fff;padding:0;font-size:11pt}
+    .doc{margin:0;border:none;padding:4mm 6mm}
+    .print-toolbar{display:none}
+    .hdr{padding-bottom:3mm;margin-bottom:3mm}
+    .title-blk{margin-bottom:3mm;padding:3mm}
+    .kpi-row{gap:4px;margin-bottom:3mm}
+    .kpi{padding:4px}
+    .kpi-v{font-size:12pt}
+    .sec-t{margin:3mm 0 2mm;font-size:11.5pt}
+    table{font-size:8.5pt;margin-bottom:2mm}
+    th,td{padding:3px 5px}
+    tr{page-break-inside:avoid}
+    thead{display:table-header-group}
+    .voucher-title-row{margin-bottom:3mm}
+    .field-row{padding:1.5mm 0}
+    .ftr{margin-top:2mm;padding-top:1mm}
     @page{ @bottom-center{ content:"صفحة " counter(page) " من " counter(pages); font-size:8pt; color:#888; } }
   }
-  </style></head><body><div class="doc">`;
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+  </head><body data-orientation="__ORIENT__" data-pagesize="__PAGESIZE__">
+  <div class="print-toolbar">
+    <button class="pt-print" onclick="window.print()">🖨️ طباعة</button>
+    <button class="pt-pdf" onclick="__downloadDocPdf(this)">📄 تنزيل PDF</button>
+  </div>
+  <div class="doc">`;
+}
+function __downloadDocPdfScript(){
+  return `<script>
+  function __downloadDocPdf(btn){
+    if(typeof html2pdf==='undefined'){ window.print(); return; }
+    var orient = document.body.getAttribute('data-orientation')||'portrait';
+    var pageSize = (document.body.getAttribute('data-pagesize')||'A4').toLowerCase();
+    var el = document.querySelector('.doc');
+    var toolbar = document.querySelector('.print-toolbar');
+    var oldDisplay = toolbar.style.display;
+    toolbar.style.display='none';
+    var oldLabel = btn.innerHTML; btn.disabled=true; btn.innerHTML='⏳ جارٍ التجهيز...';
+    var fname = (document.title||'مستند') + '.pdf';
+    var opt = { margin:0, filename:fname, image:{type:'jpeg',quality:0.98},
+      html2canvas:{scale:2, useCORS:true, backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm', format:pageSize, orientation:orient},
+      pagebreak:{mode:['css','avoid-all']} };
+    html2pdf().set(opt).from(el).save().then(function(){
+      toolbar.style.display=oldDisplay; btn.disabled=false; btn.innerHTML=oldLabel;
+    }).catch(function(){
+      toolbar.style.display=oldDisplay; btn.disabled=false; btn.innerHTML=oldLabel; window.print();
+    });
+  }
+  <\/script>`;
 }
 function printDocHeaderBlock(){
   const ph = state.printHeader || {};
@@ -1135,16 +1202,7 @@ function trainerMiniTable(o){
   const ids = (o&&o.trainerIds)||[];
   const list = ids.map(id=>state.trainers.find(t=>t.id===id)).filter(Boolean);
   if(!list.length) return '—';
-  return `<table style="display:inline-table;border-collapse:collapse;margin:2px;">
-    <thead><tr>
-      <th style="background:#f6d6bb;color:#2a1116;padding:5px 12px;border:1px solid #d9b896;font-weight:800;font-size:9.5pt;white-space:nowrap;">اسم المدرب</th>
-      <th style="background:#f6d6bb;color:#2a1116;padding:5px 12px;border:1px solid #d9b896;font-weight:800;font-size:9.5pt;white-space:nowrap;">رقم الهاتف للتواصل</th>
-    </tr></thead>
-    <tbody>${list.map(t=>`<tr>
-      <td style="padding:5px 12px;border:1px solid #d9b896;font-weight:800;font-size:10pt;white-space:nowrap;background:#fff;">${escapeHtml(t.name)}</td>
-      <td style="padding:5px 12px;border:1px solid #d9b896;font-weight:800;font-size:10pt;text-align:center;background:#fff;">${t.phone?phoneLink(t.phone):'-'}</td>
-    </tr>`).join('')}</tbody>
-  </table>`;
+  return list.map(t=>`<span style="display:inline-block;border:1px dashed #8A1538;border-radius:6px;padding:3px 8px;font-size:22px;font-weight:700;color:#1565C0;margin:1px;background:#fff;">${escapeHtml(t.name)}${t.phone?' — '+phoneLink(t.phone):''}</span>`).join(' ');
 }
 function fullTimeRange(from, to){
   if(!from && !to) return '';
@@ -1171,6 +1229,32 @@ function qrTextForOrder(o){
   const school = state.schools.find(s=>s.id===o.schoolId);
   return `أمر تكليف رقم ${o.serial}\n${o.title}\nالتاريخ: ${o.date||''} ${o.timeFrom||''}\nالمكان: ${school?school.name:''}`;
 }
+function barcodeTextForOrder(o){
+  return `TAK-${String(o.serial).padStart(4,'0')}`;
+}
+function generateBarcodeDataUrl(text, opts){
+  try{
+    if(typeof JsBarcode==='undefined') return '';
+    const canvas = document.createElement('canvas');
+    JsBarcode(canvas, text, Object.assign({
+      format:'CODE128', displayValue:false, margin:6, height:50, width:2, background:'#ffffff', lineColor:'#000000'
+    }, opts||{}));
+    return canvas.toDataURL('image/png');
+  }catch(e){ console.error('Barcode generation error', e); return ''; }
+}
+/* barcode block: title on top, barcode image, order number below (per reference design) */
+function orderBarcodeBlock(o, opts){
+  opts = opts||{};
+  const code = barcodeTextForOrder(o);
+  const barUrl = generateBarcodeDataUrl(code);
+  const imgStyle = opts.small ? 'width:16mm;height:auto;' : 'max-width:80mm;height:auto;';
+  if(!barUrl) return '';
+  return `<div class="barcode-blk">
+    <div class="bc-title">${escapeHtml(o.title||'')}</div>
+    <img src="${barUrl}" style="${imgStyle}">
+    <div class="bc-num">رقم أمر التكليف: ${String(o.serial).padStart(4,'0')}</div>
+  </div>`;
+}
 async function buildOrderPrintDoc(o, opts, copyLabel){
   opts = opts||{};
   const field = state.fields.find(f=>f.id===o.fieldId);
@@ -1178,7 +1262,6 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
   const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
   const ptype = state.programTypes.find(p=>p.id===o.programTypeId);
   const reqs = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean);
-  const qrUrl = await generateQRDataUrl(qrTextForOrder(o));
   let rows = [
     ['عنوان المبادرة', escapeHtml(o.title||'')],
     ['مجال المبادرة', escapeHtml(field?field.name:'')],
@@ -1186,9 +1269,9 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
     ['عدد المستهدفين', escapeHtml(o.participantsCount||'')],
     ['تاريخ المبادرة', escapeHtml(fullDateStr(o.date))],
     ['وقت المبادرة', escapeHtml(fullTimeRange(o.timeFrom, o.timeTo))],
-    ['مكان المبادرة', escapeHtml(school?(school.name+' ('+school.level+')'):'')],
-    ['المشرف', supervisor?(escapeHtml(supervisor.name)+' — '+(supervisor.phone?phoneLink(supervisor.phone):'')+' — '+escapeHtml(supervisor.email||'')):''],
-    ['مقدم المبادرة', trainerMiniTable(o)],
+    ['مكان المبادرة', escapeHtml(school?school.name:'')],
+    ['المشرف', supervisor?(escapeHtml(supervisor.name)+(supervisor.phone?' — '+phoneLink(supervisor.phone):'')):''],
+    ['المدرب', trainerMiniTable(o)],
   ];
   if(opts.showRequesterNote!==false) rows.push(['ملاحظة الجهة الطالبة', escapeHtml(o.requesterNote||'')]);
   if(opts.showAdminNote!==false){
@@ -1197,14 +1280,19 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
   }
   let html = printDocOpen(PRINT_THEME);
   html += printDocHeaderBlock();
-  html += `<div style="display:flex;align-items:center;justify-content:center;gap:10mm;margin-bottom:6mm;flex-wrap:wrap;">
-    <div class="title-blk" style="display:inline-block;">
-      <div class="title-ar" style="white-space:nowrap;">أمر تكليف رقم ${o.serial} <span style="direction:ltr;display:inline-block;">(No. ${o.serial})</span></div>
+  const orgLogo = state.logo ? `<img src="${state.logo}">` : '';
+  html += `<div class="voucher-title-row">
+    <div class="voucher-merged">
+      <div class="title-ar">أمر تكليف</div>
+      <div class="title-en">ASSIGNMENT ORDER</div>
+      <div class="vm-num">رقم أمر التكليف: ${String(o.serial).padStart(4,'0')}</div>
     </div>
-    ${qrUrl?`<img src="${qrUrl}" style="width:26mm;height:26mm;">`:''}
+    ${orgLogo?`<div class="org-info-blk">${orgLogo}</div>`:''}
+    ${orderBarcodeBlock(o)}
   </div>`;
   html += rows.map(([label,val])=>`<div class="field-row"><span class="f-ar">${escapeHtml(label)} :</span><span class="f-val">${val}</span></div>`).join('');
   html += printDocFooter();
+  html += `<div class="bottom-bar"></div>`;
   html += printDocClose();
   return html;
 }
@@ -1221,12 +1309,15 @@ async function printOrderAdminCopy(id){
 async function openQrCodeModal(id){
   const o = state.orders.find(x=>x.id===id); if(!o) return;
   const overlay=document.getElementById('modalOverlay'); const box=document.getElementById('modalBox');
-  box.innerHTML = `<h3>رمز QR — أمر تكليف رقم ${o.serial}</h3><div style="text-align:center;color:#999;">جارٍ التوليد...</div>`;
-  overlay.classList.add('open');
-  const qrUrl = await generateQRDataUrl(qrTextForOrder(o));
-  box.innerHTML = `<h3>رمز QR — أمر تكليف رقم ${o.serial}</h3>
-    <div style="text-align:center;">${qrUrl?`<img src="${qrUrl}" style="width:220px;height:220px;">`:'<div class="empty-state">تعذر توليد الرمز</div>'}</div>
+  const barUrl = generateBarcodeDataUrl(barcodeTextForOrder(o));
+  box.innerHTML = `<h3>باركود — أمر تكليف رقم ${o.serial}</h3>
+    <div style="text-align:center;">
+      <div style="font-weight:800;color:${PRINT_THEME};margin-bottom:8px;">${escapeHtml(o.title||'')}</div>
+      ${barUrl?`<img src="${barUrl}" style="max-width:260px;height:auto;">`:'<div class="empty-state">تعذر توليد الباركود</div>'}
+      <div style="font-weight:800;margin-top:8px;">أمر تكليف رقم ${o.serial}</div>
+    </div>
     <div class="modal-actions"><button class="btn btn-outline" id="qr_close">إغلاق</button></div>`;
+  overlay.classList.add('open');
   const closeBtn = document.getElementById('qr_close');
   if(closeBtn) closeBtn.onclick=()=>overlay.classList.remove('open');
 }
@@ -1341,14 +1432,14 @@ function renderAdminPage(c){
       const school = state.schools.find(s=>s.id===o.schoolId);
       const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
       const reqs = (o.adminRequests||[]).map(id=>{const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:'';}).filter(Boolean).join('، ');
-      const qr = await generateQRDataUrl(qrTextForOrder(o));
-      return [i+1, o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', supervisor&&supervisor.phone?phoneLink(supervisor.phone):'', o.participantsCount||'', trainerMiniTable(o), reqs||'—', qr?`<img src="${qr}" style="width:16mm;height:16mm;">`:''];
+      const bar = generateBarcodeDataUrl(barcodeTextForOrder(o));
+      return [i+1, o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', supervisor&&supervisor.phone?phoneLink(supervisor.phone):'', o.participantsCount||'', trainerMiniTable(o), reqs||'—', bar?`<img src="${bar}" style="width:22mm;height:auto;">`:''];
     }));
     const reqRows = Object.entries(k.reqCounts).map(([id,count])=>{ const r=state.adminRequestsList.find(x=>x.id===id); return `<tr><td>${escapeHtml(r?r.name:id)}</td><td>${count}</td></tr>`; }).join('') || '<tr><td colspan="2" style="text-align:center;color:#999;">لا توجد</td></tr>';
     doPrintDoc(buildReportDoc({
       titleAr:'جدول الفعاليات خلال فترة', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
       kpis:[{v:k.events,l:'عدد الفعاليات'},{v:k.trainers,l:'عدد المدربين'},{v:k.hours.toFixed(1),l:'إجمالي عدد الساعات'},{v:k.schools,l:'عدد المدارس'},{v:k.reqs,l:'عدد الطلبات الإدارية'}],
-      headers:['م','أمر التكليف','عنوان الفعالية','التاريخ','الوقت','المكان','رقم المشرف','عدد المشاركين','مقدم البرنامج','الطلبات الإدارية للبرنامج','QR'],
+      headers:['م','أمر التكليف','عنوان الفعالية','التاريخ','الوقت','المكان','رقم المشرف','عدد المشاركين','مقدم البرنامج','الطلبات الإدارية للبرنامج','الباركود'],
       rows,
       extraHtml:`<div class="sec-t">توزيع الطلبات الإدارية خلال الفترة</div><table><thead><tr><th>الطلب الإداري</th><th>عدد مرات الطلب</th></tr></thead><tbody>${reqRows}</tbody></table>`
     }), true, 'A4');
@@ -1390,7 +1481,7 @@ function renderReportsPage(c){
         <div class="field"><label>إلى تاريخ</label><input id="gn_to" type="date"></div>
       </div>
       <button class="btn btn-primary" id="gn_go">عرض</button>
-      <button class="btn btn-outline" id="gn_print">🖨️ طباعة</button>
+      <button class="btn btn-outline" id="gn_print">🖨️ طباعة / حفظ PDF</button>
       <button class="btn btn-outline" id="gn_excel">📊 استخراج إكسل</button>
       <div id="gn_result" style="margin-top:16px;"></div>
     </div>`;
@@ -1505,11 +1596,11 @@ function renderReportsPage(c){
       const {list,title,from,to}=gen();
       const rows = await Promise.all(list.map(async o=>{
         const school=state.schools.find(s=>s.id===o.schoolId);
-        const qr = await generateQRDataUrl(qrTextForOrder(o));
-        return [o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', trainerMiniTable(o), o.completionStatus||'لم تنجز', qr?`<img src="${qr}" style="width:16mm;height:16mm;">`:''];
+        const bar = generateBarcodeDataUrl(barcodeTextForOrder(o));
+        return [o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', trainerMiniTable(o), o.completionStatus||'لم تنجز', bar?`<img src="${bar}" style="width:22mm;height:auto;">`:''];
       }));
       doPrintDoc(buildReportDoc({ titleAr:title, subtitle:`من ${from||'—'} إلى ${to||'—'}`, kpis:[{v:list.length,l:'عدد الفعاليات'}],
-        headers:['م','العنوان','التاريخ','الوقت','المدرسة','مقدم المبادرة','الإنجاز','QR'], rows }), true, 'A4');
+        headers:['م','العنوان','التاريخ','الوقت','المدرسة','مقدم المبادرة','الإنجاز','الباركود'], rows }), true, 'A4');
     };
   }
   function drawSchool(){
@@ -1541,11 +1632,11 @@ function renderReportsPage(c){
     document.getElementById('rp_print2').onclick=async ()=>{
       const {list,title,from,to}=gen();
       const rows = await Promise.all(list.map(async o=>{
-        const qr = await generateQRDataUrl(qrTextForOrder(o));
-        return [o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), trainerMiniTable(o), o.completionStatus||'لم تنجز', qr?`<img src="${qr}" style="width:16mm;height:16mm;">`:''];
+        const bar = generateBarcodeDataUrl(barcodeTextForOrder(o));
+        return [o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), trainerMiniTable(o), o.completionStatus||'لم تنجز', bar?`<img src="${bar}" style="width:22mm;height:auto;">`:''];
       }));
       doPrintDoc(buildReportDoc({ titleAr:title, subtitle:`من ${from||'—'} إلى ${to||'—'}`, kpis:[{v:list.length,l:'عدد الفعاليات'}],
-        headers:['م','العنوان','التاريخ','الوقت','مقدم المبادرة','الإنجاز','QR'], rows }), true, 'A4');
+        headers:['م','العنوان','التاريخ','الوقت','مقدم المبادرة','الإنجاز','الباركود'], rows }), true, 'A4');
     };
   }
   function drawHours(){
@@ -1680,7 +1771,7 @@ function renderStatsPage(c){
     window.__lastStatsData = {byField, byType, byLevel, from, to};
 
     const fCard=document.getElementById('st_field_card'); fCard.style.display='block';
-    fCard.innerHTML = `<h2>البند — حسب مجال المبادرة <button class="btn btn-outline btn-sm" id="pr_field">🖨️ طباعة منفصلة</button></h2>${tableFrom(byField)} ${svgDonutChart(byField.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byField.map(x=>({name:x.name, value:x.programs})))}`;
+    fCard.innerHTML = `<h2>البند — حسب مجال المبادرة <button class="btn btn-outline btn-sm" id="pr_field">🖨️ طباعة / PDF</button></h2>${tableFrom(byField)} ${svgDonutChart(byField.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byField.map(x=>({name:x.name, value:x.programs})))}`;
     document.getElementById('pr_field').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير التصنيفيات — البند (مجال المبادرة)', subtitle,
       kpis:[{v:byField.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'},{v:byField.reduce((s,x)=>s+x.participants,0),l:'إجمالي المشاركين'}],
@@ -1690,7 +1781,7 @@ function renderStatsPage(c){
     }), true, 'A4');
 
     const tCard=document.getElementById('st_type_card'); tCard.style.display='block';
-    tCard.innerHTML = `<h2>حسب نوع البرنامج (مسار المبادرة) <button class="btn btn-outline btn-sm" id="pr_type">🖨️ طباعة منفصلة</button></h2>${tableFrom(byType)} ${svgDonutChart(byType.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byType.map(x=>({name:x.name, value:x.programs})))}`;
+    tCard.innerHTML = `<h2>حسب نوع البرنامج (مسار المبادرة) <button class="btn btn-outline btn-sm" id="pr_type">🖨️ طباعة / PDF</button></h2>${tableFrom(byType)} ${svgDonutChart(byType.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byType.map(x=>({name:x.name, value:x.programs})))}`;
     document.getElementById('pr_type').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير التصنيفيات — حسب نوع البرنامج', subtitle,
       kpis:[{v:byType.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'},{v:byType.reduce((s,x)=>s+x.participants,0),l:'إجمالي المشاركين'}],
@@ -1700,7 +1791,7 @@ function renderStatsPage(c){
     }), true, 'A4');
 
     const lCard=document.getElementById('st_level_card'); lCard.style.display='block';
-    lCard.innerHTML = `<h2>حسب نوع المرحلة الدراسية للمدارس <button class="btn btn-outline btn-sm" id="pr_level">🖨️ طباعة منفصلة</button></h2>${tableLevel(byLevel)} ${svgDonutChart(byLevel.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byLevel.map(x=>({name:x.name, value:x.programs})))}`;
+    lCard.innerHTML = `<h2>حسب نوع المرحلة الدراسية للمدارس <button class="btn btn-outline btn-sm" id="pr_level">🖨️ طباعة / PDF</button></h2>${tableLevel(byLevel)} ${svgDonutChart(byLevel.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byLevel.map(x=>({name:x.name, value:x.programs})))}`;
     document.getElementById('pr_level').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير التصنيفيات — حسب المرحلة الدراسية', subtitle,
       kpis:[{v:byLevel.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'}],
@@ -1788,7 +1879,7 @@ function renderResultsPage(c){
       </select></div>
     </div>
     <button class="btn btn-primary" id="res_go">عرض</button>
-    <button class="btn btn-outline" id="res_print">🖨️ طباعة</button>
+    <button class="btn btn-outline" id="res_print">🖨️ طباعة / حفظ PDF</button>
     <button class="btn btn-outline" id="res_excel">📊 استخراج إكسل</button>
     <div id="res_result" style="margin-top:16px;"></div>
   </div>`;
@@ -1980,14 +2071,14 @@ function renderTrainerPortalPage(c){
   }
 
   if(trainerPortalTab==='upcoming'){
-    box.innerHTML = `<div class="card"><h2 class="tp-h">فعالياتي القادمة <button class="btn btn-outline btn-sm" id="tp_print_up">🖨️ طباعة</button></h2>${upcomingTableOnScreen(upcoming)}</div>`;
+    box.innerHTML = `<div class="card"><h2 class="tp-h">فعالياتي القادمة <button class="btn btn-outline btn-sm" id="tp_print_up">🖨️ طباعة / PDF</button></h2>${upcomingTableOnScreen(upcoming)}</div>`;
     document.getElementById('tp_print_up').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'فعاليات قادمة — '+(trainer?trainer.name:''), kpis:[{v:upcoming.length,l:'عدد الفعاليات'}],
       headers:['م','أمر التكليف','عنوان المبادرة','المكان','هاتف المشرف','التاريخ','الوقت','الطلبات المقدمة','الإنجاز'], rows:upcomingRowsForPrint(upcoming)
     }), true, 'A4');
 
   } else if(trainerPortalTab==='past'){
-    box.innerHTML = `<div class="card"><h2 class="tp-h">فعالياتي السابقة <button class="btn btn-outline btn-sm" id="tp_print_past">🖨️ طباعة</button></h2>${upcomingTableOnScreen(past)}</div>`;
+    box.innerHTML = `<div class="card"><h2 class="tp-h">فعالياتي السابقة <button class="btn btn-outline btn-sm" id="tp_print_past">🖨️ طباعة / PDF</button></h2>${upcomingTableOnScreen(past)}</div>`;
     document.getElementById('tp_print_past').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'فعاليات سابقة — '+(trainer?trainer.name:''), kpis:[{v:past.length,l:'عدد الفعاليات'}],
       headers:['م','أمر التكليف','عنوان المبادرة','المكان','هاتف المشرف','التاريخ','الوقت','الطلبات المقدمة','الإنجاز'], rows:upcomingRowsForPrint(past)
@@ -2028,7 +2119,7 @@ function renderTrainerPortalPage(c){
       <table><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>عدد الساعات</th></tr></thead><tbody>
         ${rows.length?rows.map(r=>`<tr><td>${r.o.serial}</td><td>${escapeHtml(r.o.title)}</td><td>${r.o.date||''}</td><td>${r.o.timeFrom||''}-${r.o.timeTo||''}</td><td>${r.hrs.toFixed(1)}</td></tr>`).join(''):'<tr><td colspan="5" class="empty-state">لا توجد بيانات</td></tr>'}
       </tbody></table>
-      <button class="btn btn-outline btn-sm" style="margin-top:12px;" id="tp_print_hours">🖨️ طباعة</button>
+      <button class="btn btn-outline btn-sm" style="margin-top:12px;" id="tp_print_hours">🖨️ طباعة / PDF</button>
     </div>`;
     document.getElementById('tp_print_hours').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير ساعات مقدم الفعالية: '+(trainer?trainer.name:''), kpis:[{v:myOrders.length,l:'عدد الفعاليات'},{v:totalHours.toFixed(1),l:'إجمالي الساعات'}],
