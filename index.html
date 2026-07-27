@@ -21,21 +21,21 @@
   html,body{margin:0;padding:0;}
   body{font-family:var(--font-body); font-size:22px; background:var(--maroon-50); color:var(--ink); min-height:100vh;
     background-image: linear-gradient(var(--line) 1px, transparent 1px); background-size: 100% 34px;}
-  #app{display:flex; min-height:100vh;}
-  #sidebar{width:250px; flex:0 0 250px; background:linear-gradient(180deg,var(--maroon-900),var(--maroon-950)); color:var(--white);
-    display:flex; flex-direction:column; position:sticky; top:0; height:100vh;}
-  .brand{display:flex; align-items:center; gap:10px; padding:20px 16px; border-bottom:1px solid rgba(255,255,255,.12);}
-  .brand img{width:42px;height:42px;object-fit:contain;}
-  .brand .logo-placeholder{width:42px;height:42px;border-radius:8px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px;}
-  .brand-name{font-family:var(--font-head);font-weight:800;font-style:italic;font-size:15px;line-height:1.3;}
-  .brand-sub{font-size:11px;opacity:.75;margin-top:2px;}
-  nav.mainnav{flex:1; padding:14px 10px; display:flex; flex-direction:column; gap:4px; overflow-y:auto;}
-  nav.mainnav button{all:unset; cursor:pointer; display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:8px; font-size:13.5px; color:rgba(255,255,255,.88); transition:background .15s;}
-  nav.mainnav button .ic{font-size:17px; width:20px; text-align:center;}
-  nav.mainnav button:hover{background:rgba(255,255,255,.08);}
-  nav.mainnav button.active{background:var(--gold); color:var(--maroon-950); font-weight:700;}
-  .sidebar-foot{padding:14px; font-size:11px; opacity:.85; border-top:1px solid rgba(255,255,255,.12); display:flex; flex-direction:column; gap:8px;}
-  .sidebar-foot button{all:unset; cursor:pointer; background:rgba(255,255,255,.12); color:#fff; padding:7px 10px; border-radius:6px; font-size:12px; text-align:center;}
+  #app{display:flex; flex-direction:column; min-height:100vh;}
+  #topNav{background:linear-gradient(180deg,var(--maroon-900),var(--maroon-950)); color:var(--white);
+    display:flex; align-items:center; justify-content:space-between; gap:18px; padding:0 22px; position:sticky; top:0; z-index:50; box-shadow:0 2px 10px rgba(0,0,0,.18); flex-wrap:wrap;}
+  .brand{display:flex; align-items:center; gap:10px; padding:11px 0; flex:0 0 auto;}
+  .brand img{width:38px;height:38px;object-fit:contain;}
+  .brand .logo-placeholder{width:38px;height:38px;border-radius:8px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .brand-name{font-family:'Cairo','Tajawal',sans-serif;font-weight:800;font-size:15px;line-height:1.3;}
+  .brand-sub{font-size:10.5px;opacity:.75;margin-top:2px;}
+  nav.mainnav{display:flex; align-items:center; gap:2px; flex-wrap:wrap; flex:1; font-family:'Cairo','Tajawal',sans-serif;}
+  nav.mainnav button{all:unset; cursor:pointer; display:flex; align-items:center; gap:7px; padding:14px 14px; font-size:13.5px; font-weight:700; color:rgba(255,255,255,.92); transition:background .15s; white-space:nowrap;}
+  nav.mainnav button .ic{font-size:15px;}
+  nav.mainnav button:hover{background:rgba(255,255,255,.1);}
+  nav.mainnav button.active{background:var(--gold); color:var(--maroon-950);}
+  .sidebar-foot{padding:10px 0; font-size:11px; opacity:.9; display:flex; align-items:center; gap:10px; flex:0 0 auto;}
+  .sidebar-foot button{all:unset; cursor:pointer; background:rgba(255,255,255,.12); color:#fff; padding:7px 12px; border-radius:6px; font-size:11.5px; text-align:center; white-space:nowrap;}
   .sidebar-foot button:hover{background:rgba(255,255,255,.22);}
   #main{flex:1; display:flex; flex-direction:column; min-width:0;}
   header.topbar{background:var(--white); border-bottom:2px solid var(--maroon-800); padding:16px 26px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:5; box-shadow:var(--shadow);}
@@ -132,13 +132,15 @@
   .mob-toggle{display:none;}
   .mob-scrim{display:none;}
   @media (max-width:860px){
-    #sidebar{position:fixed; right:0; z-index:50; transform:translateX(100%); transition:transform .2s; box-shadow:0 0 40px rgba(0,0,0,.3);}
-    #sidebar.open{transform:translateX(0);}
+    #topNav{padding:10px 14px;}
+    nav.mainnav{display:none; flex-direction:column; align-items:stretch; width:100%; order:5; background:rgba(0,0,0,.12); border-radius:8px; margin:4px 0 8px; padding:4px;}
+    nav.mainnav.open{display:flex;}
+    nav.mainnav button{padding:12px 14px; border-radius:6px;}
+    .sidebar-foot{order:4; margin-inline-start:auto;}
     .content{padding:14px;}
     header.topbar{padding:12px 14px;}
     header.topbar h1{font-size:17px;}
-    .mob-toggle{display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:9px; background:var(--maroon-800); color:#fff; font-size:18px; border:none; cursor:pointer;}
-    .mob-scrim.show{display:block; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:45;}
+    .mob-toggle{display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:9px; background:rgba(255,255,255,.15); color:#fff; font-size:18px; border:none; cursor:pointer;}
     .grid{grid-template-columns:1fr !important;}
     table{font-size:13.5px;}
   }
@@ -367,12 +369,6 @@ function renderGate(root){
     <div class="field" style="text-align:right; margin-bottom:6px;"><label>كلمة المرور</label><input id="lg_pass" type="password" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="helper" id="lg_err" style="display:none;color:#9e2b2b;font-weight:700;margin-bottom:8px;">اسم المستخدم أو كلمة المرور غير صحيحة</div>
     <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:10px;" onclick="doLogin()">🔐 دخول</button>
-    <div class="helper" style="margin-top:16px; text-align:right; line-height:1.9;">
-      حسابات تجريبية:<br>
-      مدير نظام: admin / admin123<br>
-      مستخدم: user / user123<br>
-      مقدم فعالية: trainer1 / trainer123
-    </div>
   </div></div>`;
   document.getElementById('lg_user').focus();
 }
@@ -392,22 +388,21 @@ function doLogin(){
 function renderAppShell(root){
   root.innerHTML = `
   <div id="app">
-    <aside id="sidebar">
+    <header id="topNav">
       <div class="brand">
         <div id="logoSlot"><div class="logo-placeholder">🕌</div></div>
         <div><div class="brand-name" id="orgNameDisplay">إدارة الفعاليات</div><div class="brand-sub">نظام طلبات الفعاليات والمبادرات</div></div>
       </div>
+      <button class="mob-toggle" id="mobToggleBtn">☰</button>
       <nav class="mainnav" id="mainNav"></nav>
       <div class="sidebar-foot">
-        <div style="font-weight:800;">${currentUser?escapeHtml(currentUser.displayName||currentUser.username):''}</div>
-        <div>الدور: ${currentRole==='admin'?'مدير نظام':currentRole==='user'?'مستخدم':'مقدم فعالية'}</div>
+        <div style="text-align:left;"><div style="font-weight:800;">${currentUser?escapeHtml(currentUser.displayName||currentUser.username):''}</div><div>الدور: ${currentRole==='admin'?'مدير نظام':currentRole==='user'?'مستخدم':'مقدم فعالية'}</div></div>
         <button id="switchRoleBtn">تسجيل الخروج</button>
       </div>
-    </aside>
+    </header>
     <div id="main">
       <header class="topbar">
         <div style="display:flex; align-items:center; gap:10px;">
-          <button class="mob-toggle" id="mobToggleBtn">☰</button>
           <div><h1 id="pageTitle"></h1><div class="sub" id="pageSub"></div></div>
         </div>
         <div id="topbarActions"></div>
@@ -416,8 +411,7 @@ function renderAppShell(root){
     </div>
   </div>`;
   document.getElementById('switchRoleBtn').onclick=()=>{ currentRole=null; loggedTrainerId=null; currentUser=null; renderRoot(); };
-  document.getElementById('mobToggleBtn').onclick=()=>{ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('mobScrim').classList.toggle('show'); };
-  document.getElementById('mobScrim').onclick=()=>{ document.getElementById('sidebar').classList.remove('open'); document.getElementById('mobScrim').classList.remove('show'); };
+  document.getElementById('mobToggleBtn').onclick=()=>{ document.getElementById('mainNav').classList.toggle('open'); };
   if(currentRole==='trainer'){ currentPage='trainerPortal'; }
   else if(!visiblePages().find(p=>p.id===currentPage)){ currentPage='home'; }
   render();
@@ -432,7 +426,7 @@ function renderNav(){
     b.className = p.id===currentPage ? 'active':'';
     const badge = (p.id==='approvals' && pendingCount) ? ` <span class="badge" style="background:#f4c9d1;color:#7a1230;">${pendingCount}</span>` : '';
     b.innerHTML = `<span class="ic">${p.icon}</span><span>${p.label}</span>${badge}`;
-    b.onclick=()=>{ currentPage=p.id; if(p.id==='order'){editingOrderId=null;} render(); };
+    b.onclick=()=>{ currentPage=p.id; if(p.id==='order'){editingOrderId=null;} render(); nav.classList.remove('open'); };
     nav.appendChild(b);
   });
 }
@@ -1068,7 +1062,7 @@ const PRINT_THEME = '#8A1538';
 function doPrintDoc(htmlStr, landscape, pageSize){
   pageSize = pageSize || 'A4';
   const orient = landscape?'landscape':'portrait';
-  const pCSS = '@page{size:'+pageSize+' '+orient+';margin:8mm}';
+  const pCSS = '@page{size:'+pageSize+' '+orient+';margin:6mm}';
   let full = htmlStr.replace('</head>', '<style>'+pCSS+'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head>');
   full = full.replace('__ORIENT__', orient).replace('__PAGESIZE__', pageSize);
   full = full.replace('</body></html>', __downloadDocPdfScript()+'</body></html>');
@@ -1083,56 +1077,58 @@ function printDocOpen(theme, docTitle){
   docTitle = docTitle || 'مستند';
   return `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
   <title>${escapeHtml(docTitle)}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Beiruti:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Tajawal',Arial;direction:rtl;background:#f5f7fa;padding:10mm;color:#222;font-size:14pt;font-weight:400}
-  .doc-heading-font{font-family:'Cairo','Tajawal',Arial;font-weight:900;}
-  .doc{width:100%;max-width:100%;margin:0 auto;padding:10mm 14mm;border:1.5px solid ${theme};border-radius:4px;background:#fff;box-sizing:border-box}
-  .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid ${theme};padding-bottom:5mm;margin-bottom:5mm;direction:ltr}
-  .org-right{text-align:right;direction:rtl;line-height:1.7}
-  .org-l1{font-size:15pt;font-weight:900;color:${theme};font-family:'Cairo','Tajawal',Arial;}
+  body{font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;direction:rtl;background:#f5f7fa;padding:10mm;color:#222;font-size:14pt;font-weight:400}
+  .doc-heading-font{font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;font-weight:800;}
+  .doc{width:100%;max-width:100%;margin:0 auto;padding:6mm 10mm;border:1.5px solid ${theme};border-radius:4px;background:#fff;box-sizing:border-box}
+  .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid ${theme};padding-bottom:2.5mm;margin-bottom:2.5mm;direction:ltr}
+  .org-right{text-align:right;direction:rtl;line-height:1.5}
+  .org-l1{font-size:15pt;font-weight:900;color:${theme};font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;}
   .org-l2,.org-l3{font-size:10pt;color:#555;font-weight:700}
   .logo-ph{font-size:34px}
-  .title-blk{text-align:center;margin-bottom:6mm;border:2px solid ${theme};border-radius:8px;padding:5mm;background:${theme}0d}
-  .title-ar{font-size:19pt;font-weight:900;color:${theme};font-family:'Cairo','Tajawal',Arial;letter-spacing:.3px;}
-  .title-sub{font-size:10.5pt;color:#555;margin-top:2mm;font-weight:700}
-  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;margin-bottom:6mm}
-  .kpi{border:1.5px solid ${theme};border-radius:6px;padding:7px;text-align:center}
+  .title-blk{text-align:center;margin-bottom:3mm;border:2px solid ${theme};border-radius:8px;padding:3mm;background:${theme}0d}
+  .title-ar{font-size:19pt;font-weight:900;color:${theme};font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;letter-spacing:.3px;}
+  .title-sub{font-size:10.5pt;color:#555;margin-top:1mm;font-weight:700}
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:5px;margin-bottom:3mm}
+  .kpi{border:1.5px solid ${theme};border-radius:6px;padding:5px;text-align:center}
   .kpi-v{font-size:15pt;font-weight:900;color:${theme}}
   .kpi-l{font-size:9.5pt;color:#666;margin-top:2px}
-  .sec-t{font-size:14pt;font-weight:900;margin:6mm 0 3mm;border-right:5px solid ${theme};padding-right:8px;color:${theme};font-family:'Cairo','Tajawal',Arial;}
-  table{width:100%;border-collapse:collapse;font-size:14pt;margin-bottom:4mm}
+  .sec-t{font-size:14pt;font-weight:900;margin:3mm 0 1.5mm;border-right:5px solid ${theme};padding-right:8px;color:${theme};font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;}
+  table{width:100%;border-collapse:separate;border-spacing:0;font-size:13pt;margin-bottom:2mm;border:0.5pt solid #d5d5d5;border-radius:4px;overflow:hidden}
   thead{display:table-header-group}
   tfoot{display:table-footer-group}
-  th{background:${theme};color:#fff;padding:6px 8px;border:1px solid ${theme};text-align:right;font-weight:800}
-  td{padding:6px 8px;border:1px solid #dde6f0;text-align:right;font-weight:400}
+  th{background:${theme};color:#fff;padding:4px 6px;border-bottom:0.5pt solid ${theme};border-left:0.5pt solid rgba(255,255,255,.25);text-align:right;font-weight:800}
+  th:last-child{border-left:none}
+  td{padding:4px 6px;border-bottom:0.5pt solid #e4e4e4;border-left:0.5pt solid #e4e4e4;text-align:right;font-weight:400}
+  td:last-child{border-left:none}
+  tr:last-child td{border-bottom:none}
   td.num, th.num{text-align:center}
   tr:nth-child(even) td{background:#f8fafc}
   tfoot td{background:#f0f4f8;font-weight:800}
-  .field-row{display:flex;justify-content:space-between;border-bottom:1px dotted #ccc;padding:2.6mm 0;font-size:18pt}
+  .field-row{display:flex;justify-content:space-between;align-items:center;border:0.5pt solid #d5d5d5;border-radius:4px;padding:1.2mm 8px;font-size:10pt;margin-bottom:1mm}
   .f-ar{font-weight:700;color:${theme};min-width:150px}
   .f-val{flex:1;text-align:center;font-weight:400}
-  .ftr{border-top:2px solid ${theme};margin-top:5mm;padding-top:2mm;text-align:center;font-size:9.5pt;color:#666}
-  .voucher-title-row{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:6mm;border:1px dashed ${theme};border-radius:8px;background:#fff;overflow:hidden}
-  .voucher-title-row>div{flex:1;text-align:center;padding:4mm 6mm;border-left:1px dashed ${theme}}
+  .ftr{border-top:2px solid ${theme};margin-top:2mm;padding-top:1mm;text-align:center;font-size:9pt;color:#666}
+  .voucher-title-row{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:2mm;margin-top:-1mm;border:1px dashed ${theme};border-radius:8px;background:#fff;overflow:hidden}
+  .voucher-title-row>div{flex:1;text-align:center;padding:1.5mm 4mm;border-left:1px dashed ${theme}}
   .voucher-title-row>div:last-child{border-left:none}
-  .voucher-merged{background:${theme}0d;flex:0 0 auto;margin:auto;padding:4mm 12mm}
-  .voucher-merged .title-ar{font-size:17pt;margin:0}
-  .voucher-merged .title-en{font-size:9.5pt;color:#555;font-weight:700;letter-spacing:1px;margin-top:1mm}
-  .voucher-merged .vm-num{font-size:11pt;font-weight:900;color:${theme};margin-top:2mm;border-top:1px dashed ${theme};padding-top:2mm}
-  .org-info-blk{line-height:1.6;font-family:'Cairo','Tajawal',Arial;font-weight:800;color:${theme};font-size:10.5pt}
-  .org-info-blk img{max-height:16mm;max-width:36mm;object-fit:contain}
-  .barcode-blk .bc-title{font-size:14pt;font-weight:800;color:${theme};margin-bottom:2mm;font-family:'Cairo','Tajawal',Arial;}
-  .barcode-blk img{max-width:60mm;height:auto}
-  .barcode-blk .bc-num{font-size:9.5pt;font-weight:800;color:#444;margin-top:1mm;letter-spacing:.5px}
-  .bottom-bar{height:4mm;background:${theme};border-radius:2px;margin-top:6mm}
+  .voucher-merged{background:${theme}0d;flex:0 0 auto;margin:auto;padding:1.5mm 7mm}
+  .voucher-merged .title-ar{font-size:16pt;margin:0}
+  .voucher-merged .title-en{font-size:9pt;color:#555;font-weight:700;letter-spacing:1px;margin-top:1mm}
+  .org-info-blk{line-height:1.5;font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;font-weight:800;color:${theme};font-size:10pt}
+  .org-info-blk img{max-height:11mm;max-width:26mm;object-fit:contain}
+  .barcode-blk .bc-title{font-size:10pt;font-weight:800;color:${theme};margin-bottom:1mm;font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;}
+  .barcode-blk img{max-width:48mm;height:auto}
+  .barcode-blk .bc-num{font-size:9pt;font-weight:800;color:#444;margin-top:1mm;letter-spacing:.5px}
+  .bottom-bar{height:2.5mm;background:${theme};border-radius:2px;margin-top:2mm}
   .print-toolbar{display:flex;justify-content:center;gap:10px;margin-bottom:6mm;position:sticky;top:0;background:#f5f7fa;padding-top:2mm;z-index:10}
-  .print-toolbar button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-family:'Tajawal',Arial;font-weight:800;font-size:11pt;border:1.5px solid ${theme}}
+  .print-toolbar button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;font-weight:800;font-size:11pt;border:1.5px solid ${theme}}
   .print-toolbar .pt-print{background:${theme};color:#fff}
   .print-toolbar .pt-pdf{background:#fff;color:${theme}}
   .print-toolbar button:disabled{opacity:.6;cursor:wait}
-  @page{margin:10mm 8mm 14mm 8mm;}
+  @page{margin:6mm 6mm 10mm 6mm;}
   @media print{
     body{background:#fff;padding:0}
     .doc{margin:0;border:none}
@@ -1173,11 +1169,21 @@ function printDocFooter(){
 }
 function printDocClose(){ return `</div></body></html>`; }
 /* Trainer name+phone mini-table: peach header "اسم المدرب" / "رقم الهاتف للتواصل" per the reference image */
+function trainerPlainText(o){
+  const ids = (o&&o.trainerIds)||[];
+  const list = ids.map(id=>state.trainers.find(t=>t.id===id)).filter(Boolean);
+  if(!list.length) return '—';
+  return list.map(t=>`${escapeHtml(t.name)}${t.phone?' — '+phoneLink(t.phone):''}`).join('، ');
+}
 function trainerMiniTable(o){
   const ids = (o&&o.trainerIds)||[];
   const list = ids.map(id=>state.trainers.find(t=>t.id===id)).filter(Boolean);
   if(!list.length) return '—';
-  return list.map(t=>`<span style="display:inline-block;border:1px dashed #8A1538;border-radius:6px;padding:3px 8px;font-size:22px;font-weight:700;color:#1565C0;margin:1px;background:#fff;">${escapeHtml(t.name)}${t.phone?' — '+phoneLink(t.phone):''}</span>`).join(' ');
+  const boxCss = 'display:inline-flex;align-items:center;background:#B5527A;color:#fff;border:2px solid #fff;box-shadow:0 0 0 1px #d9a9ba,0 1px 2px rgba(0,0,0,.12);border-radius:9px;padding:8px 18px;white-space:nowrap;flex-shrink:0;';
+  return list.map(t=>`<span style="display:inline-flex;align-items:stretch;gap:5px;margin:2px;font-size:14px;font-weight:700;vertical-align:middle;">
+    <span style="${boxCss}">${escapeHtml(t.name)}</span>
+    ${t.phone?`<span style="${boxCss}">${phoneLink(t.phone)}</span>`:''}
+  </span>`).join(' ');
 }
 function fullTimeRange(from, to){
   if(!from && !to) return '';
@@ -1260,7 +1266,6 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
     <div class="voucher-merged">
       <div class="title-ar">أمر تكليف</div>
       <div class="title-en">ASSIGNMENT ORDER</div>
-      <div class="vm-num">رقم أمر التكليف: ${String(o.serial).padStart(4,'0')}</div>
     </div>
     ${orgLogo?`<div class="org-info-blk">${orgLogo}</div>`:''}
     ${orderBarcodeBlock(o)}
@@ -1274,12 +1279,12 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
 async function printOrderSchoolCopy(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
   const html = await buildOrderPrintDoc(o, {showAdminNote:false}, 'نسخة الجهة الطالبة');
-  doPrintDoc(html, false, 'A4');
+  doPrintDoc(html, true, 'A4');
 }
 async function printOrderAdminCopy(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
   const html = await buildOrderPrintDoc(o, {}, 'نسخة الإدارة (كاملة)');
-  doPrintDoc(html, false, 'A4');
+  doPrintDoc(html, true, 'A4');
 }
 async function openQrCodeModal(id){
   const o = state.orders.find(x=>x.id===id); if(!o) return;
@@ -1296,12 +1301,15 @@ async function openQrCodeModal(id){
   const closeBtn = document.getElementById('qr_close');
   if(closeBtn) closeBtn.onclick=()=>overlay.classList.remove('open');
 }
-function emailOrder(id){
+async function emailOrder(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
   const field = state.fields.find(f=>f.id===o.fieldId);
   const school = state.schools.find(s=>s.id===o.schoolId);
   const subject = `طلب رقم ${o.serial} — ${o.title}`;
-  const body = `عنوان المبادرة: ${o.title}\nالمجال: ${field?field.name:''}\nالتاريخ: ${o.date||''}\nالوقت: ${o.timeFrom||''} - ${o.timeTo||''}\nالمدرسة: ${school?school.name:''}\nمقدم المبادرة: ${trainerNames(o)}\nملاحظة الإدارة: ${o.adminNote||''}`;
+  const body = `عنوان المبادرة: ${o.title}\nالمجال: ${field?field.name:''}\nالتاريخ: ${o.date||''}\nالوقت: ${o.timeFrom||''} - ${o.timeTo||''}\nالمدرسة: ${school?school.name:''}\nمقدم المبادرة: ${trainerNames(o)}\nملاحظة الإدارة: ${o.adminNote||''}\n\n(مرفق: تم فتح أمر التكليف في نافذة جديدة — استخدم زر "تنزيل PDF" بداخلها ثم أرفق الملف هنا يدويًا، فالمتصفحات لا تسمح بإرفاق الملفات تلقائيًا في رسائل البريد)`;
+  const html = await buildOrderPrintDoc(o, {}, '');
+  doPrintDoc(html, true, 'A4');
+  toast('افتحنا أمر التكليف — اضغط "تنزيل PDF" في النافذة الجديدة ثم أرفقه يدويًا في رسالة البريد');
   window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -1326,6 +1334,7 @@ function buildReportDoc(opts){
   // opts: {titleAr, subtitle, kpis:[{v,l}], headers:[...], rows:[[...]], theme}
   const theme = opts.theme || PRINT_THEME;
   let html = printDocOpen(theme, opts.titleAr || 'تقرير');
+  if(opts.extraStyle) html += `<style>${opts.extraStyle}</style>`;
   html += printDocHeaderBlock();
   html += `<div class="title-blk"><div class="title-ar">${escapeHtml(opts.titleAr)}</div><div class="title-sub">${escapeHtml(opts.subtitle||'')}</div></div>`;
   if(opts.kpis && opts.kpis.length){
@@ -1408,7 +1417,7 @@ function renderAdminPage(c){
       const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
       const reqs = (o.adminRequests||[]).map(id=>{const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:'';}).filter(Boolean).join('، ');
       const bar = generateBarcodeDataUrl(barcodeTextForOrder(o));
-      return [i+1, o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', supervisor&&supervisor.phone?phoneLink(supervisor.phone):'', o.participantsCount||'', trainerMiniTable(o), reqs||'—', bar?`<img src="${bar}" style="width:22mm;height:auto;">`:''];
+      return [i+1, o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', supervisor&&supervisor.phone?phoneLink(supervisor.phone):'', o.participantsCount||'', trainerPlainText(o), reqs||'—', bar?`<img src="${bar}" style="width:22mm;height:auto;">`:''];
     }));
     const reqRows = Object.entries(k.reqCounts).map(([id,count])=>{ const r=state.adminRequestsList.find(x=>x.id===id); return `<tr><td>${escapeHtml(r?r.name:id)}</td><td>${count}</td></tr>`; }).join('') || '<tr><td colspan="2" style="text-align:center;color:#999;">لا توجد</td></tr>';
     doPrintDoc(buildReportDoc({
@@ -1416,6 +1425,7 @@ function renderAdminPage(c){
       kpis:[{v:k.events,l:'عدد الفعاليات'},{v:k.trainers,l:'عدد المدربين'},{v:k.hours.toFixed(1),l:'إجمالي عدد الساعات'},{v:k.schools,l:'عدد المدارس'},{v:k.reqs,l:'عدد الطلبات الإدارية'}],
       headers:['م','أمر التكليف','عنوان الفعالية','التاريخ','الوقت','المكان','رقم المشرف','عدد المشاركين','مقدم البرنامج','الطلبات الإدارية للبرنامج','الباركود'],
       rows,
+      extraStyle:'.title-ar{font-size:10pt !important} .title-sub{font-size:10pt !important} .kpi-v{font-size:10pt !important} .kpi-l{font-size:10pt !important} table{font-size:10pt !important} th,td{font-size:10pt !important;font-weight:400 !important} .sec-t{font-size:10pt !important}',
       extraHtml:`<div class="sec-t">توزيع الطلبات الإدارية خلال الفترة</div><table><thead><tr><th>الطلب الإداري</th><th>عدد مرات الطلب</th></tr></thead><tbody>${reqRows}</tbody></table>`
     }), true, 'A4');
   };
