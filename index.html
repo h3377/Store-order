@@ -1213,7 +1213,7 @@ function quickAddAdminRequest(){
 /* ============ Print system (Duroob-style: self-contained popup document) ============ */
 const PRINT_THEME = '#12335c';
 const PRINT_LINE_COLOR = '#8A1538'; // عنابي — يُستخدم لإطارات وخطوط الجداول في كل التقارير
-function doPrintDoc(htmlStr, landscape, pageSize){
+function doPrintDoc(htmlStr, landscape, pageSize, fileName){
   pageSize = pageSize || 'A4';
   const pCSS = '@page{size:'+pageSize+' '+(landscape?'landscape':'portrait')+';margin:10mm}';
   const orgName = (state.printHeader && state.printHeader.line1) || '';
@@ -1225,7 +1225,9 @@ function doPrintDoc(htmlStr, landscape, pageSize){
       <button onclick="window.close()" style="background:#5a6b82;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-weight:800;font-size:11pt;cursor:pointer;font-family:'Tajawal',Arial;">❌ إغلاق</button>
     </div>
   </div>`;
-  const printCss = '<style>'+pCSS+'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none !important;}}</style>';
+  // اسم الملف المقترح عند "حفظ كـ PDF" — المتصفح يعتمد على وسم <title> الخاص بالمستند
+  const titleTag = fileName ? `<title>${escapeHtml(fileName)}</title>` : '';
+  const printCss = titleTag+'<style>'+pCSS+'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none !important;}}</style>';
   let full = htmlStr.replace('</head>', printCss+'</head>');
   full = full.replace('<body><div class="doc">', '<body>'+toolbar+'<div class="doc">');
   const blob = new Blob([full], {type:'text/html;charset=utf-8'});
@@ -1326,7 +1328,7 @@ function generateBarcodeDataUrl(text){
   try{
     if(typeof JsBarcode==='undefined') return '';
     const canvas = document.createElement('canvas');
-    JsBarcode(canvas, text, {format:'CODE128', displayValue:false, margin:2, height:44, width:2});
+    JsBarcode(canvas, text, {format:'CODE128', displayValue:false, margin:2, height:44, width:5});
     return canvas.toDataURL('image/png');
   }catch(e){ console.error('Barcode generation error', e); return ''; }
 }
@@ -1375,18 +1377,18 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
   }
   let html = printDocOpen(PRINT_THEME);
   html += printDocHeaderBlock();
-  html += `<div style="display:flex;align-items:stretch;border:1.5px dashed ${PRINT_LINE_COLOR};border-radius:10px;overflow:hidden;margin-bottom:5mm;">
-    <div style="flex:0 0 auto;padding:3mm 8mm;text-align:center;display:flex;flex-direction:column;justify-content:center;border-left:1px dashed ${PRINT_LINE_COLOR};">
-      <div style="font-family:'Cairo','Tajawal',Arial;font-weight:900;font-size:15pt;color:${PRINT_THEME};">أمر تكليف</div>
-      <div style="font-family:Arial,'Tajawal';font-weight:800;font-size:8.5pt;letter-spacing:1.5px;color:${PRINT_THEME};margin-top:0.5mm;">ASSIGNMENT ORDER</div>
+  html += `<div style="display:flex;align-items:stretch;border:1.5px dashed ${PRINT_LINE_COLOR};border-radius:8px;overflow:hidden;margin-bottom:4mm;">
+    <div style="flex:0 0 auto;padding:2mm 5mm;text-align:center;display:flex;flex-direction:column;justify-content:center;border-left:1px dashed ${PRINT_LINE_COLOR};">
+      <div style="font-family:'Cairo','Tajawal',Arial;font-weight:900;font-size:12pt;color:${PRINT_THEME};">أمر تكليف</div>
+      <div style="font-family:Arial,'Tajawal';font-weight:800;font-size:7pt;letter-spacing:1px;color:${PRINT_THEME};margin-top:0.5mm;">ASSIGNMENT ORDER</div>
     </div>
-    <div style="flex:0 0 auto;padding:2mm 8mm;display:flex;align-items:center;justify-content:center;border-left:1px dashed ${PRINT_LINE_COLOR};">
-      ${state.logo?`<img src="${state.logo}" style="height:14mm;max-width:32mm;object-fit:contain;">`:'<span style="font-size:24px;">🕌</span>'}
+    <div style="flex:0 0 auto;padding:1.5mm 5mm;display:flex;align-items:center;justify-content:center;border-left:1px dashed ${PRINT_LINE_COLOR};">
+      ${state.logo?`<img src="${state.logo}" style="height:11mm;max-width:26mm;object-fit:contain;">`:'<span style="font-size:18px;">🕌</span>'}
     </div>
-    <div style="flex:1 1 260px;padding:3mm 5mm;text-align:center;display:flex;flex-direction:column;justify-content:center;">
-      <div style="font-weight:900;font-size:10.5pt;color:#161616;margin-bottom:1.5mm;">${escapeHtml(o.title||'')}</div>
-      ${barcodeUrl?`<img src="${barcodeUrl}" style="max-width:100%;height:12mm;display:inline-block;">`:''}
-      <div style="font-weight:800;font-size:9pt;color:#161616;margin-top:1.5mm;">رقم أمر التكليف: ${o.serial}</div>
+    <div style="flex:0 0 150px;padding:2mm 4mm;text-align:center;display:flex;flex-direction:column;justify-content:center;">
+      <div style="font-weight:900;font-size:10pt;color:#111111;margin-bottom:1mm;">${escapeHtml(o.title||'')}</div>
+      ${barcodeUrl?`<img src="${barcodeUrl}" style="max-width:100%;height:9mm;display:inline-block;">`:''}
+      <div style="font-weight:800;font-size:8pt;color:#111111;margin-top:1mm;">رقم أمر التكليف: ${o.serial}</div>
     </div>
   </div>`;
   html += summaryRows.map(([label,val])=>`<div class="field-row"><span class="f-ar">${escapeHtml(label)} :</span><span class="f-val">${val}</span></div>`).join('');
@@ -1398,12 +1400,12 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
 async function printOrderSchoolCopy(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
   const html = await buildOrderPrintDoc(o, {showAdminNote:false}, 'نسخة الجهة الطالبة');
-  doPrintDoc(html, false, 'A4');
+  doPrintDoc(html, false, 'A4', o.title || ('أمر تكليف '+o.serial));
 }
 async function printOrderAdminCopy(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
   const html = await buildOrderPrintDoc(o, {}, 'نسخة الإدارة (كاملة)');
-  doPrintDoc(html, false, 'A4');
+  doPrintDoc(html, false, 'A4', o.title || ('أمر تكليف '+o.serial));
 }
 async function openQrCodeModal(id){
   const o = state.orders.find(x=>x.id===id); if(!o) return;
@@ -1422,7 +1424,8 @@ function emailOrder(id){
   const field = state.fields.find(f=>f.id===o.fieldId);
   const school = state.schools.find(s=>s.id===o.schoolId);
   const subject = `طلب رقم ${o.serial} — ${o.title}`;
-  const body = `عنوان المبادرة: ${o.title}\nالمجال: ${field?field.name:''}\nالتاريخ: ${o.date||''}\nالوقت: ${o.timeFrom||''} - ${o.timeTo||''}\nالمدرسة: ${school?school.name:''}\nمقدم المبادرة: ${trainerNames(o)}\nملاحظة الإدارة: ${o.adminNote||''}`;
+  const body = `عنوان المبادرة: ${o.title}\nالمجال: ${field?field.name:''}\nالتاريخ: ${o.date||''}\nالوقت: ${o.timeFrom||''} - ${o.timeTo||''}\nالمدرسة: ${school?school.name:''}\nمقدم المبادرة: ${trainerNames(o)}\nملاحظة الإدارة: ${o.adminNote||''}\n\n📎 تنبيه: افتح نافذة أمر التكليف التي فُتحت الآن، اضغط "تنزيل PDF"، ثم أرفق الملف المحفوظ يدويًا في هذه الرسالة (لا يمكن للمتصفح إرفاق الملف تلقائيًا لأسباب تتعلق بالخصوصية).`;
+  printOrderAdminCopy(id); // يفتح نافذة التقرير جاهزة لتنزيل PDF بجانب نافذة البريد
   window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
