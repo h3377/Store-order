@@ -1507,14 +1507,15 @@ function renderQuranEntryForm(sub){
     </div>
     <div class="grid" style="grid-template-columns:repeat(2,1fr);">
       <div class="field"><label>عدد صفحات الحفظ</label><input id="qa_memPages" type="number" lang="en" min="0" value="${editing?editing.memPages:''}"></div>
-      <div class="field"><label>عدد الأجزاء المحفوظة</label><input id="qa_memParts" type="number" lang="en" min="0" value="${editing?editing.memParts:''}"></div>
+      <div class="field"><label>عدد الأجزاء المحفوظة (تلقائي: كل 20 صفحة = جزء)</label><input id="qa_memParts" type="number" lang="en" min="0" value="${editing?editing.memParts:0}" readonly style="background:#f4f6fa;"></div>
     </div>
     <div class="grid" style="grid-template-columns:repeat(2,1fr);">
       <div class="field"><label>عدد صفحات المراجعة</label><input id="qa_revPages" type="number" lang="en" min="0" value="${editing?editing.revPages:''}"></div>
-      <div class="field"><label>عدد الأجزاء التي تمت مراجعتها</label><input id="qa_revParts" type="number" lang="en" min="0" value="${editing?editing.revParts:''}"></div>
+      <div class="field"><label>عدد الأجزاء التي تمت مراجعتها (تلقائي: كل 20 صفحة = جزء)</label><input id="qa_revParts" type="number" lang="en" min="0" value="${editing?editing.revParts:0}" readonly style="background:#f4f6fa;"></div>
     </div>
-    <div class="grid" style="grid-template-columns:1fr;">
-      <div class="field"><label>نسبة الإنجاز الشهري (%)</label><input id="qa_pct" type="number" lang="en" min="0" max="100" value="${editing?editing.completionPct:''}"></div>
+    <div class="grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="field"><label>المستهدف الشهري (عدد الصفحات)</label><input id="qa_target" type="number" lang="en" min="0" value="${editing?editing.monthlyTarget||'':''}"></div>
+      <div class="field"><label>نسبة الإنجاز الشهري (%) — تلقائي = (الإنجاز الفعلي ÷ المستهدف الشهري) × 100</label><input id="qa_pct" type="number" lang="en" value="${editing?editing.completionPct:0}" readonly style="background:#f4f6fa;"></div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <button class="btn btn-primary" id="qa_save">${editing?'حفظ التعديلات':'حفظ البيانات'}</button>
@@ -1522,12 +1523,32 @@ function renderQuranEntryForm(sub){
     </div>
   </div>`;
 
+  function partsFromPages(pages){
+    // كل 20 صفحة = جزء، مع احتساب حتى الربع والنصف جزء (تقريب لأقرب 0.25)
+    return Math.round((pages/20)*4)/4;
+  }
+  function recalc(){
+    const memPages = Number(document.getElementById('qa_memPages').value)||0;
+    const revPages = Number(document.getElementById('qa_revPages').value)||0;
+    const target = Number(document.getElementById('qa_target').value)||0;
+    const memParts = partsFromPages(memPages);
+    const revParts = partsFromPages(revPages);
+    document.getElementById('qa_memParts').value = String(memParts);
+    document.getElementById('qa_revParts').value = String(revParts);
+    const actual = memPages + revPages;
+    const pct = target>0 ? Math.round((actual/target)*1000)/10 : 0;
+    document.getElementById('qa_pct').value = String(pct);
+  }
+  ['qa_memPages','qa_revPages','qa_target'].forEach(id=>document.getElementById(id).addEventListener('input', recalc));
+  recalc();
+
   if(editing) document.getElementById('qa_cancelEdit').onclick=()=>{editingQuranId=null; render();};
 
   document.getElementById('qa_save').onclick=async ()=>{
     const programName=document.getElementById('qa_program').value;
     const month=document.getElementById('qa_month').value;
     if(!month){ toast('يرجى تحديد الشهر'); return; }
+    recalc();
     const data = {
       programName, month,
       dateFrom:document.getElementById('qa_from').value,
@@ -1540,6 +1561,7 @@ function renderQuranEntryForm(sub){
       memParts:Number(document.getElementById('qa_memParts').value)||0,
       revPages:Number(document.getElementById('qa_revPages').value)||0,
       revParts:Number(document.getElementById('qa_revParts').value)||0,
+      monthlyTarget:Number(document.getElementById('qa_target').value)||0,
       completionPct:Number(document.getElementById('qa_pct').value)||0,
     };
     if(editing){
