@@ -66,6 +66,13 @@
   .icon-btn:hover{background:var(--maroon-800); color:#fff;}
   .icon-btn.danger:hover{background:#a3263a;}
   .icon-btn:disabled{opacity:.4; cursor:not-allowed;}
+  .tbl-enhance-toolbar{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;}
+  .tbl-scroll{overflow-x:auto; max-width:100%;}
+  .tbl-scroll table{table-layout:auto; width:auto; min-width:100%;}
+  .tbl-scroll th{position:relative; white-space:normal; word-break:break-word;}
+  .tbl-scroll.tbl-nowrap th, .tbl-scroll.tbl-nowrap td{white-space:nowrap;}
+  .col-resizer{position:absolute; top:0; bottom:0; left:-3px; width:6px; cursor:col-resize; z-index:2;}
+  .col-resizer:hover, .col-resizer.active{background:rgba(255,255,255,.35);}
   .plus-btn{all:unset; cursor:pointer; width:34px; height:34px; border-radius:7px; flex:0 0 auto; background:var(--maroon-800); color:#fff; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center;}
   .plus-btn:hover{background:var(--maroon-900);}
   table{width:100%; border-collapse:collapse; font-size:14px; font-family:var(--font-body);}
@@ -605,6 +612,59 @@ function phoneLink(phone){
 }
 
 /* ============ Order tables ============ */
+/* Enhances a report table: wraps it for horizontal scroll, adds a toolbar with
+   "reset column widths" and "toggle text wrap", and makes each column's border
+   draggable to resize manually. Auto-fit-to-content is the browser default
+   (table-layout:auto) and is restored any time "reset" is pressed or the table
+   is re-rendered (e.g. after filtering/searching), since a fresh render has no
+   inline widths. Call this once, right after inserting a <table> into `container`. */
+function enhanceReportTable(container){
+  if(!container) return;
+  const tables = container.querySelectorAll('table');
+  if(!tables.length) return;
+
+  if(!container.querySelector('.tbl-enhance-toolbar')){
+    const toolbar = document.createElement('div');
+    toolbar.className = 'tbl-enhance-toolbar';
+    toolbar.innerHTML = `<button class="icon-btn rect" type="button">↺ إعادة ضبط عرض الأعمدة</button>
+      <button class="icon-btn rect" type="button">↔️ عرض مضغوط (بدون التفاف)</button>`;
+    tables[0].parentNode.insertBefore(toolbar, tables[0]);
+    const [resetBtn, wrapBtn] = toolbar.querySelectorAll('button');
+    resetBtn.onclick = ()=>{ container.querySelectorAll('th').forEach(th=>{ th.style.width=''; }); };
+    wrapBtn.onclick = ()=>{ container.querySelectorAll('.tbl-scroll').forEach(w=>w.classList.toggle('tbl-nowrap')); };
+  }
+
+  tables.forEach(table=>{
+    if(!table.parentElement.classList.contains('tbl-scroll')){
+      const scrollWrap = document.createElement('div');
+      scrollWrap.className = 'tbl-scroll';
+      table.parentNode.insertBefore(scrollWrap, table);
+      scrollWrap.appendChild(table);
+    }
+    table.querySelectorAll('th').forEach(th=>{
+      if(th.querySelector('.col-resizer')) return;
+      const handle = document.createElement('span');
+      handle.className = 'col-resizer';
+      th.appendChild(handle);
+      handle.addEventListener('mousedown', (e)=>{
+        e.preventDefault(); e.stopPropagation();
+        handle.classList.add('active');
+        const startX = e.clientX, startWidth = th.offsetWidth;
+        function onMove(ev){
+          const delta = startX - ev.clientX; // RTL: dragging the left edge left increases width
+          th.style.width = Math.max(40, startWidth + delta) + 'px';
+        }
+        function onUp(){
+          handle.classList.remove('active');
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+    });
+  });
+}
 let __orderTableSelections = {};
 function otblSelect(containerId, checkbox){
   const container = document.getElementById(containerId);
@@ -734,7 +794,9 @@ function renderOrderPage(c){
         list = list.filter(o=> completionFilter==='__pending' ? !o.completionStatus : o.completionStatus===completionFilter);
       }
       if(statusFilter){ list = list.filter(o=>(o.status||'active')===statusFilter); }
-      document.getElementById('ord_listResult').innerHTML = ordersTableHtml(list, 'otbl_order_list');
+      const box = document.getElementById('ord_listResult');
+      box.innerHTML = ordersTableHtml(list, 'otbl_order_list');
+      enhanceReportTable(box);
     }
     document.getElementById('ord_schoolSearch').addEventListener('input', drawFiltered);
     document.getElementById('ord_trainerFilter').addEventListener('change', drawFiltered);
@@ -1194,7 +1256,7 @@ function printDocOpen(theme){
   .f-ar{font-weight:700;color:${theme};min-width:150px}
   .f-val{flex:1;text-align:center;font-weight:400}
   .ftr{border-top:2px solid ${theme};margin-top:5mm;padding-top:2mm;text-align:center;font-size:9.5pt;color:#666}
-  @page{margin:12mm 10mm 16mm 10mm;}
+  @page{margin:10mm;}
   @media print{
     body{background:#fff;padding:0}
     .doc{margin:0;border:none}
@@ -1434,7 +1496,9 @@ function renderAdminPage(c){
       </div>
       <h3 style="margin-top:16px;font-family:var(--font-head);color:var(--maroon-800);">توزيع الطلبات الإدارية خلال الفترة</h3>
       ${reqBreakdownTable(k.reqCounts)}`;
-    document.getElementById('adm_results').innerHTML = `<h2>النتائج (${list.length})</h2>` + dailyReportTable(list);
+    const box_adm = document.getElementById('adm_results');
+    box_adm.innerHTML = `<h2>النتائج (${list.length})</h2>` + dailyReportTable(list);
+    enhanceReportTable(box_adm);
   }
   document.getElementById('adm_filter').onclick=doFilter;
   document.getElementById('adm_excel').onclick=()=>{
@@ -1500,10 +1564,12 @@ function renderAdminRequestsReportPage(c){
   function draw(){
     const {list} = getList();
     const rows = rowsOf(list);
-    document.getElementById('arq_result').innerHTML = `<h2>النتائج (${list.length})</h2>
+    const box = document.getElementById('arq_result');
+    box.innerHTML = `<h2>النتائج (${list.length})</h2>
       <table><thead><tr><th>أمر التكليف</th><th>عنوان الفعالية</th><th>من الساعة</th><th>إلى الساعة</th><th>المكان</th><th>مقدم البرنامج</th><th>الطلبات الإدارية للبرنامج</th></tr></thead><tbody>
         ${rows.map(r=>`<tr><td>${r.o.serial}</td><td>${escapeHtml(r.o.title)}</td><td>${r.o.timeFrom||''}</td><td>${r.o.timeTo||''}</td><td>${r.school?escapeHtml(r.school.name):''}</td><td>${trainerMiniTable(r.o)}</td><td>${escapeHtml(r.reqs)}</td></tr>`).join('') || '<tr><td colspan="7" class="empty-state">لا توجد طلبات إدارية ضمن هذه الفترة</td></tr>'}
       </tbody></table>`;
+    enhanceReportTable(box);
   }
   document.getElementById('arq_go').onclick=draw;
   document.getElementById('arq_excel').onclick=()=>{
@@ -1680,12 +1746,14 @@ function renderQuranReportTab(sub){
     const list = getList();
     const t = totalsOf(list);
     const avgPct = list.length ? (t.pctSum/list.length).toFixed(1) : '0';
-    document.getElementById('qr_result').innerHTML = `<h2>النتائج (${list.length})</h2>
+    const box = document.getElementById('qr_result');
+    box.innerHTML = `<h2>النتائج (${list.length})</h2>
       <table><thead><tr><th>اسم البرنامج</th><th>الشهر</th><th>الفترة</th><th>أيام التنفيذ</th><th>آلية التسميع</th><th>المعلمين</th><th>الطلاب</th><th>صفحات الحفظ</th><th>الأجزاء المحفوظة</th><th>صفحات المراجعة</th><th>الأجزاء المراجعة</th><th>نسبة الإنجاز %</th>${currentRole==='admin'?'<th>إجراءات</th>':''}</tr></thead><tbody>
         ${list.map(x=>`<tr><td>${escapeHtml(x.programName)}</td><td>${x.month}</td><td>${x.dateFrom||''} — ${x.dateTo||''}</td><td>${x.execDays}</td><td>${escapeHtml(x.method)}</td><td>${x.teachersCount}</td><td>${x.studentsCount}</td><td>${x.memPages}</td><td>${x.memParts}</td><td>${x.revPages}</td><td>${x.revParts}</td><td>${x.completionPct}%</td>${currentRole==='admin'?`<td><button class="icon-btn" title="تعديل" onclick="editQuranRecord('${x.id}')">✏️</button> <button class="icon-btn" title="حذف" onclick="deleteQuranRecord('${x.id}')">🗑️</button></td>`:''}</tr>`).join('') || `<tr><td colspan="13" class="empty-state">لا توجد سجلات مطابقة</td></tr>`}
       </tbody>
       ${list.length?`<tfoot><tr style="font-weight:900;background:#f4f6fa;"><td colspan="3">الإجمالي</td><td>${t.execDays}</td><td></td><td>${t.teachersCount}</td><td>${t.studentsCount}</td><td>${t.memPages}</td><td>${t.memParts}</td><td>${t.revPages}</td><td>${t.revParts}</td><td>${avgPct}%</td>${currentRole==='admin'?'<td></td>':''}</tr></tfoot>`:''}
       </table>`;
+    enhanceReportTable(box);
   }
   document.getElementById('qr_go').onclick=draw;
 
@@ -1778,7 +1846,7 @@ function renderReportsPage(c){
         ${rows.length?rows.map(r=>`<tr>${r.map(c=>`<td>${escapeHtml(String(c))}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}" class="empty-state">لا توجد بيانات</td></tr>`}
       </tbody></table>`;
     }
-    document.getElementById('gn_go').onclick=()=>{ const {headers,rows}=gen(); document.getElementById('gn_result').innerHTML = tableOf(headers,rows); };
+    document.getElementById('gn_go').onclick=()=>{ const {headers,rows}=gen(); const box=document.getElementById('gn_result'); box.innerHTML = tableOf(headers,rows); enhanceReportTable(box); };
     document.getElementById('gn_print').onclick=()=>{
       const {headers,rows}=gen(); const from=document.getElementById('gn_from').value, to=document.getElementById('gn_to').value;
       doPrintDoc(buildReportDoc({titleAr:'تقرير عام', subtitle:`من ${from||'—'} إلى ${to||'—'}`, headers, rows:rows.map(r=>r.map(escapeHtml))}), true, 'A4');
@@ -1811,12 +1879,14 @@ function renderReportsPage(c){
     }
     document.getElementById('ev_go').onclick=()=>{
       const {evaluated, notEvaluated} = gen();
-      document.getElementById('ev_result').innerHTML = `
+      const box = document.getElementById('ev_result');
+      box.innerHTML = `
         <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin-bottom:8px;">✅ فعاليات نُفذت وتم تقييمها (${evaluated.length})</h3>
         ${tableOf(evaluated)}
         <div class="divider"></div>
         <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin-bottom:8px;">⏳ فعاليات نُفذت ولم تُقيَّم بعد (${notEvaluated.length})</h3>
         ${tableOf(notEvaluated)}`;
+      enhanceReportTable(box);
     };
     document.getElementById('ev_excel').onclick=()=>{
       const {evaluated, notEvaluated, from, to} = gen();
@@ -1858,7 +1928,7 @@ function renderReportsPage(c){
       const trainer=state.trainers.find(t=>t.id===tId);
       return {list, title:`جدول مقدم الفعالية: ${trainer?trainer.name:''}`, from, to};
     }
-    document.getElementById('rp_go').onclick=()=>{ document.getElementById('rp_result').innerHTML = ordersTableHtmlPrint(gen().list); };
+    document.getElementById('rp_go').onclick=()=>{ const box=document.getElementById('rp_result'); box.innerHTML = ordersTableHtmlPrint(gen().list); enhanceReportTable(box); };
     document.getElementById('rp_excel').onclick=()=>{
       const {list,title,from,to}=gen();
       const rows = list.map(o=>{ const school=state.schools.find(s=>s.id===o.schoolId); return [o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), school?school.name:'', trainerNames(o), o.completionStatus||'لم تنجز']; });
@@ -1895,7 +1965,7 @@ function renderReportsPage(c){
       const sch=state.schools.find(s=>s.id===sId);
       return {list, title:`جدول المدرسة: ${sch?sch.name:''}`, from, to};
     }
-    document.getElementById('rp_go2').onclick=()=>{ document.getElementById('rp_result2').innerHTML = ordersTableHtmlPrint(gen().list); };
+    document.getElementById('rp_go2').onclick=()=>{ const box=document.getElementById('rp_result2'); box.innerHTML = ordersTableHtmlPrint(gen().list); enhanceReportTable(box); };
     document.getElementById('rp_excel2').onclick=()=>{
       const {list,title,from,to}=gen();
       const rows = list.map(o=>[o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), trainerNames(o), o.completionStatus||'لم تنجز']);
@@ -1936,7 +2006,7 @@ function renderReportsPage(c){
         </tbody></table><div style="margin-top:10px;font-weight:800;color:var(--maroon-800);">إجمالي الساعات: ${totalHours.toFixed(1)} ساعة</div>`;
       return {table, title:`تقرير ساعات مقدم الفعالية: ${trainer?trainer.name:''}`, from, to};
     }
-    document.getElementById('hr_go').onclick=()=>{ document.getElementById('hr_result').innerHTML = gen().table; };
+    document.getElementById('hr_go').onclick=()=>{ const box=document.getElementById('hr_result'); box.innerHTML = gen().table; enhanceReportTable(box); };
     document.getElementById('hr_excel').onclick=()=>{
       const tId=document.getElementById('hr_trainer').value;
       const from=document.getElementById('hr_from').value, to=document.getElementById('hr_to').value;
@@ -2050,6 +2120,7 @@ function renderStatsPage(c){
 
     const fCard=document.getElementById('st_field_card'); fCard.style.display='block';
     fCard.innerHTML = `<h2>البند — حسب مجال المبادرة <button class="btn btn-outline btn-sm" id="pr_field">🖨️ طباعة منفصلة</button></h2>${tableFrom(byField)} ${svgDonutChart(byField.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byField.map(x=>({name:x.name, value:x.programs})))}`;
+    enhanceReportTable(fCard);
     document.getElementById('pr_field').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير التصنيفيات — البند (مجال المبادرة)', subtitle,
       kpis:[{v:byField.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'},{v:byField.reduce((s,x)=>s+x.participants,0),l:'إجمالي الطلاب'},{v:byField.reduce((s,x)=>s+x.hours,0).toFixed(1),l:'إجمالي الساعات'},{v:byField.reduce((s,x)=>s+x.days,0),l:'إجمالي الأيام'}],
@@ -2060,6 +2131,7 @@ function renderStatsPage(c){
 
     const tCard=document.getElementById('st_type_card'); tCard.style.display='block';
     tCard.innerHTML = `<h2>حسب نوع البرنامج (مسار المبادرة) <button class="btn btn-outline btn-sm" id="pr_type">🖨️ طباعة منفصلة</button></h2>${tableFrom(byType)} ${svgDonutChart(byType.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byType.map(x=>({name:x.name, value:x.programs})))}`;
+    enhanceReportTable(tCard);
     document.getElementById('pr_type').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير التصنيفيات — حسب نوع البرنامج', subtitle,
       kpis:[{v:byType.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'},{v:byType.reduce((s,x)=>s+x.participants,0),l:'إجمالي الطلاب'},{v:byType.reduce((s,x)=>s+x.hours,0).toFixed(1),l:'إجمالي الساعات'},{v:byType.reduce((s,x)=>s+x.days,0),l:'إجمالي الأيام'}],
