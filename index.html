@@ -64,6 +64,7 @@
   .icon-btn.rect{width:auto; height:36px; padding:0 12px; border-radius:6px;}
   .icon-btn:hover{background:var(--maroon-800); color:#fff;}
   .icon-btn.danger:hover{background:#a3263a;}
+  .icon-btn:disabled{opacity:.4; cursor:not-allowed;}
   .plus-btn{all:unset; cursor:pointer; width:34px; height:34px; border-radius:7px; flex:0 0 auto; background:var(--maroon-800); color:#fff; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center;}
   .plus-btn:hover{background:var(--maroon-900);}
   table{width:100%; border-collapse:collapse; font-size:14px; font-family:var(--font-body);}
@@ -544,7 +545,7 @@ function renderHome(c){
     <div class="stat-box"><div class="num">${tasksInProgress}</div><div class="lbl">مهام قيد التنفيذ</div></div>
     <div class="stat-box" style="${tasksOverdue?'border-color:#9e2b2b;':''}"><div class="num" style="${tasksOverdue?'color:#9e2b2b;':''}">${tasksOverdue}</div><div class="lbl">⚠️ مهام متأخرة عن الاستحقاق</div></div>
   </div>
-  <div class="card"><h2>أحدث الطلبات</h2>${ordersTableHtml(state.orders.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,6))}</div>
+  <div class="card"><h2>أحدث الطلبات</h2>${ordersTableHtml(state.orders.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,6), 'otbl_home_latest')}</div>
   <div class="card">
     <h2>بيانات المؤسسة</h2>
     <div class="grid">
@@ -565,7 +566,7 @@ function renderHome(c){
     }
     if(from) list = list.filter(o=>o.date>=from);
     if(to) list = list.filter(o=>o.date<=to);
-    document.getElementById('hs_result').innerHTML = ordersTableHtml(list.sort((a,b)=>b.serial-a.serial));
+    document.getElementById('hs_result').innerHTML = ordersTableHtml(list.sort((a,b)=>b.serial-a.serial), 'otbl_home_search');
   };
   document.getElementById('saveOrgBtn').onclick=async ()=>{
     state.orgName = document.getElementById('homeOrgName').value.trim();
@@ -590,31 +591,55 @@ function phoneLink(phone){
 }
 
 /* ============ Order tables ============ */
-function ordersTableHtml(list){
+let __orderTableSelections = {};
+function otblSelect(containerId, checkbox){
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('.otbl-check').forEach(cb=>{ if(cb!==checkbox) cb.checked=false; });
+  __orderTableSelections[containerId] = checkbox.checked ? checkbox.dataset.id : null;
+  const toolbar = document.getElementById(containerId+'_toolbar');
+  if(toolbar) toolbar.querySelectorAll('button').forEach(b=>{ b.disabled = !checkbox.checked; });
+}
+function otblAction(containerId, action){
+  const id = __orderTableSelections[containerId];
+  if(!id){ toast('الرجاء تحديد الطلب أولًا عبر مربع الاختيار'); return; }
+  if(action==='edit') editOrder(id);
+  else if(action==='eval') openEvaluationModal(id);
+  else if(action==='postpone') openPostponeModal(id);
+  else if(action==='cancel') toggleCancelOrder(id);
+  else if(action==='qr') openQrCodeModal(id);
+  else if(action==='printSchool') printOrderSchoolCopy(id);
+  else if(action==='printAdmin') printOrderAdminCopy(id);
+  else if(action==='email') emailOrder(id);
+  else if(action==='delete') deleteOrder(id);
+}
+function ordersTableHtml(list, containerId){
+  containerId = containerId || ('otbl_'+uid());
   if(!list.length) return `<div class="empty-state">لا توجد طلبات بعد</div>`;
-  return `<table><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>المجال</th><th>المدرسة</th><th>مقدم المبادرة</th><th>الإنجاز</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>
+  const toolbar = `<div class="table-toolbar" id="${containerId}_toolbar" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+    <button class="icon-btn rect" disabled title="تعديل" onclick="otblAction('${containerId}','edit')">✏️ تعديل</button>
+    <button class="icon-btn rect" disabled title="تقييم وإنجاز" onclick="otblAction('${containerId}','eval')">📝 تقييم</button>
+    <button class="icon-btn rect" disabled title="ترحيل / تأجيل" onclick="otblAction('${containerId}','postpone')">⏩ ترحيل</button>
+    <button class="icon-btn rect" disabled title="إلغاء / تراجع عن الإلغاء" onclick="otblAction('${containerId}','cancel')">❌ إلغاء</button>
+    <button class="icon-btn rect" disabled title="رمز QR" onclick="otblAction('${containerId}','qr')">🔲 QR</button>
+    <button class="icon-btn rect" disabled title="طباعة نسخة الجهة الطالبة" onclick="otblAction('${containerId}','printSchool')">🏫🖨️ نسخة الجهة الطالبة</button>
+    <button class="icon-btn rect" disabled title="طباعة نسخة الإدارة" onclick="otblAction('${containerId}','printAdmin')">🏢🖨️ نسخة الإدارة</button>
+    <button class="icon-btn rect" disabled title="إرسال بالبريد" onclick="otblAction('${containerId}','email')">✉️ بريد</button>
+    <button class="icon-btn rect danger" disabled title="حذف" onclick="otblAction('${containerId}','delete')">🗑️ حذف</button>
+  </div>`;
+  const table = `<table><thead><tr><th></th><th>م</th><th>العنوان</th><th>التاريخ</th><th>المجال</th><th>المدرسة</th><th>مقدم المبادرة</th><th>الإنجاز</th><th>الحالة</th></tr></thead><tbody>
   ${list.map(o=>{
     const field = state.fields.find(f=>f.id===o.fieldId);
     const school = state.schools.find(s=>s.id===o.schoolId);
     const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>' : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : '<span class="badge">لم تنجز بعد</span>';
     const orderStatusBadge = o.status==='cancelled' ? '<span class="badge bad">ملغاة</span>' : o.status==='postponed' ? '<span class="badge busy">مؤجّلة</span>' : '<span class="badge ok">نشطة</span>';
     return `<tr style="${o.status==='cancelled'?'opacity:.6;':''}">
+      <td><input type="checkbox" class="otbl-check" data-id="${o.id}" onchange="otblSelect('${containerId}', this)"></td>
       <td><span class="badge">${o.serial}</span></td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td>
       <td>${field?escapeHtml(field.name):''}</td><td>${school?escapeHtml(school.name):''}</td><td>${escapeHtml(trainerNames(o))}</td>
       <td>${statusBadge}</td><td>${orderStatusBadge}</td>
-      <td class="actions-cell">
-        <button class="icon-btn" title="تعديل" onclick="editOrder('${o.id}')">✏️</button>
-        <button class="icon-btn" title="تقييم وإنجاز" onclick="openEvaluationModal('${o.id}')">📝</button>
-        <button class="icon-btn" title="ترحيل / تأجيل" onclick="openPostponeModal('${o.id}')">⏩</button>
-        <button class="icon-btn" title="${o.status==='cancelled'?'إلغاء الإلغاء':'إلغاء الفعالية'}" onclick="toggleCancelOrder('${o.id}')">${o.status==='cancelled'?'↩️':'❌'}</button>
-        <button class="icon-btn" title="رمز QR" onclick="openQrCodeModal('${o.id}')">🔲</button>
-        <button class="icon-btn" title="طباعة نسخة الجهة الطالبة" onclick="printOrderSchoolCopy('${o.id}')">🏫🖨️</button>
-        <button class="icon-btn" title="طباعة نسخة الإدارة (كاملة)" onclick="printOrderAdminCopy('${o.id}')">🏢🖨️</button>
-        <button class="icon-btn" title="إرسال بالبريد" onclick="emailOrder('${o.id}')">✉️</button>
-        <button class="icon-btn danger" title="حذف" onclick="deleteOrder('${o.id}')">🗑️</button>
-      </td>
     </tr>`;
   }).join('')}</tbody></table>`;
+  return `${toolbar}<div id="${containerId}">${table}</div>`;
 }
 function ordersTableHtmlPrint(list){
   if(!list.length) return `<div class="empty-state">لا توجد بيانات ضمن هذه المعايير</div>`;
@@ -695,7 +720,7 @@ function renderOrderPage(c){
         list = list.filter(o=> completionFilter==='__pending' ? !o.completionStatus : o.completionStatus===completionFilter);
       }
       if(statusFilter){ list = list.filter(o=>(o.status||'active')===statusFilter); }
-      document.getElementById('ord_listResult').innerHTML = ordersTableHtml(list);
+      document.getElementById('ord_listResult').innerHTML = ordersTableHtml(list, 'otbl_order_list');
     }
     document.getElementById('ord_schoolSearch').addEventListener('input', drawFiltered);
     document.getElementById('ord_trainerFilter').addEventListener('change', drawFiltered);
