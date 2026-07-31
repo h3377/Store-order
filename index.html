@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <style>
   :root{
     --maroon-950:#6d0f2b; --maroon-900:#6d0f2b; --maroon-800:#8A1538; --maroon-700:#a83c5b; --maroon-600:#a83c5b;
@@ -415,7 +416,7 @@ function renderAppShell(root){
           <button class="mob-toggle" id="mobToggleBtn">☰</button>
           <div><h1 id="pageTitle"></h1><div class="sub" id="pageSub"></div></div>
         </div>
-        <div id="topbarActions"></div>
+        <div id="topbarActions" style="display:flex; align-items:center; gap:8px;"></div>
       </header>
       <div class="content" id="content"></div>
     </div>
@@ -474,6 +475,18 @@ function renderBell(){
   document.addEventListener('click', function closeBell(ev){ const pnl=document.getElementById('bellPnl'); if(pnl && !wrap.contains(ev.target)){ pnl.classList.remove('open'); } }, {once:true});
 }
 function daysDiffSafe(from,to){ if(!from||!to) return null; return Math.round((new Date(to+'T00:00:00') - new Date(from+'T00:00:00'))/86400000); }
+function renderRefreshBtn(){
+  const btn = document.createElement('button');
+  btn.className = 'icon-btn rect';
+  btn.title = 'تحديث البيانات';
+  btn.textContent = '⟳ تحديث';
+  btn.onclick = async ()=>{
+    btn.disabled = true;
+    try{ await loadState(); toast('تم تحديث البيانات'); render(); }
+    catch(e){ toast('تعذر التحديث، حاول مرة أخرى'); btn.disabled = false; }
+  };
+  document.getElementById('topbarActions').appendChild(btn);
+}
 function render(){
   renderNav();
   const titleMap={home:['الصفحة الرئيسية','نظرة عامة على البرنامج'],
@@ -493,6 +506,7 @@ function render(){
   document.getElementById('pageSub').textContent = titleMap[currentPage][1];
   document.getElementById('topbarActions').innerHTML='';
   renderBell();
+  renderRefreshBtn();
   const c = document.getElementById('content'); c.innerHTML='';
   if(currentPage==='home') renderHome(c);
   else if(currentPage==='order') renderOrderPage(c);
@@ -1233,9 +1247,29 @@ async function generateQRDataUrl(text){
     return await QRCode.toDataURL(text, {width:220, margin:1, color:{dark:'#000000', light:'#ffffff'}});
   }catch(e){ console.error('QR generation error', e); return ''; }
 }
+/* Real 1D (linear) barcode — CODE128 — encoding the assignment order serial number */
+function generateBarcodeDataUrl(text){
+  try{
+    if(typeof JsBarcode==='undefined') return '';
+    const canvas = document.createElement('canvas');
+    JsBarcode(canvas, text, {format:'CODE128', displayValue:false, margin:2, height:44, width:2});
+    return canvas.toDataURL('image/png');
+  }catch(e){ console.error('Barcode generation error', e); return ''; }
+}
 function qrTextForOrder(o){
   const school = state.schools.find(s=>s.id===o.schoolId);
   return `أمر تكليف رقم ${o.serial}\n${o.title}\nالتاريخ: ${o.date||''} ${o.timeFrom||''}\nالمكان: ${school?school.name:''}`;
+}
+/* Same dashed-column box but for people: name on top (bold), phone below (muted, clickable) — used for trainers/supervisor */
+function dashedPeopleBox(people){
+  const list = people.filter(Boolean);
+  if(!list.length) return '—';
+  return `<div style="display:flex;border:1.5px solid #ddd;border-radius:10px;overflow:hidden;flex-wrap:wrap;">
+    ${list.map((p,i)=>`<div style="flex:1 1 0; min-width:120px; padding:3mm 3mm; text-align:center; ${i>0?'border-right:1.5px dashed #bbb;':''}">
+      <div style="font-size:10.5pt; color:#161616; font-weight:900; margin-bottom:1.5mm;">${escapeHtml(p.name||'—')}</div>
+      <div style="font-size:9pt; color:#666;">${p.phone?phoneLink(p.phone):'-'}</div>
+    </div>`).join('')}
+  </div>`;
 }
 async function buildOrderPrintDoc(o, opts, copyLabel){
   opts = opts||{};
@@ -1244,19 +1278,21 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
   const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
   const ptype = state.programTypes.find(p=>p.id===o.programTypeId);
   const reqs = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean);
-  const qrUrl = await generateQRDataUrl(qrTextForOrder(o));
-  const summaryBoxes = [
-    {v:escapeHtml(o.title||'—'), l:'عنوان المبادرة'},
-    {v:escapeHtml(field?field.name:'—'), l:'مجال المبادرة'},
-    {v:escapeHtml(ptype?ptype.name:'—'), l:'مسار المبادرة'},
-    {v:escapeHtml(o.participantsCount||'—'), l:'عدد المستهدفين'},
-    {v:escapeHtml(fullDateStr(o.date)||'—'), l:'تاريخ المبادرة'},
-    {v:escapeHtml(fullTimeRange(o.timeFrom, o.timeTo)||'—'), l:'وقت المبادرة'},
-    {v:escapeHtml(school?school.name:'—'), l:'مكان المبادرة'},
+  const barcodeUrl = generateBarcodeDataUrl(String(o.serial));
+  const summaryRows = [
+    ['عنوان المبادرة', escapeHtml(o.title||'')],
+    ['مجال المبادرة', escapeHtml(field?field.name:'')],
+    ['مسار المبادرة', escapeHtml(ptype?ptype.name:'')],
+    ['عدد المستهدفين', escapeHtml(o.participantsCount||'')],
+    ['تاريخ المبادرة', escapeHtml(fullDateStr(o.date))],
+    ['وقت المبادرة', escapeHtml(fullTimeRange(o.timeFrom, o.timeTo))],
+    ['مكان المبادرة', escapeHtml(school?school.name:'')],
   ];
+  const trainerIds = (o.trainerIds||[]);
+  const trainerPeople = trainerIds.map(id=>state.trainers.find(t=>t.id===id)).filter(Boolean).map(t=>({name:t.name, phone:t.phone}));
   let rows = [
-    ['المشرف', supervisor?(escapeHtml(supervisor.name)+' — '+(supervisor.phone?phoneLink(supervisor.phone):'')+' — '+escapeHtml(supervisor.email||'')):''],
-    ['مقدم المبادرة', trainerMiniTable(o)],
+    ['المشرف', dashedPeopleBox([supervisor?{name:supervisor.name, phone:supervisor.phone}:null])],
+    ['مقدم المبادرة', dashedPeopleBox(trainerPeople)],
   ];
   if(opts.showRequesterNote!==false) rows.push(['ملاحظة الجهة الطالبة', escapeHtml(o.requesterNote||'')]);
   if(opts.showAdminNote!==false){
@@ -1265,18 +1301,21 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
   }
   let html = printDocOpen(PRINT_THEME);
   html += printDocHeaderBlock();
-  html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:8mm;margin-bottom:6mm;flex-wrap:wrap;border:1.5px solid #ddd;border-radius:10px;padding:5mm 7mm;">
-    <div style="text-align:center;">
-      <div style="font-family:'Cairo','Tajawal',Arial;font-weight:900;font-size:20pt;color:#161616;border-bottom:1.5px solid #ccc;padding-bottom:2mm;margin-bottom:2mm;display:inline-block;">أمر تكليف</div><br>
-      <div style="font-family:Arial,'Tajawal';font-weight:800;font-size:11pt;letter-spacing:2px;color:#161616;border-bottom:1.5px solid #ccc;padding-bottom:2mm;margin-bottom:2mm;display:inline-block;">WORK ORDER</div><br>
-      <div style="font-family:Arial,'Tajawal';font-weight:900;font-size:15pt;color:${PRINT_THEME};direction:ltr;display:inline-block;">${o.serial}-TC</div>
+  html += `<div style="display:flex;align-items:stretch;justify-content:space-between;gap:6mm;margin-bottom:6mm;flex-wrap:wrap;">
+    <div style="flex:0 0 auto;border:1.5px dashed ${PRINT_THEME};border-radius:10px;padding:6mm 10mm;text-align:center;">
+      <div style="font-family:'Cairo','Tajawal',Arial;font-weight:900;font-size:18pt;color:${PRINT_THEME};">أمر تكليف</div>
+      <div style="font-family:Arial,'Tajawal';font-weight:800;font-size:10pt;letter-spacing:1.5px;color:${PRINT_THEME};margin-top:1mm;">ASSIGNMENT ORDER</div>
     </div>
-    ${qrUrl?`<div style="text-align:center;">
-      <img src="${qrUrl}" style="width:24mm;height:24mm;display:block;border-radius:4px;">
-      <div style="font-size:8pt;color:#666;margin-top:1.5mm;">رقم التكليف: ${o.serial}</div>
-    </div>`:''}
+    <div style="flex:0 0 auto;align-self:center;text-align:center;">
+      ${state.logo?`<img src="${state.logo}" style="height:20mm;max-width:40mm;object-fit:contain;">`:'<span style="font-size:30px;">🕌</span>'}
+    </div>
+    <div style="flex:1 1 260px;border:1.5px dashed ${PRINT_THEME};border-radius:10px;padding:4mm 6mm;text-align:center;">
+      <div style="font-weight:900;font-size:11pt;color:#161616;margin-bottom:2mm;">${escapeHtml(o.title||'')}</div>
+      ${barcodeUrl?`<img src="${barcodeUrl}" style="max-width:100%;height:16mm;display:inline-block;">`:''}
+      <div style="font-weight:800;font-size:10pt;color:#161616;margin-top:2mm;">رقم أمر التكليف: ${o.serial}</div>
+    </div>
   </div>`;
-  html += `<div class="kpi-row">${summaryBoxes.map(b=>`<div class="kpi"><div class="kpi-v" style="font-size:11.5pt;">${b.v}</div><div class="kpi-l">${b.l}</div></div>`).join('')}</div>`;
+  html += summaryRows.map(([label,val])=>`<div class="field-row"><span class="f-ar">${escapeHtml(label)} :</span><span class="f-val">${val}</span></div>`).join('');
   html += rows.map(([label,val])=>`<div class="field-row"><span class="f-ar">${escapeHtml(label)} :</span><span class="f-val">${val}</span></div>`).join('');
   html += printDocFooter();
   html += printDocClose();
