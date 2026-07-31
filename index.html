@@ -1216,12 +1216,23 @@ const PRINT_LINE_COLOR = '#8A1538'; // عنابي — يُستخدم لإطار�
 function doPrintDoc(htmlStr, landscape, pageSize){
   pageSize = pageSize || 'A4';
   const pCSS = '@page{size:'+pageSize+' '+(landscape?'landscape':'portrait')+';margin:10mm}';
-  const full = htmlStr.replace('</head>', '<style>'+pCSS+'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head>');
+  const orgName = (state.printHeader && state.printHeader.line1) || '';
+  const toolbar = `<div class="no-print" style="position:sticky;top:0;z-index:999;background:${PRINT_THEME};display:flex;align-items:center;justify-content:space-between;padding:10px 18px;direction:rtl;font-family:'Tajawal',Arial;box-shadow:0 2px 8px rgba(0,0,0,.15);">
+    <div style="color:#fff;font-weight:800;font-size:13pt;display:flex;align-items:center;gap:6px;">🏢 ${escapeHtml(orgName)}</div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="window.print()" style="background:#fff;color:#161616;border:none;border-radius:8px;padding:9px 18px;font-weight:800;font-size:11pt;cursor:pointer;font-family:'Tajawal',Arial;">🖨️ طباعة</button>
+      <button onclick="window.print()" style="background:#c0392b;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-weight:800;font-size:11pt;cursor:pointer;font-family:'Tajawal',Arial;">📥 تنزيل PDF</button>
+      <button onclick="window.close()" style="background:#5a6b82;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-weight:800;font-size:11pt;cursor:pointer;font-family:'Tajawal',Arial;">❌ إغلاق</button>
+    </div>
+  </div>`;
+  const printCss = '<style>'+pCSS+'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none !important;}}</style>';
+  let full = htmlStr.replace('</head>', printCss+'</head>');
+  full = full.replace('<body><div class="doc">', '<body>'+toolbar+'<div class="doc">');
   const blob = new Blob([full], {type:'text/html;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const w = window.open(url, '_blank');
   if(!w){ toast('يرجى السماح بالنوافذ المنبثقة في المتصفح ثم إعادة المحاولة'); return; }
-  w.addEventListener('load', function(){ w.focus(); w.print(); setTimeout(function(){ URL.revokeObjectURL(url); }, 3000); });
+  w.addEventListener('load', function(){ w.focus(); setTimeout(function(){ URL.revokeObjectURL(url); }, 15000); });
 }
 function printDocOpen(theme){
   theme = theme || PRINT_THEME;
@@ -1364,18 +1375,18 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
   }
   let html = printDocOpen(PRINT_THEME);
   html += printDocHeaderBlock();
-  html += `<div style="display:flex;align-items:stretch;justify-content:space-between;gap:6mm;margin-bottom:6mm;flex-wrap:wrap;">
-    <div style="flex:0 0 auto;border:1.5px dashed ${PRINT_LINE_COLOR};border-radius:10px;padding:6mm 10mm;text-align:center;">
-      <div style="font-family:'Cairo','Tajawal',Arial;font-weight:900;font-size:18pt;color:${PRINT_THEME};">أمر تكليف</div>
-      <div style="font-family:Arial,'Tajawal';font-weight:800;font-size:10pt;letter-spacing:1.5px;color:${PRINT_THEME};margin-top:1mm;">ASSIGNMENT ORDER</div>
+  html += `<div style="display:flex;align-items:stretch;border:1.5px dashed ${PRINT_LINE_COLOR};border-radius:10px;overflow:hidden;margin-bottom:5mm;">
+    <div style="flex:0 0 auto;padding:3mm 8mm;text-align:center;display:flex;flex-direction:column;justify-content:center;border-left:1px dashed ${PRINT_LINE_COLOR};">
+      <div style="font-family:'Cairo','Tajawal',Arial;font-weight:900;font-size:15pt;color:${PRINT_THEME};">أمر تكليف</div>
+      <div style="font-family:Arial,'Tajawal';font-weight:800;font-size:8.5pt;letter-spacing:1.5px;color:${PRINT_THEME};margin-top:0.5mm;">ASSIGNMENT ORDER</div>
     </div>
-    <div style="flex:0 0 auto;align-self:center;text-align:center;">
-      ${state.logo?`<img src="${state.logo}" style="height:20mm;max-width:40mm;object-fit:contain;">`:'<span style="font-size:30px;">🕌</span>'}
+    <div style="flex:0 0 auto;padding:2mm 8mm;display:flex;align-items:center;justify-content:center;border-left:1px dashed ${PRINT_LINE_COLOR};">
+      ${state.logo?`<img src="${state.logo}" style="height:14mm;max-width:32mm;object-fit:contain;">`:'<span style="font-size:24px;">🕌</span>'}
     </div>
-    <div style="flex:1 1 260px;border:1.5px dashed ${PRINT_LINE_COLOR};border-radius:10px;padding:4mm 6mm;text-align:center;">
-      <div style="font-weight:900;font-size:11pt;color:#161616;margin-bottom:2mm;">${escapeHtml(o.title||'')}</div>
-      ${barcodeUrl?`<img src="${barcodeUrl}" style="max-width:100%;height:16mm;display:inline-block;">`:''}
-      <div style="font-weight:800;font-size:10pt;color:#161616;margin-top:2mm;">رقم أمر التكليف: ${o.serial}</div>
+    <div style="flex:1 1 260px;padding:3mm 5mm;text-align:center;display:flex;flex-direction:column;justify-content:center;">
+      <div style="font-weight:900;font-size:10.5pt;color:#161616;margin-bottom:1.5mm;">${escapeHtml(o.title||'')}</div>
+      ${barcodeUrl?`<img src="${barcodeUrl}" style="max-width:100%;height:12mm;display:inline-block;">`:''}
+      <div style="font-weight:800;font-size:9pt;color:#161616;margin-top:1.5mm;">رقم أمر التكليف: ${o.serial}</div>
     </div>
   </div>`;
   html += summaryRows.map(([label,val])=>`<div class="field-row"><span class="f-ar">${escapeHtml(label)} :</span><span class="f-val">${val}</span></div>`).join('');
