@@ -8,47 +8,46 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <style>
   :root{
     --maroon-950:#6d0f2b; --maroon-900:#6d0f2b; --maroon-800:#8A1538; --maroon-700:#a83c5b; --maroon-600:#a83c5b;
     --maroon-100:#f3ecde; --maroon-50:#FBF7EF; --gold:#C8A951; --gold-d:#a8893a; --red:#9e2b2b; --ink:#2b2320; --line:#e4d9c6; --white:#ffffff;
-    --font-body:'Sakkal Majalla','Tajawal','Cairo',sans-serif;
-    --font-head:'29LT Bukra','Tajawal','Cairo',sans-serif;
+    --font-body:'Tajawal','Sakkal Majalla','Cairo',sans-serif;
+    --font-head:'Tajawal','29LT Bukra','Cairo',sans-serif;
     --radius:14px; --shadow:0 1px 3px rgba(43,35,32,.08),0 6px 24px rgba(138,21,56,.08);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{font-family:var(--font-body); font-size:22px; background:var(--maroon-50); color:var(--ink); min-height:100vh;
+  body{font-family:var(--font-body); font-size:14px; background:var(--maroon-50); color:var(--ink); min-height:100vh;
     background-image: linear-gradient(var(--line) 1px, transparent 1px); background-size: 100% 34px;}
-  #app{display:flex; flex-direction:column; min-height:100vh;}
-  #topNav{background:linear-gradient(180deg,var(--maroon-900),var(--maroon-950)); color:var(--white);
-    display:flex; align-items:center; justify-content:space-between; gap:18px; padding:0 22px; position:sticky; top:0; z-index:50; box-shadow:0 2px 10px rgba(0,0,0,.18); flex-wrap:wrap;}
-  .brand{display:flex; align-items:center; gap:10px; padding:11px 0; flex:0 0 auto;}
-  .brand img{width:38px;height:38px;object-fit:contain;}
-  .brand .logo-placeholder{width:38px;height:38px;border-radius:8px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:16px;}
-  .brand-name{font-family:'Cairo','Tajawal',sans-serif;font-weight:800;font-size:15px;line-height:1.3;}
-  .brand-sub{font-size:10.5px;opacity:.75;margin-top:2px;}
-  nav.mainnav{display:flex; align-items:center; gap:2px; flex-wrap:wrap; flex:1; font-family:'Cairo','Tajawal',sans-serif;}
-  nav.mainnav button{all:unset; cursor:pointer; display:flex; align-items:center; gap:7px; padding:14px 14px; font-size:13.5px; font-weight:700; color:rgba(255,255,255,.92); transition:background .15s; white-space:nowrap;}
-  nav.mainnav button .ic{font-size:15px;}
-  nav.mainnav button:hover{background:rgba(255,255,255,.1);}
-  nav.mainnav button.active{background:var(--gold); color:var(--maroon-950);}
-  .sidebar-foot{padding:10px 0; font-size:11px; opacity:.9; display:flex; align-items:center; gap:10px; flex:0 0 auto;}
-  .sidebar-foot button{all:unset; cursor:pointer; background:rgba(255,255,255,.12); color:#fff; padding:7px 12px; border-radius:6px; font-size:11.5px; text-align:center; white-space:nowrap;}
+  #app{display:flex; min-height:100vh;}
+  #sidebar{width:250px; flex:0 0 250px; background:linear-gradient(180deg,var(--maroon-900),var(--maroon-950)); color:var(--white);
+    display:flex; flex-direction:column; position:sticky; top:0; height:100vh;}
+  .brand{display:flex; align-items:center; gap:10px; padding:20px 16px; border-bottom:1px solid rgba(255,255,255,.12);}
+  .brand img{width:42px;height:42px;object-fit:contain;}
+  .brand .logo-placeholder{width:42px;height:42px;border-radius:8px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .brand-name{font-family:var(--font-head);font-weight:800;font-style:italic;font-size:15px;line-height:1.3;}
+  .brand-sub{font-size:11px;opacity:.75;margin-top:2px;}
+  nav.mainnav{flex:1; padding:14px 10px; display:flex; flex-direction:column; gap:4px; overflow-y:auto;}
+  nav.mainnav button{all:unset; cursor:pointer; display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:8px; font-size:13.5px; color:rgba(255,255,255,.88); transition:background .15s;}
+  nav.mainnav button .ic{font-size:17px; width:20px; text-align:center;}
+  nav.mainnav button:hover{background:rgba(255,255,255,.08);}
+  nav.mainnav button.active{background:var(--gold); color:var(--maroon-950); font-weight:700;}
+  .sidebar-foot{padding:14px; font-size:11px; opacity:.85; border-top:1px solid rgba(255,255,255,.12); display:flex; flex-direction:column; gap:8px;}
+  .sidebar-foot button{all:unset; cursor:pointer; background:rgba(255,255,255,.12); color:#fff; padding:7px 10px; border-radius:6px; font-size:12px; text-align:center;}
   .sidebar-foot button:hover{background:rgba(255,255,255,.22);}
   #main{flex:1; display:flex; flex-direction:column; min-width:0;}
   header.topbar{background:var(--white); border-bottom:2px solid var(--maroon-800); padding:16px 26px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:5; box-shadow:var(--shadow);}
   header.topbar h1{font-family:var(--font-head); font-style:italic; font-weight:800; color:var(--maroon-800); font-size:21px; margin:0;}
   header.topbar .sub{font-size:12.5px;color:#7a5560;margin-top:3px;}
   .content{padding:24px 26px 60px; flex:1;}
-  .card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:0 20px 20px; margin-bottom:20px; overflow:hidden;}
-  .card h2{font-family:var(--font-body); font-weight:900; color:#fff; background:#12335c; font-size:17px; margin:0 -20px 16px -20px; padding:14px 20px; border-radius:0; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; border-bottom:none;}
+  .card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:0 14px 14px; margin-bottom:14px; overflow:hidden;}
+  .card h2{font-family:var(--font-body); font-weight:900; color:#fff; background:#12335c; font-size:14px; margin:0 -14px 12px -14px; padding:10px 14px; border-radius:0; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; border-bottom:none;}
   .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; margin-bottom:14px;}
   .field{display:flex; flex-direction:column; gap:6px;}
   .field label{font-size:14px; font-weight:700; color:var(--maroon-800);}
   .field .row-inline{display:flex; gap:6px;}
-  input,select,textarea{font-family:var(--font-body); font-size:19px; padding:10px 12px; border:1.5px solid var(--line); border-radius:9px; background:#fff; color:var(--ink); width:100%;}
+  input,select,textarea{font-family:var(--font-body); font-size:14px; padding:8px 10px; border:1.5px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); width:100%;}
   input:focus,select:focus,textarea:focus{outline:none; border-color:var(--maroon-600); box-shadow:0 0 0 3px rgba(200,169,81,.18);}
   input:disabled, select:disabled{background:#f2eaec; color:#a98d94;}
   input[type=date], input[type=time]{text-align:right; direction:rtl;}
@@ -60,13 +59,15 @@
   .btn-outline:hover{background:var(--maroon-100);}
   .btn-lg{padding:14px 22px; font-size:15px;}
   .btn-sm{padding:6px 10px; font-size:12.5px;}
-  .icon-btn{all:unset; cursor:pointer; width:30px; height:30px; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:15px; background:var(--maroon-100); color:var(--maroon-800);}
+  .icon-btn{all:unset; cursor:pointer; width:30px; height:30px; border-radius:5px; border:1.5px solid var(--maroon-700); display:inline-flex; align-items:center; justify-content:center; font-size:15px; background:var(--maroon-100); color:var(--maroon-800);}
+  .icon-btn.rect{width:auto; min-width:38px; height:36px; padding:0 10px; border-radius:8px; margin-inline-start:6px; background:#fff;}
+  .icon-btn.rect{width:auto; height:36px; padding:0 12px; border-radius:6px;}
   .icon-btn:hover{background:var(--maroon-800); color:#fff;}
   .icon-btn.danger:hover{background:#a3263a;}
   .plus-btn{all:unset; cursor:pointer; width:34px; height:34px; border-radius:7px; flex:0 0 auto; background:var(--maroon-800); color:#fff; font-size:18px; font-weight:800; display:flex; align-items:center; justify-content:center;}
   .plus-btn:hover{background:var(--maroon-900);}
-  table{width:100%; border-collapse:collapse; font-size:17px; font-family:var(--font-body);}
-  thead th{background:var(--maroon-800); color:#fff; padding:12px 13px; text-align:right; font-family:var(--font-body); font-weight:800; font-style:normal; font-size:17px;}
+  table{width:100%; border-collapse:collapse; font-size:14px; font-family:var(--font-body);}
+  thead th{background:var(--maroon-800); color:#fff; padding:12px 13px; text-align:right; font-family:var(--font-body); font-weight:800; font-style:normal; font-size:14px;}
   tbody td{padding:12px 13px; border-bottom:1px solid var(--line); vertical-align:middle; line-height:1.6;}
   tbody tr:hover{background:var(--maroon-50);}
   .actions-cell{display:flex; gap:4px; flex-wrap:wrap;}
@@ -86,7 +87,7 @@
   .stat-box .num{font-size:19px; font-weight:800; font-family:var(--font-head); font-style:italic; color:var(--maroon-800);}
   .stat-box .lbl{font-size:11px; color:#7a5560; margin-top:2px;}
   .tabs{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; background:var(--maroon-50); padding:8px; border-radius:12px;}
-  .tab-btn{all:unset; cursor:pointer; padding:11px 20px; font-size:17px; font-weight:700; color:#8a5a66; border-radius:10px; transition:.15s;}
+  .tab-btn{all:unset; cursor:pointer; padding:11px 20px; font-size:14px; font-weight:700; color:#8a5a66; border-radius:10px; transition:.15s;}
   .tab-btn:hover{background:var(--maroon-50);}
   .tab-btn.active{color:#fff; background:#1d6fa5; box-shadow:0 0 0 3px rgba(29,111,165,.22), 0 4px 14px rgba(29,111,165,.35);}
   .helper{font-size:11.5px; color:#8a6470; margin-top:2px;}
@@ -132,15 +133,13 @@
   .mob-toggle{display:none;}
   .mob-scrim{display:none;}
   @media (max-width:860px){
-    #topNav{padding:10px 14px;}
-    nav.mainnav{display:none; flex-direction:column; align-items:stretch; width:100%; order:5; background:rgba(0,0,0,.12); border-radius:8px; margin:4px 0 8px; padding:4px;}
-    nav.mainnav.open{display:flex;}
-    nav.mainnav button{padding:12px 14px; border-radius:6px;}
-    .sidebar-foot{order:4; margin-inline-start:auto;}
+    #sidebar{position:fixed; right:0; z-index:50; transform:translateX(100%); transition:transform .2s; box-shadow:0 0 40px rgba(0,0,0,.3);}
+    #sidebar.open{transform:translateX(0);}
     .content{padding:14px;}
     header.topbar{padding:12px 14px;}
     header.topbar h1{font-size:17px;}
-    .mob-toggle{display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:9px; background:rgba(255,255,255,.15); color:#fff; font-size:18px; border:none; cursor:pointer;}
+    .mob-toggle{display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:9px; background:var(--maroon-800); color:#fff; font-size:18px; border:none; cursor:pointer;}
+    .mob-scrim.show{display:block; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:45;}
     .grid{grid-template-columns:1fr !important;}
     table{font-size:13.5px;}
   }
@@ -187,7 +186,7 @@ function defaultState(){
       {id:uid(), username:'trainer1', password:'trainer123', role:'trainer', trainerId:window.__seedTrainerIds[0], displayName:'أ. أحمد النعيمي', active:true},
       {id:uid(), username:'trainer2', password:'trainer123', role:'trainer', trainerId:window.__seedTrainerIds[1], displayName:'أ. فيصل السليطي', active:true},
     ],
-    orders:[], trainerRequests:[], notifications:[], adminNotifications:[], reminderFlags:{}, tasks:[]
+    orders:[], trainerRequests:[], notifications:[], adminNotifications:[], reminderFlags:{}, tasks:[], quranActivities:[]
   };
 }
 /* ══════════════════════════════════════════════════════════════════
@@ -216,6 +215,7 @@ async function loadState(){
       if(!state.notifications) state.notifications=[];
       if(!state.adminNotifications) state.adminNotifications=[];
       if(!state.reminderFlags) state.reminderFlags={};
+      if(!state.quranActivities) state.quranActivities=[];
       if(!state.users || !state.users.length){
         state.users=[
           {id:uid(), username:'admin', password:'admin123', role:'admin', trainerId:'', displayName:'مدير النظام', active:true},
@@ -252,11 +252,11 @@ async function saveState(){
 const PAGES = [
   {id:'home', label:'الصفحة الرئيسية', icon:'🏠', roles:['admin','user']},
   {id:'order', label:'طلبات الفعاليات والمبادرات', icon:'📋', roles:['admin','user']},
-  {id:'admin', label:'الإداريات (اليومية)', icon:'🗓️', roles:['admin','user']},
   {id:'results', label:'النتائج', icon:'🏁', roles:['admin','user']},
   {id:'distributions', label:'التوزيعات', icon:'🗂️', roles:['admin','user']},
   {id:'reports', label:'التقارير', icon:'📄', roles:['admin','user']},
-  {id:'stats', label:'الإحصائيات', icon:'📊', roles:['admin','user']},
+  {id:'adminRequestsReport', label:'الطلبات الإدارية', icon:'🗂️', roles:['admin','user']},
+  {id:'quranActivities', label:'الأنشطة القرآنية', icon:'📖', roles:['admin','user']},
   {id:'tasks', label:'المهام', icon:'✅', roles:['admin','user']},
   {id:'trainerPortal', label:'بوابة مقدم الفعالية', icon:'🧑‍🏫', roles:['admin','user','trainer']},
   {id:'approvals', label:'الموافقات', icon:'✅', roles:['admin']},
@@ -266,6 +266,8 @@ let currentRole=null;      // 'admin' | 'user' | 'trainer'
 let currentUser=null;      // the matched user record from state.users
 let currentPage='home';
 let orderSubTab='new';
+let quranSubTab='entry';
+let editingQuranId=null;
 let editingOrderId=null;
 let loggedTrainerId=null;
 let trainerPortalTab='upcoming';
@@ -369,6 +371,12 @@ function renderGate(root){
     <div class="field" style="text-align:right; margin-bottom:6px;"><label>كلمة المرور</label><input id="lg_pass" type="password" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="helper" id="lg_err" style="display:none;color:#9e2b2b;font-weight:700;margin-bottom:8px;">اسم المستخدم أو كلمة المرور غير صحيحة</div>
     <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:10px;" onclick="doLogin()">🔐 دخول</button>
+    <div class="helper" style="margin-top:16px; text-align:right; line-height:1.9;">
+      حسابات تجريبية:<br>
+      مدير نظام: admin / admin123<br>
+      مستخدم: user / user123<br>
+      مقدم فعالية: trainer1 / trainer123
+    </div>
   </div></div>`;
   document.getElementById('lg_user').focus();
 }
@@ -388,21 +396,22 @@ function doLogin(){
 function renderAppShell(root){
   root.innerHTML = `
   <div id="app">
-    <header id="topNav">
+    <aside id="sidebar">
       <div class="brand">
         <div id="logoSlot"><div class="logo-placeholder">🕌</div></div>
         <div><div class="brand-name" id="orgNameDisplay">إدارة الفعاليات</div><div class="brand-sub">نظام طلبات الفعاليات والمبادرات</div></div>
       </div>
-      <button class="mob-toggle" id="mobToggleBtn">☰</button>
       <nav class="mainnav" id="mainNav"></nav>
       <div class="sidebar-foot">
-        <div style="text-align:left;"><div style="font-weight:800;">${currentUser?escapeHtml(currentUser.displayName||currentUser.username):''}</div><div>الدور: ${currentRole==='admin'?'مدير نظام':currentRole==='user'?'مستخدم':'مقدم فعالية'}</div></div>
+        <div style="font-weight:800;">${currentUser?escapeHtml(currentUser.displayName||currentUser.username):''}</div>
+        <div>الدور: ${currentRole==='admin'?'مدير نظام':currentRole==='user'?'مستخدم':'مقدم فعالية'}</div>
         <button id="switchRoleBtn">تسجيل الخروج</button>
       </div>
-    </header>
+    </aside>
     <div id="main">
       <header class="topbar">
         <div style="display:flex; align-items:center; gap:10px;">
+          <button class="mob-toggle" id="mobToggleBtn">☰</button>
           <div><h1 id="pageTitle"></h1><div class="sub" id="pageSub"></div></div>
         </div>
         <div id="topbarActions"></div>
@@ -411,7 +420,8 @@ function renderAppShell(root){
     </div>
   </div>`;
   document.getElementById('switchRoleBtn').onclick=()=>{ currentRole=null; loggedTrainerId=null; currentUser=null; renderRoot(); };
-  document.getElementById('mobToggleBtn').onclick=()=>{ document.getElementById('mainNav').classList.toggle('open'); };
+  document.getElementById('mobToggleBtn').onclick=()=>{ document.getElementById('sidebar').classList.toggle('open'); document.getElementById('mobScrim').classList.toggle('show'); };
+  document.getElementById('mobScrim').onclick=()=>{ document.getElementById('sidebar').classList.remove('open'); document.getElementById('mobScrim').classList.remove('show'); };
   if(currentRole==='trainer'){ currentPage='trainerPortal'; }
   else if(!visiblePages().find(p=>p.id===currentPage)){ currentPage='home'; }
   render();
@@ -426,7 +436,7 @@ function renderNav(){
     b.className = p.id===currentPage ? 'active':'';
     const badge = (p.id==='approvals' && pendingCount) ? ` <span class="badge" style="background:#f4c9d1;color:#7a1230;">${pendingCount}</span>` : '';
     b.innerHTML = `<span class="ic">${p.icon}</span><span>${p.label}</span>${badge}`;
-    b.onclick=()=>{ currentPage=p.id; if(p.id==='order'){editingOrderId=null;} render(); nav.classList.remove('open'); };
+    b.onclick=()=>{ currentPage=p.id; if(p.id==='order'){editingOrderId=null;} render(); };
     nav.appendChild(b);
   });
 }
@@ -469,6 +479,8 @@ function render(){
     order:['طلبات الفعاليات والمبادرات','إنشاء ومتابعة أوامر التكليف'],
     admin:['الإداريات','المتابعة اليومية للفعاليات'],
     reports:['التقارير','تقارير مقدمي الفعاليات والمدارس والساعات'],
+    adminRequestsReport:['الطلبات الإدارية','تقرير مفرز بكل الطلبات الإدارية للبرامج'],
+    quranActivities:['الأنشطة القرآنية','بيانات وتقارير برنامجي روح والرحيق'],
     stats:['الإحصائيات','تصنيفات وأعداد البرامج'],
     tasks:['المهام','قائمة المهام الإدارية'],
     trainerPortal:['بوابة مقدم الفعالية','متابعة فعالياتك وتقييمها'],
@@ -485,6 +497,8 @@ function render(){
   else if(currentPage==='order') renderOrderPage(c);
   else if(currentPage==='admin') renderAdminPage(c);
   else if(currentPage==='reports') renderReportsPage(c);
+  else if(currentPage==='adminRequestsReport') renderAdminRequestsReportPage(c);
+  else if(currentPage==='quranActivities') renderQuranActivitiesPage(c);
   else if(currentPage==='stats') renderStatsPage(c);
   else if(currentPage==='tasks') renderTasksPage(c);
   else if(currentPage==='trainerPortal') renderTrainerPortalPage(c);
@@ -511,8 +525,8 @@ function renderHome(c){
     <h2>🔎 بحث سريع</h2>
     <div class="grid">
       <div class="field"><label>اسم الفعالية / المدرسة / رقم أمر التكليف</label><input id="hs_query" placeholder="اكتب للبحث..."></div>
-      <div class="field"><label>من تاريخ</label><input id="hs_from" type="date"></div>
-      <div class="field"><label>إلى تاريخ</label><input id="hs_to" type="date"></div>
+      <div class="field"><label>من تاريخ</label><input id="hs_from" type="date" lang="en"></div>
+      <div class="field"><label>إلى تاريخ</label><input id="hs_to" type="date" lang="en"></div>
     </div>
     <button class="btn btn-primary" id="hs_go">بحث</button>
     <div id="hs_result" style="margin-top:14px;"></div>
@@ -593,9 +607,9 @@ function ordersTableHtml(list){
         <button class="icon-btn" title="تقييم وإنجاز" onclick="openEvaluationModal('${o.id}')">📝</button>
         <button class="icon-btn" title="ترحيل / تأجيل" onclick="openPostponeModal('${o.id}')">⏩</button>
         <button class="icon-btn" title="${o.status==='cancelled'?'إلغاء الإلغاء':'إلغاء الفعالية'}" onclick="toggleCancelOrder('${o.id}')">${o.status==='cancelled'?'↩️':'❌'}</button>
-        <button class="icon-btn" title="الباركود" onclick="openQrCodeModal('${o.id}')">🔲</button>
-        <button class="icon-btn" title="طباعة نسخة الجهة الطالبة / حفظ PDF" onclick="printOrderSchoolCopy('${o.id}')">🏫🖨️</button>
-        <button class="icon-btn" title="طباعة نسخة الإدارة (كاملة) / حفظ PDF" onclick="printOrderAdminCopy('${o.id}')">🏢🖨️</button>
+        <button class="icon-btn" title="رمز QR" onclick="openQrCodeModal('${o.id}')">🔲</button>
+        <button class="icon-btn" title="طباعة نسخة الجهة الطالبة" onclick="printOrderSchoolCopy('${o.id}')">🏫🖨️</button>
+        <button class="icon-btn" title="طباعة نسخة الإدارة (كاملة)" onclick="printOrderAdminCopy('${o.id}')">🏢🖨️</button>
         <button class="icon-btn" title="إرسال بالبريد" onclick="emailOrder('${o.id}')">✉️</button>
         <button class="icon-btn danger" title="حذف" onclick="deleteOrder('${o.id}')">🗑️</button>
       </td>
@@ -632,6 +646,7 @@ function renderOrderPage(c){
   <div class="tabs">
     <button class="tab-btn ${orderSubTab==='new'?'active':''}" id="tabNew">فعاليات ومبادرات جديدة</button>
     <button class="tab-btn ${orderSubTab==='list'?'active':''}" id="tabList">كل الطلبات</button>
+    <button class="tab-btn ${orderSubTab==='adminDaily'?'active':''}" id="tabAdminDaily">الإداريات اليومية</button>
   </div>
   <div id="orderSubContent"></div>
   <div class="stat-grid" style="margin:18px 0;">
@@ -653,18 +668,39 @@ function renderOrderPage(c){
   </div>`;
   document.getElementById('tabNew').onclick=()=>{orderSubTab='new'; editingOrderId=null; render();};
   document.getElementById('tabList').onclick=()=>{orderSubTab='list'; render();};
+  document.getElementById('tabAdminDaily').onclick=()=>{orderSubTab='adminDaily'; render();};
   const sub = document.getElementById('orderSubContent');
+  if(orderSubTab==='adminDaily'){
+    renderAdminPage(sub);
+    return;
+  }
   if(orderSubTab==='list'){
     sub.innerHTML = `<div class="card"><h2>كل طلبات الفعاليات والمبادرات</h2>
-      <div class="field" style="margin-bottom:14px;max-width:340px;"><label>🔎 بحث باسم المدرسة</label><input id="ord_schoolSearch" placeholder="اكتب اسم المدرسة..."></div>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:14px;">
+        <div class="field"><label>🔎 بحث باسم المدرسة</label><input id="ord_schoolSearch" placeholder="اكتب اسم المدرسة..."></div>
+        <div class="field"><label>مقدم المبادرة</label><select id="ord_trainerFilter"><option value="">الكل</option>${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
+        <div class="field"><label>الإنجاز</label><select id="ord_completionFilter"><option value="">الكل</option><option value="تم">تم الإنجاز</option><option value="لم يتم">لم يتم الإنجاز</option><option value="__pending">لم تنجز بعد</option></select></div>
+        <div class="field"><label>الحالة</label><select id="ord_statusFilter"><option value="">الكل</option><option value="active">نشطة</option><option value="cancelled">ملغاة</option><option value="postponed">مؤجّلة</option></select></div>
+      </div>
       <div id="ord_listResult"></div></div>`;
     function drawFiltered(){
       const q = document.getElementById('ord_schoolSearch').value.trim();
+      const trainerFilter = document.getElementById('ord_trainerFilter').value;
+      const completionFilter = document.getElementById('ord_completionFilter').value;
+      const statusFilter = document.getElementById('ord_statusFilter').value;
       let list = state.orders.slice().sort((a,b)=>b.serial-a.serial);
       if(q){ list = list.filter(o=>{ const s=state.schools.find(x=>x.id===o.schoolId); return s && s.name.includes(q); }); }
+      if(trainerFilter){ list = list.filter(o=>(o.trainerIds||[]).includes(trainerFilter)); }
+      if(completionFilter){
+        list = list.filter(o=> completionFilter==='__pending' ? !o.completionStatus : o.completionStatus===completionFilter);
+      }
+      if(statusFilter){ list = list.filter(o=>(o.status||'active')===statusFilter); }
       document.getElementById('ord_listResult').innerHTML = ordersTableHtml(list);
     }
     document.getElementById('ord_schoolSearch').addEventListener('input', drawFiltered);
+    document.getElementById('ord_trainerFilter').addEventListener('change', drawFiltered);
+    document.getElementById('ord_completionFilter').addEventListener('change', drawFiltered);
+    document.getElementById('ord_statusFilter').addEventListener('change', drawFiltered);
     drawFiltered();
     return;
   }
@@ -678,6 +714,11 @@ function renderOrderForm(sub){
   sub.innerHTML = `
   <div class="card">
     <h2>${editing? 'تعديل فعاليات ومبادرات — رقم '+editing.serial : 'فعاليات ومبادرات'}</h2>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr; align-items:start; gap:20px;">
+  <div class="card">
+    <h2>بيانات المدرسة</h2>
 
     <div class="grid" style="grid-template-columns:minmax(160px,240px) minmax(160px,240px); gap:14px;">
       <div class="field"><label>مجال المبادرة</label>
@@ -695,9 +736,9 @@ function renderOrderForm(sub){
     </div>
 
     <div class="grid" style="grid-template-columns:repeat(3,1fr);">
-      <div class="field"><label>تاريخ المبادرة</label><input id="f_date" type="date" value="${editing?editing.date:''}"></div>
-      <div class="field"><label>وقت المبادرة من</label><input id="f_timeFrom" type="time" value="${editing?editing.timeFrom:''}"></div>
-      <div class="field"><label>وقت المبادرة إلى</label><input id="f_timeTo" type="time" value="${editing?editing.timeTo:''}"></div>
+      <div class="field"><label>تاريخ المبادرة</label><input id="f_date" type="date" lang="en" value="${editing?editing.date:''}"></div>
+      <div class="field"><label>وقت المبادرة من</label><input id="f_timeFrom" type="time" lang="en" value="${editing?editing.timeFrom:''}"></div>
+      <div class="field"><label>وقت المبادرة إلى</label><input id="f_timeTo" type="time" lang="en" value="${editing?editing.timeTo:''}"></div>
     </div>
 
     <div class="grid" style="grid-template-columns:1.6fr 1.4fr 0.8fr;">
@@ -710,10 +751,14 @@ function renderOrderForm(sub){
         <div class="row-inline"><select id="f_supervisor"></select>
         <button class="plus-btn" title="إضافة مشرف لهذه المدرسة" onclick="quickAddSupervisor()">+</button></div>
       </div>
-      <div class="field"><label>عدد المستهدفين</label><input id="f_count" type="number" min="0" value="${editing?editing.participantsCount:''}"></div>
+      <div class="field"><label>عدد المستهدفين</label><input id="f_count" type="number" lang="en" min="0" value="${editing?editing.participantsCount:''}"></div>
     </div>
 
-    <div id="supervisorInfo" class="supervisor-info" style="margin-bottom:14px;"></div>
+    <div id="supervisorInfo" class="supervisor-info">${''}</div>
+  </div>
+
+  <div class="card">
+    <h2>بيانات المدرب</h2>
 
     <div class="field" style="margin-bottom:14px;">
       <label style="display:flex;justify-content:space-between;align-items:center;">
@@ -738,7 +783,10 @@ function renderOrderForm(sub){
       <div class="checkbox-list" id="adminReqList"></div>
       <div class="helper">إذا كان الطلب مستخدمًا مسبقًا لبرنامج آخر في نفس التاريخ سيظهر تنبيه بذلك.</div>
     </div>
-    <div class="divider"></div>
+  </div>
+  </div>
+
+  <div class="card">
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <button class="btn btn-primary" id="saveOrderBtn">${editing?'حفظ التعديلات':'حفظ الطلب'}</button>
       ${editing?'<button class="btn btn-outline" id="cancelEditBtn">إلغاء التعديل</button>':''}
@@ -847,7 +895,11 @@ function renderOrderForm(sub){
     };
     if(editing){ Object.assign(editing, orderData); }
     else {
-      orderData.id = uid(); orderData.serial = state.nextSerial++; orderData.createdAt = Date.now();
+      orderData.id = uid(); orderData.createdAt = Date.now();
+      const orderYear = (date || todayStr()).slice(0,4);
+      const yearOrders = state.orders.filter(o=>o.date && o.date.slice(0,4)===orderYear);
+      const maxSerialThisYear = yearOrders.reduce((m,o)=>Math.max(m,o.serial||0),0);
+      orderData.serial = maxSerialThisYear + 1;
       orderData.completionStatus=''; orderData.notDoneReason=''; orderData.supervisorRating=0; orderData.schoolRating=0; orderData.studentsRating=0; orderData.recommendSchool=''; orderData.evaluatedBy=''; orderData.status='active';
       state.orders.push(orderData);
     }
@@ -1058,101 +1110,58 @@ function quickAddAdminRequest(){
 }
 
 /* ============ Print system (Duroob-style: self-contained popup document) ============ */
-const PRINT_THEME = '#8A1538';
+const PRINT_THEME = '#12335c';
 function doPrintDoc(htmlStr, landscape, pageSize){
   pageSize = pageSize || 'A4';
-  const orient = landscape?'landscape':'portrait';
-  const pCSS = '@page{size:'+pageSize+' '+orient+';margin:6mm}';
-  let full = htmlStr.replace('</head>', '<style>'+pCSS+'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head>');
-  full = full.replace('__ORIENT__', orient).replace('__PAGESIZE__', pageSize);
-  full = full.replace('</body></html>', __downloadDocPdfScript()+'</body></html>');
+  const pCSS = '@page{size:'+pageSize+' '+(landscape?'landscape':'portrait')+';margin:10mm}';
+  const full = htmlStr.replace('</head>', '<style>'+pCSS+'@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head>');
   const blob = new Blob([full], {type:'text/html;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const w = window.open(url, '_blank');
   if(!w){ toast('يرجى السماح بالنوافذ المنبثقة في المتصفح ثم إعادة المحاولة'); return; }
-  w.addEventListener('load', function(){ w.focus(); setTimeout(function(){ URL.revokeObjectURL(url); }, 5000); });
+  w.addEventListener('load', function(){ w.focus(); w.print(); setTimeout(function(){ URL.revokeObjectURL(url); }, 3000); });
 }
-function printDocOpen(theme, docTitle){
+function printDocOpen(theme){
   theme = theme || PRINT_THEME;
-  docTitle = docTitle || 'مستند';
   return `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
-  <title>${escapeHtml(docTitle)}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Beiruti:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@700;800;900&display=swap" rel="stylesheet">
   <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;direction:rtl;background:#f5f7fa;padding:10mm;color:#222;font-size:14pt;font-weight:400}
-  .doc-heading-font{font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;font-weight:800;}
-  .doc{width:100%;max-width:100%;margin:0 auto;padding:6mm 10mm;border:1.5px solid ${theme};border-radius:4px;background:#fff;box-sizing:border-box}
-  .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid ${theme};padding-bottom:2.5mm;margin-bottom:2.5mm;direction:ltr}
-  .org-right{text-align:right;direction:rtl;line-height:1.5}
-  .org-l1{font-size:15pt;font-weight:900;color:${theme};font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;}
+  body{font-family:'Tajawal',Arial;direction:rtl;background:#f5f7fa;padding:10mm;color:#222;font-size:14pt;font-weight:400}
+  .doc-heading-font{font-family:'Cairo','Tajawal',Arial;font-weight:900;}
+  .doc{width:100%;max-width:100%;margin:0 auto;padding:10mm 14mm;border:1.5px solid ${theme};border-radius:4px;background:#fff;box-sizing:border-box}
+  .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid ${theme};padding-bottom:5mm;margin-bottom:5mm;direction:ltr}
+  .org-right{text-align:right;direction:rtl;line-height:1.7}
+  .org-l1{font-size:15pt;font-weight:900;color:${theme};font-family:'Cairo','Tajawal',Arial;}
   .org-l2,.org-l3{font-size:10pt;color:#555;font-weight:700}
   .logo-ph{font-size:34px}
-  .title-blk{text-align:center;margin-bottom:3mm;border:2px solid ${theme};border-radius:8px;padding:3mm;background:${theme}0d}
-  .title-ar{font-size:19pt;font-weight:900;color:${theme};font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;letter-spacing:.3px;}
-  .title-sub{font-size:10.5pt;color:#555;margin-top:1mm;font-weight:700}
-  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:5px;margin-bottom:3mm}
-  .kpi{border:1.5px solid ${theme};border-radius:6px;padding:5px;text-align:center}
+  .title-blk{text-align:center;margin-bottom:6mm;border:2px solid ${theme};border-radius:8px;padding:5mm;background:${theme}0d}
+  .title-ar{font-size:19pt;font-weight:900;color:${theme};font-family:'Cairo','Tajawal',Arial;letter-spacing:.3px;}
+  .title-sub{font-size:10.5pt;color:#555;margin-top:2mm;font-weight:700}
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;margin-bottom:6mm}
+  .kpi{border:1.5px solid ${theme};border-radius:6px;padding:7px;text-align:center}
   .kpi-v{font-size:15pt;font-weight:900;color:${theme}}
   .kpi-l{font-size:9.5pt;color:#666;margin-top:2px}
-  .sec-t{font-size:14pt;font-weight:900;margin:3mm 0 1.5mm;border-right:5px solid ${theme};padding-right:8px;color:${theme};font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;}
-  table{width:100%;border-collapse:separate;border-spacing:0;font-size:13pt;margin-bottom:2mm;border:0.5pt solid #d5d5d5;border-radius:4px;overflow:hidden}
+  .sec-t{font-size:14pt;font-weight:900;margin:6mm 0 3mm;border-right:5px solid ${theme};padding-right:8px;color:${theme};font-family:'Cairo','Tajawal',Arial;}
+  table{width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:4mm}
   thead{display:table-header-group}
   tfoot{display:table-footer-group}
-  th{background:${theme};color:#fff;padding:4px 6px;border-bottom:0.5pt solid ${theme};border-left:0.5pt solid rgba(255,255,255,.25);text-align:right;font-weight:800}
-  th:last-child{border-left:none}
-  td{padding:4px 6px;border-bottom:0.5pt solid #e4e4e4;border-left:0.5pt solid #e4e4e4;text-align:right;font-weight:400}
-  td:last-child{border-left:none}
-  tr:last-child td{border-bottom:none}
+  th{background:${theme};color:#fff;padding:6px 8px;border:1px solid ${theme};text-align:right;font-weight:800}
+  td{padding:6px 8px;border:1px solid #dde6f0;text-align:right;font-weight:400}
   td.num, th.num{text-align:center}
   tr:nth-child(even) td{background:#f8fafc}
   tfoot td{background:#f0f4f8;font-weight:800}
-  .field-row{display:flex;justify-content:space-between;align-items:center;border:0.5pt solid #d5d5d5;border-radius:4px;padding:1.2mm 8px;font-size:10pt;margin-bottom:1mm}
+  .field-row{display:flex;justify-content:space-between;border-bottom:1px dotted #ccc;padding:2.6mm 0;font-size:13pt}
   .f-ar{font-weight:700;color:${theme};min-width:150px}
   .f-val{flex:1;text-align:center;font-weight:400}
-  .ftr{border-top:2px solid ${theme};margin-top:2mm;padding-top:1mm;text-align:center;font-size:9pt;color:#666}
-  .voucher-title-row{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:2mm;margin-top:-1mm;border:1px dashed ${theme};border-radius:8px;background:#fff;overflow:hidden}
-  .voucher-title-row>div{flex:1;text-align:center;padding:1.5mm 4mm;border-left:1px dashed ${theme}}
-  .voucher-title-row>div:last-child{border-left:none}
-  .voucher-merged{background:${theme}0d;flex:0 0 auto;margin:auto;padding:1.5mm 7mm}
-  .voucher-merged .title-ar{font-size:16pt;margin:0}
-  .voucher-merged .title-en{font-size:9pt;color:#555;font-weight:700;letter-spacing:1px;margin-top:1mm}
-  .org-info-blk{line-height:1.5;font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;font-weight:800;color:${theme};font-size:10pt}
-  .org-info-blk img{max-height:11mm;max-width:26mm;object-fit:contain}
-  .barcode-blk .bc-title{font-size:10pt;font-weight:800;color:${theme};margin-bottom:1mm;font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;}
-  .barcode-blk img{max-width:48mm;height:auto}
-  .barcode-blk .bc-num{font-size:9pt;font-weight:800;color:#444;margin-top:1mm;letter-spacing:.5px}
-  .bottom-bar{height:2.5mm;background:${theme};border-radius:2px;margin-top:2mm}
-  .print-toolbar{display:flex;justify-content:center;gap:10px;margin-bottom:6mm;position:sticky;top:0;background:#f5f7fa;padding-top:2mm;z-index:10}
-  .print-toolbar button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-family:'Almarai','IBM Plex Sans Arabic','Beiruti',Arial,sans-serif;font-weight:800;font-size:11pt;border:1.5px solid ${theme}}
-  .print-toolbar .pt-print{background:${theme};color:#fff}
-  .print-toolbar .pt-pdf{background:#fff;color:${theme}}
-  .print-toolbar button:disabled{opacity:.6;cursor:wait}
-  @page{margin:6mm 6mm 10mm 6mm;}
+  .ftr{border-top:2px solid ${theme};margin-top:5mm;padding-top:2mm;text-align:center;font-size:9.5pt;color:#666}
+  @page{margin:12mm 10mm 16mm 10mm;}
   @media print{
     body{background:#fff;padding:0}
     .doc{margin:0;border:none}
-    .print-toolbar{display:none}
-    tr{page-break-inside:avoid}
-    thead{display:table-header-group}
     @page{ @bottom-center{ content:"صفحة " counter(page) " من " counter(pages); font-size:8pt; color:#888; } }
   }
-  </style></head><body data-orientation="__ORIENT__" data-pagesize="__PAGESIZE__" data-filename="${escapeHtml(docTitle)}">
-  <div class="print-toolbar">
-    <button class="pt-print" onclick="window.print()">🖨️ طباعة</button>
-    <button class="pt-pdf" onclick="__downloadDocPdf(this)">📄 تنزيل PDF</button>
-  </div>
-  <div class="doc">`;
-}
-function __downloadDocPdfScript(){
-  return `<script>
-  function __downloadDocPdf(btn){
-    /* Use the browser's native print pipeline (Save as PDF) instead of image-based
-       capture — this preserves correct Arabic text shaping/connectivity and true A4
-       pagination without any shrinking, which canvas-based export cannot guarantee. */
-    window.print();
-  }
-  <\/script>`;
+  </style></head><body><div class="doc">`;
 }
 function printDocHeaderBlock(){
   const ph = state.printHeader || {};
@@ -1164,26 +1173,19 @@ function printDocHeaderBlock(){
 function printDocFooter(){
   const ph = state.printHeader || {};
   const now = new Date();
-  const timeStr = now.toLocaleTimeString('ar-QA', {hour:'2-digit', minute:'2-digit'});
+  const timeStr = now.toLocaleTimeString('ar-QA-u-nu-latn', {hour:'2-digit', minute:'2-digit'});
   return `<div class="ftr">${escapeHtml(ph.line1||'')} — ${escapeHtml(ph.line2||'')} — تمت الطباعة بتاريخ ${todayStr()} الساعة ${timeStr}</div>`;
 }
 function printDocClose(){ return `</div></body></html>`; }
-/* Trainer name+phone mini-table: peach header "اسم المدرب" / "رقم الهاتف للتواصل" per the reference image */
-function trainerPlainText(o){
-  const ids = (o&&o.trainerIds)||[];
-  const list = ids.map(id=>state.trainers.find(t=>t.id===id)).filter(Boolean);
-  if(!list.length) return '—';
-  return list.map(t=>`${escapeHtml(t.name)}${t.phone?' — '+phoneLink(t.phone):''}`).join('، ');
-}
+/* Trainer name+phone: same style and same color for both boxes, uniform width across multiple trainers */
 function trainerMiniTable(o){
   const ids = (o&&o.trainerIds)||[];
   const list = ids.map(id=>state.trainers.find(t=>t.id===id)).filter(Boolean);
   if(!list.length) return '—';
-  const boxCss = 'display:inline-flex;align-items:center;background:#B5527A;color:#fff;border:2px solid #fff;box-shadow:0 0 0 1px #d9a9ba,0 1px 2px rgba(0,0,0,.12);border-radius:9px;padding:8px 18px;white-space:nowrap;flex-shrink:0;';
-  return list.map(t=>`<span style="display:inline-flex;align-items:stretch;gap:5px;margin:2px;font-size:14px;font-weight:700;vertical-align:middle;">
-    <span style="${boxCss}">${escapeHtml(t.name)}</span>
-    ${t.phone?`<span style="${boxCss}">${phoneLink(t.phone)}</span>`:''}
-  </span>`).join(' ');
+  return list.map(t=>`<div style="display:flex;align-items:stretch;gap:6px;margin:3px 2px;">
+      <span style="display:inline-flex;align-items:center;justify-content:center;min-width:38mm;padding:6px 10px;border-radius:8px;border:1.5px solid #12335c;background:#eaf0f7;color:#12335c;font-weight:800;font-size:10pt;text-align:center;">${escapeHtml(t.name)}</span>
+      <span style="display:inline-flex;align-items:center;justify-content:center;min-width:26mm;padding:6px 10px;border-radius:8px;border:1.5px solid #12335c;background:#eaf0f7;color:#12335c;font-weight:800;font-size:10pt;text-align:center;">${t.phone?phoneLink(t.phone):'-'}</span>
+    </div>`).join('');
 }
 function fullTimeRange(from, to){
   if(!from && !to) return '';
@@ -1194,7 +1196,7 @@ function fullDateStr(dateStr){
   if(!dateStr) return '';
   try{
     const d = new Date(dateStr+'T00:00:00');
-    const weekday = d.toLocaleDateString('ar-QA', {weekday:'long'});
+    const weekday = d.toLocaleDateString('ar-QA-u-nu-latn', {weekday:'long'});
     return `${weekday}، ${dateStr}`;
   }catch(e){ return dateStr; }
 }
@@ -1210,32 +1212,6 @@ function qrTextForOrder(o){
   const school = state.schools.find(s=>s.id===o.schoolId);
   return `أمر تكليف رقم ${o.serial}\n${o.title}\nالتاريخ: ${o.date||''} ${o.timeFrom||''}\nالمكان: ${school?school.name:''}`;
 }
-function barcodeTextForOrder(o){
-  return `TAK-${String(o.serial).padStart(4,'0')}`;
-}
-function generateBarcodeDataUrl(text, opts){
-  try{
-    if(typeof JsBarcode==='undefined') return '';
-    const canvas = document.createElement('canvas');
-    JsBarcode(canvas, text, Object.assign({
-      format:'CODE128', displayValue:false, margin:6, height:50, width:2, background:'#ffffff', lineColor:'#000000'
-    }, opts||{}));
-    return canvas.toDataURL('image/png');
-  }catch(e){ console.error('Barcode generation error', e); return ''; }
-}
-/* barcode block: title on top, barcode image, order number below (per reference design) */
-function orderBarcodeBlock(o, opts){
-  opts = opts||{};
-  const code = barcodeTextForOrder(o);
-  const barUrl = generateBarcodeDataUrl(code);
-  const imgStyle = opts.small ? 'width:16mm;height:auto;' : 'max-width:80mm;height:auto;';
-  if(!barUrl) return '';
-  return `<div class="barcode-blk">
-    <div class="bc-title">${escapeHtml(o.title||'')}</div>
-    <img src="${barUrl}" style="${imgStyle}">
-    <div class="bc-num">رقم أمر التكليف: ${String(o.serial).padStart(4,'0')}</div>
-  </div>`;
-}
 async function buildOrderPrintDoc(o, opts, copyLabel){
   opts = opts||{};
   const field = state.fields.find(f=>f.id===o.fieldId);
@@ -1243,73 +1219,72 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
   const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
   const ptype = state.programTypes.find(p=>p.id===o.programTypeId);
   const reqs = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean);
+  const qrUrl = await generateQRDataUrl(qrTextForOrder(o));
+  const summaryBoxes = [
+    {v:escapeHtml(o.title||'—'), l:'عنوان المبادرة'},
+    {v:escapeHtml(field?field.name:'—'), l:'مجال المبادرة'},
+    {v:escapeHtml(ptype?ptype.name:'—'), l:'مسار المبادرة'},
+    {v:escapeHtml(o.participantsCount||'—'), l:'عدد المستهدفين'},
+    {v:escapeHtml(fullDateStr(o.date)||'—'), l:'تاريخ المبادرة'},
+    {v:escapeHtml(fullTimeRange(o.timeFrom, o.timeTo)||'—'), l:'وقت المبادرة'},
+    {v:escapeHtml(school?school.name:'—'), l:'مكان المبادرة'},
+  ];
   let rows = [
-    ['عنوان المبادرة', escapeHtml(o.title||'')],
-    ['مجال المبادرة', escapeHtml(field?field.name:'')],
-    ['مسار المبادرة', escapeHtml(ptype?ptype.name:'')],
-    ['عدد المستهدفين', escapeHtml(o.participantsCount||'')],
-    ['تاريخ المبادرة', escapeHtml(fullDateStr(o.date))],
-    ['وقت المبادرة', escapeHtml(fullTimeRange(o.timeFrom, o.timeTo))],
-    ['مكان المبادرة', escapeHtml(school?school.name:'')],
-    ['المشرف', supervisor?(escapeHtml(supervisor.name)+(supervisor.phone?' — '+phoneLink(supervisor.phone):'')):''],
-    ['المدرب', trainerMiniTable(o)],
+    ['المشرف', supervisor?(escapeHtml(supervisor.name)+' — '+(supervisor.phone?phoneLink(supervisor.phone):'')+' — '+escapeHtml(supervisor.email||'')):''],
+    ['مقدم المبادرة', trainerMiniTable(o)],
   ];
   if(opts.showRequesterNote!==false) rows.push(['ملاحظة الجهة الطالبة', escapeHtml(o.requesterNote||'')]);
   if(opts.showAdminNote!==false){
     rows.push(['ملاحظة الإدارة', escapeHtml(o.adminNote||'')]);
     rows.push(['الطلبات الإدارية', escapeHtml(reqs.join('، ')||'—')]);
   }
-  let html = printDocOpen(PRINT_THEME, o.title || 'أمر تكليف');
+  let html = printDocOpen(PRINT_THEME);
   html += printDocHeaderBlock();
-  const orgLogo = state.logo ? `<img src="${state.logo}">` : '';
-  html += `<div class="voucher-title-row">
-    <div class="voucher-merged">
-      <div class="title-ar">أمر تكليف</div>
-      <div class="title-en">ASSIGNMENT ORDER</div>
+  html += `<div style="display:flex;align-items:center;justify-content:space-between;gap:8mm;margin-bottom:6mm;flex-wrap:wrap;border:1.5px solid #ddd;border-radius:10px;padding:5mm 7mm;">
+    <div style="text-align:center;">
+      <div style="font-family:'Cairo','Tajawal',Arial;font-weight:900;font-size:20pt;color:#161616;border-bottom:1.5px solid #ccc;padding-bottom:2mm;margin-bottom:2mm;display:inline-block;">أمر تكليف</div><br>
+      <div style="font-family:Arial,'Tajawal';font-weight:800;font-size:11pt;letter-spacing:2px;color:#161616;border-bottom:1.5px solid #ccc;padding-bottom:2mm;margin-bottom:2mm;display:inline-block;">WORK ORDER</div><br>
+      <div style="font-family:Arial,'Tajawal';font-weight:900;font-size:15pt;color:${PRINT_THEME};direction:ltr;display:inline-block;">${o.serial}-TC</div>
     </div>
-    ${orgLogo?`<div class="org-info-blk">${orgLogo}</div>`:''}
-    ${orderBarcodeBlock(o)}
+    ${qrUrl?`<div style="text-align:center;">
+      <img src="${qrUrl}" style="width:24mm;height:24mm;display:block;border-radius:4px;">
+      <div style="font-size:8pt;color:#666;margin-top:1.5mm;">رقم التكليف: ${o.serial}</div>
+    </div>`:''}
   </div>`;
+  html += `<div class="kpi-row">${summaryBoxes.map(b=>`<div class="kpi"><div class="kpi-v" style="font-size:11.5pt;">${b.v}</div><div class="kpi-l">${b.l}</div></div>`).join('')}</div>`;
   html += rows.map(([label,val])=>`<div class="field-row"><span class="f-ar">${escapeHtml(label)} :</span><span class="f-val">${val}</span></div>`).join('');
   html += printDocFooter();
-  html += `<div class="bottom-bar"></div>`;
   html += printDocClose();
   return html;
 }
 async function printOrderSchoolCopy(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
   const html = await buildOrderPrintDoc(o, {showAdminNote:false}, 'نسخة الجهة الطالبة');
-  doPrintDoc(html, true, 'A4');
+  doPrintDoc(html, false, 'A4');
 }
 async function printOrderAdminCopy(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
   const html = await buildOrderPrintDoc(o, {}, 'نسخة الإدارة (كاملة)');
-  doPrintDoc(html, true, 'A4');
+  doPrintDoc(html, false, 'A4');
 }
 async function openQrCodeModal(id){
   const o = state.orders.find(x=>x.id===id); if(!o) return;
   const overlay=document.getElementById('modalOverlay'); const box=document.getElementById('modalBox');
-  const barUrl = generateBarcodeDataUrl(barcodeTextForOrder(o));
-  box.innerHTML = `<h3>باركود — أمر تكليف رقم ${o.serial}</h3>
-    <div style="text-align:center;">
-      <div style="font-weight:800;color:${PRINT_THEME};margin-bottom:8px;">${escapeHtml(o.title||'')}</div>
-      ${barUrl?`<img src="${barUrl}" style="max-width:260px;height:auto;">`:'<div class="empty-state">تعذر توليد الباركود</div>'}
-      <div style="font-weight:800;margin-top:8px;">أمر تكليف رقم ${o.serial}</div>
-    </div>
-    <div class="modal-actions"><button class="btn btn-outline" id="qr_close">إغلاق</button></div>`;
+  box.innerHTML = `<h3>رمز QR — أمر تكليف رقم ${o.serial}</h3><div style="text-align:center;color:#999;">جارٍ التوليد...</div>`;
   overlay.classList.add('open');
+  const qrUrl = await generateQRDataUrl(qrTextForOrder(o));
+  box.innerHTML = `<h3>رمز QR — أمر تكليف رقم ${o.serial}</h3>
+    <div style="text-align:center;">${qrUrl?`<img src="${qrUrl}" style="width:220px;height:220px;">`:'<div class="empty-state">تعذر توليد الرمز</div>'}</div>
+    <div class="modal-actions"><button class="btn btn-outline" id="qr_close">إغلاق</button></div>`;
   const closeBtn = document.getElementById('qr_close');
   if(closeBtn) closeBtn.onclick=()=>overlay.classList.remove('open');
 }
-async function emailOrder(id){
+function emailOrder(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
   const field = state.fields.find(f=>f.id===o.fieldId);
   const school = state.schools.find(s=>s.id===o.schoolId);
   const subject = `طلب رقم ${o.serial} — ${o.title}`;
-  const body = `عنوان المبادرة: ${o.title}\nالمجال: ${field?field.name:''}\nالتاريخ: ${o.date||''}\nالوقت: ${o.timeFrom||''} - ${o.timeTo||''}\nالمدرسة: ${school?school.name:''}\nمقدم المبادرة: ${trainerNames(o)}\nملاحظة الإدارة: ${o.adminNote||''}\n\n(مرفق: تم فتح أمر التكليف في نافذة جديدة — استخدم زر "تنزيل PDF" بداخلها ثم أرفق الملف هنا يدويًا، فالمتصفحات لا تسمح بإرفاق الملفات تلقائيًا في رسائل البريد)`;
-  const html = await buildOrderPrintDoc(o, {}, '');
-  doPrintDoc(html, true, 'A4');
-  toast('افتحنا أمر التكليف — اضغط "تنزيل PDF" في النافذة الجديدة ثم أرفقه يدويًا في رسالة البريد');
+  const body = `عنوان المبادرة: ${o.title}\nالمجال: ${field?field.name:''}\nالتاريخ: ${o.date||''}\nالوقت: ${o.timeFrom||''} - ${o.timeTo||''}\nالمدرسة: ${school?school.name:''}\nمقدم المبادرة: ${trainerNames(o)}\nملاحظة الإدارة: ${o.adminNote||''}`;
   window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -1333,8 +1308,7 @@ function dailyReportTable(list){
 function buildReportDoc(opts){
   // opts: {titleAr, subtitle, kpis:[{v,l}], headers:[...], rows:[[...]], theme}
   const theme = opts.theme || PRINT_THEME;
-  let html = printDocOpen(theme, opts.titleAr || 'تقرير');
-  if(opts.extraStyle) html += `<style>${opts.extraStyle}</style>`;
+  let html = printDocOpen(theme);
   html += printDocHeaderBlock();
   html += `<div class="title-blk"><div class="title-ar">${escapeHtml(opts.titleAr)}</div><div class="title-sub">${escapeHtml(opts.subtitle||'')}</div></div>`;
   if(opts.kpis && opts.kpis.length){
@@ -1357,8 +1331,8 @@ function renderAdminPage(c){
   <div class="card">
     <h2>عرض الفعاليات اليومية</h2>
     <div class="grid">
-      <div class="field"><label>من تاريخ</label><input id="adm_from" type="date" value="${today}"></div>
-      <div class="field"><label>إلى تاريخ</label><input id="adm_to" type="date" value="${today}"></div>
+      <div class="field"><label>من تاريخ</label><input id="adm_from" type="date" lang="en" value="${today}"></div>
+      <div class="field"><label>إلى تاريخ</label><input id="adm_to" type="date" lang="en" value="${today}"></div>
     </div>
     <button class="btn btn-primary" id="adm_filter">عرض</button>
     <button class="btn btn-outline" id="adm_print">🖨️ طباعة / حفظ PDF</button>
@@ -1416,20 +1390,245 @@ function renderAdminPage(c){
       const school = state.schools.find(s=>s.id===o.schoolId);
       const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
       const reqs = (o.adminRequests||[]).map(id=>{const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:'';}).filter(Boolean).join('، ');
-      const bar = generateBarcodeDataUrl(barcodeTextForOrder(o));
-      return [i+1, o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', supervisor&&supervisor.phone?phoneLink(supervisor.phone):'', o.participantsCount||'', trainerPlainText(o), reqs||'—', bar?`<img src="${bar}" style="width:22mm;height:auto;">`:''];
+      const qr = await generateQRDataUrl(qrTextForOrder(o));
+      return [i+1, o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', supervisor&&supervisor.phone?phoneLink(supervisor.phone):'', o.participantsCount||'', trainerMiniTable(o), reqs||'—', qr?`<img src="${qr}" style="width:16mm;height:16mm;">`:''];
     }));
     const reqRows = Object.entries(k.reqCounts).map(([id,count])=>{ const r=state.adminRequestsList.find(x=>x.id===id); return `<tr><td>${escapeHtml(r?r.name:id)}</td><td>${count}</td></tr>`; }).join('') || '<tr><td colspan="2" style="text-align:center;color:#999;">لا توجد</td></tr>';
     doPrintDoc(buildReportDoc({
       titleAr:'جدول الفعاليات خلال فترة', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
       kpis:[{v:k.events,l:'عدد الفعاليات'},{v:k.trainers,l:'عدد المدربين'},{v:k.hours.toFixed(1),l:'إجمالي عدد الساعات'},{v:k.schools,l:'عدد المدارس'},{v:k.reqs,l:'عدد الطلبات الإدارية'}],
-      headers:['م','أمر التكليف','عنوان الفعالية','التاريخ','الوقت','المكان','رقم المشرف','عدد المشاركين','مقدم البرنامج','الطلبات الإدارية للبرنامج','الباركود'],
+      headers:['م','أمر التكليف','عنوان الفعالية','التاريخ','الوقت','المكان','رقم المشرف','عدد المشاركين','مقدم البرنامج','الطلبات الإدارية للبرنامج','QR'],
       rows,
-      extraStyle:'.title-ar{font-size:10pt !important} .title-sub{font-size:10pt !important} .kpi-v{font-size:10pt !important} .kpi-l{font-size:10pt !important} table{font-size:10pt !important} th,td{font-size:10pt !important;font-weight:400 !important} .sec-t{font-size:10pt !important}',
       extraHtml:`<div class="sec-t">توزيع الطلبات الإدارية خلال الفترة</div><table><thead><tr><th>الطلب الإداري</th><th>عدد مرات الطلب</th></tr></thead><tbody>${reqRows}</tbody></table>`
     }), true, 'A4');
   };
   doFilter();
+}
+
+/* ============ Admin Requests Report Page ============ */
+function renderAdminRequestsReportPage(c){
+  c.innerHTML = `
+  <div class="card">
+    <h2>تقرير الطلبات الإدارية</h2>
+    <div class="grid">
+      <div class="field"><label>من تاريخ</label><input id="arq_from" type="date" lang="en"></div>
+      <div class="field"><label>إلى تاريخ</label><input id="arq_to" type="date" lang="en"></div>
+    </div>
+    <button class="btn btn-primary" id="arq_go">عرض</button>
+    <button class="icon-btn rect" id="arq_print" title="طباعة">🖨️</button>
+    <button class="icon-btn rect" id="arq_excel" title="تنزيل Excel">📊</button>
+    <button class="icon-btn rect" id="arq_pdf" title="تنزيل PDF">📄</button>
+  </div>
+  <div class="card" id="arq_result"></div>`;
+  function getList(){
+    const from=document.getElementById('arq_from').value, to=document.getElementById('arq_to').value;
+    const list = state.orders.filter(o=> (o.adminRequests||[]).length>0 && (!from||o.date>=from) && (!to||o.date<=to))
+      .sort((a,b)=> (a.date||'').localeCompare(b.date||'') || a.serial-b.serial);
+    return {list, from, to};
+  }
+  function rowsOf(list){
+    return list.map(o=>{
+      const school = state.schools.find(s=>s.id===o.schoolId);
+      const reqs = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean).join('، ');
+      return {o, school, reqs};
+    });
+  }
+  function draw(){
+    const {list} = getList();
+    const rows = rowsOf(list);
+    document.getElementById('arq_result').innerHTML = `<h2>النتائج (${list.length})</h2>
+      <table><thead><tr><th>أمر التكليف</th><th>عنوان الفعالية</th><th>من الساعة</th><th>إلى الساعة</th><th>المكان</th><th>مقدم البرنامج</th><th>الطلبات الإدارية للبرنامج</th></tr></thead><tbody>
+        ${rows.map(r=>`<tr><td>${r.o.serial}</td><td>${escapeHtml(r.o.title)}</td><td>${r.o.timeFrom||''}</td><td>${r.o.timeTo||''}</td><td>${r.school?escapeHtml(r.school.name):''}</td><td>${trainerMiniTable(r.o)}</td><td>${escapeHtml(r.reqs)}</td></tr>`).join('') || '<tr><td colspan="7" class="empty-state">لا توجد طلبات إدارية ضمن هذه الفترة</td></tr>'}
+      </tbody></table>`;
+  }
+  document.getElementById('arq_go').onclick=draw;
+  document.getElementById('arq_excel').onclick=()=>{
+    const {list, from, to} = getList();
+    const rows = rowsOf(list).map(r=>[r.o.serial, r.o.title, r.o.timeFrom||'', r.o.timeTo||'', r.school?r.school.name:'', trainerNames(r.o), r.reqs]);
+    exportToExcel('الطلبات_الإدارية.xlsx', ['أمر التكليف','عنوان الفعالية','من الساعة','إلى الساعة','المكان','مقدم البرنامج','الطلبات الإدارية للبرنامج'], rows, `تقرير الطلبات الإدارية (من ${from||'—'} إلى ${to||'—'})`);
+  };
+  async function printIt(){
+    const {list, from, to} = getList();
+    const rows = rowsOf(list).map(r=>[r.o.serial, escapeHtml(r.o.title), r.o.timeFrom||'', r.o.timeTo||'', r.school?escapeHtml(r.school.name):'', trainerMiniTable(r.o), escapeHtml(r.reqs)]);
+    doPrintDoc(buildReportDoc({
+      titleAr:'تقرير الطلبات الإدارية', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
+      kpis:[{v:list.length,l:'عدد الفعاليات'}],
+      headers:['أمر التكليف','عنوان الفعالية','من الساعة','إلى الساعة','المكان','مقدم البرنامج','الطلبات الإدارية للبرنامج'],
+      rows
+    }), true, 'A4');
+  }
+  document.getElementById('arq_print').onclick=printIt;
+  /* "تنزيل PDF": يفتح نفس نافذة الطباعة، ومن حوار الطباعة يختار المستخدم "حفظ كـ PDF" كوجهة — بدون الحاجة لأي مكتبة خارجية إضافية */
+  document.getElementById('arq_pdf').onclick=printIt;
+  draw();
+}
+
+/* ============ Quranic Activities Page (روح / الرحيق) ============ */
+function renderQuranActivitiesPage(c){
+  c.innerHTML = `
+  <div class="card"><h2>الأنشطة القرآنية — برنامجا روح والرحيق</h2></div>
+  <div class="tabs">
+    <button class="tab-btn ${quranSubTab==='entry'?'active':''}" id="qa_tabEntry">إدخال البيانات</button>
+    <button class="tab-btn ${quranSubTab==='report'?'active':''}" id="qa_tabReport">التقارير</button>
+  </div>
+  <div id="qa_sub"></div>`;
+  const sub = document.getElementById('qa_sub');
+  document.getElementById('qa_tabEntry').onclick=()=>{quranSubTab='entry'; editingQuranId=null; render();};
+  document.getElementById('qa_tabReport').onclick=()=>{quranSubTab='report'; render();};
+  if(quranSubTab==='report'){ renderQuranReportTab(sub); return; }
+  renderQuranEntryForm(sub);
+}
+
+function renderQuranEntryForm(sub){
+  const editing = editingQuranId ? state.quranActivities.find(x=>x.id===editingQuranId) : null;
+  sub.innerHTML = `<div class="card">
+    <h2>${editing?'تعديل سجل شهري':'إدخال بيانات شهرية جديدة'}</h2>
+    <div class="grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="field"><label>اسم البرنامج</label><select id="qa_program">
+        <option value="روح" ${editing&&editing.programName==='روح'?'selected':''}>روح</option>
+        <option value="الرحيق" ${editing&&editing.programName==='الرحيق'?'selected':''}>الرحيق</option>
+      </select></div>
+      <div class="field"><label>الشهر</label><input id="qa_month" type="month" lang="en" value="${editing?editing.month:''}"></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="field"><label>من تاريخ</label><input id="qa_from" type="date" lang="en" value="${editing?editing.dateFrom:''}"></div>
+      <div class="field"><label>إلى تاريخ</label><input id="qa_to" type="date" lang="en" value="${editing?editing.dateTo:''}"></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="field"><label>عدد أيام تنفيذ البرنامج</label><input id="qa_days" type="number" lang="en" min="0" value="${editing?editing.execDays:''}"></div>
+      <div class="field"><label>آلية التسميع</label><select id="qa_method">
+        <option value="حضوري" ${editing&&editing.method==='حضوري'?'selected':''}>حضوري</option>
+        <option value="عن بُعد" ${editing&&editing.method==='عن بُعد'?'selected':''}>عن بُعد</option>
+      </select></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="field"><label>عدد المعلمين</label><input id="qa_teachers" type="number" lang="en" min="0" value="${editing?editing.teachersCount:''}"></div>
+      <div class="field"><label>عدد الطلاب</label><input id="qa_students" type="number" lang="en" min="0" value="${editing?editing.studentsCount:''}"></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="field"><label>عدد صفحات الحفظ</label><input id="qa_memPages" type="number" lang="en" min="0" value="${editing?editing.memPages:''}"></div>
+      <div class="field"><label>عدد الأجزاء المحفوظة</label><input id="qa_memParts" type="number" lang="en" min="0" value="${editing?editing.memParts:''}"></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(2,1fr);">
+      <div class="field"><label>عدد صفحات المراجعة</label><input id="qa_revPages" type="number" lang="en" min="0" value="${editing?editing.revPages:''}"></div>
+      <div class="field"><label>عدد الأجزاء التي تمت مراجعتها</label><input id="qa_revParts" type="number" lang="en" min="0" value="${editing?editing.revParts:''}"></div>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr;">
+      <div class="field"><label>نسبة الإنجاز الشهري (%)</label><input id="qa_pct" type="number" lang="en" min="0" max="100" value="${editing?editing.completionPct:''}"></div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <button class="btn btn-primary" id="qa_save">${editing?'حفظ التعديلات':'حفظ البيانات'}</button>
+      ${editing?'<button class="btn btn-outline" id="qa_cancelEdit">إلغاء التعديل</button>':''}
+    </div>
+  </div>`;
+
+  if(editing) document.getElementById('qa_cancelEdit').onclick=()=>{editingQuranId=null; render();};
+
+  document.getElementById('qa_save').onclick=async ()=>{
+    const programName=document.getElementById('qa_program').value;
+    const month=document.getElementById('qa_month').value;
+    if(!month){ toast('يرجى تحديد الشهر'); return; }
+    const data = {
+      programName, month,
+      dateFrom:document.getElementById('qa_from').value,
+      dateTo:document.getElementById('qa_to').value,
+      execDays:Number(document.getElementById('qa_days').value)||0,
+      method:document.getElementById('qa_method').value,
+      teachersCount:Number(document.getElementById('qa_teachers').value)||0,
+      studentsCount:Number(document.getElementById('qa_students').value)||0,
+      memPages:Number(document.getElementById('qa_memPages').value)||0,
+      memParts:Number(document.getElementById('qa_memParts').value)||0,
+      revPages:Number(document.getElementById('qa_revPages').value)||0,
+      revParts:Number(document.getElementById('qa_revParts').value)||0,
+      completionPct:Number(document.getElementById('qa_pct').value)||0,
+    };
+    if(editing){
+      Object.assign(editing, data);
+      await saveState(); toast('تم حفظ التعديلات'); editingQuranId=null; render();
+      return;
+    }
+    const dup = state.quranActivities.find(x=>x.programName===programName && x.month===month);
+    if(dup){
+      const ok = confirm(`يوجد سجل مسبق لبرنامج "${programName}" لشهر ${month}. هل تريد استبدال بياناته؟`);
+      if(!ok) return;
+      Object.assign(dup, data);
+      await saveState(); toast('تم تحديث السجل الموجود'); render();
+      return;
+    }
+    state.quranActivities.push({id:uid(), ...data, createdAt:Date.now()});
+    await saveState(); toast('تم حفظ البيانات'); render();
+  };
+}
+
+function renderQuranReportTab(sub){
+  sub.innerHTML = `<div class="card">
+    <h2>تقرير الأنشطة القرآنية</h2>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="field"><label>البرنامج</label><select id="qr_program"><option value="">الكل</option><option value="روح">روح</option><option value="الرحيق">الرحيق</option></select></div>
+      <div class="field"><label>الشهر</label><input id="qr_month" type="month" lang="en"></div>
+      <div class="field" style="align-self:flex-end;"><button class="btn btn-primary" id="qr_go">عرض</button></div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="icon-btn rect" id="qr_print" title="طباعة">🖨️</button>
+      <button class="icon-btn rect" id="qr_excel" title="تنزيل Excel">📊</button>
+      <button class="icon-btn rect" id="qr_pdf" title="تنزيل PDF">📄</button>
+    </div>
+  </div>
+  <div class="card" id="qr_result"></div>`;
+
+  function getList(){
+    const program=document.getElementById('qr_program').value;
+    const month=document.getElementById('qr_month').value;
+    return state.quranActivities.filter(x=> (!program||x.programName===program) && (!month||x.month===month))
+      .sort((a,b)=> a.month.localeCompare(b.month) || a.programName.localeCompare(b.programName));
+  }
+  function totalsOf(list){
+    return list.reduce((t,x)=>({
+      teachersCount:t.teachersCount+x.teachersCount, studentsCount:t.studentsCount+x.studentsCount,
+      memPages:t.memPages+x.memPages, memParts:t.memParts+x.memParts,
+      revPages:t.revPages+x.revPages, revParts:t.revParts+x.revParts,
+      execDays:t.execDays+x.execDays, pctSum:t.pctSum+x.completionPct
+    }), {teachersCount:0,studentsCount:0,memPages:0,memParts:0,revPages:0,revParts:0,execDays:0,pctSum:0});
+  }
+  function draw(){
+    const list = getList();
+    const t = totalsOf(list);
+    const avgPct = list.length ? (t.pctSum/list.length).toFixed(1) : '0';
+    document.getElementById('qr_result').innerHTML = `<h2>النتائج (${list.length})</h2>
+      <table><thead><tr><th>اسم البرنامج</th><th>الشهر</th><th>الفترة</th><th>أيام التنفيذ</th><th>آلية التسميع</th><th>المعلمين</th><th>الطلاب</th><th>صفحات الحفظ</th><th>الأجزاء المحفوظة</th><th>صفحات المراجعة</th><th>الأجزاء المراجعة</th><th>نسبة الإنجاز %</th>${currentRole==='admin'?'<th>إجراءات</th>':''}</tr></thead><tbody>
+        ${list.map(x=>`<tr><td>${escapeHtml(x.programName)}</td><td>${x.month}</td><td>${x.dateFrom||''} — ${x.dateTo||''}</td><td>${x.execDays}</td><td>${escapeHtml(x.method)}</td><td>${x.teachersCount}</td><td>${x.studentsCount}</td><td>${x.memPages}</td><td>${x.memParts}</td><td>${x.revPages}</td><td>${x.revParts}</td><td>${x.completionPct}%</td>${currentRole==='admin'?`<td><button class="icon-btn" title="تعديل" onclick="editQuranRecord('${x.id}')">✏️</button> <button class="icon-btn" title="حذف" onclick="deleteQuranRecord('${x.id}')">🗑️</button></td>`:''}</tr>`).join('') || `<tr><td colspan="13" class="empty-state">لا توجد سجلات مطابقة</td></tr>`}
+      </tbody>
+      ${list.length?`<tfoot><tr style="font-weight:900;background:#f4f6fa;"><td colspan="3">الإجمالي</td><td>${t.execDays}</td><td></td><td>${t.teachersCount}</td><td>${t.studentsCount}</td><td>${t.memPages}</td><td>${t.memParts}</td><td>${t.revPages}</td><td>${t.revParts}</td><td>${avgPct}%</td>${currentRole==='admin'?'<td></td>':''}</tr></tfoot>`:''}
+      </table>`;
+  }
+  document.getElementById('qr_go').onclick=draw;
+
+  document.getElementById('qr_excel').onclick=()=>{
+    const list=getList();
+    const rows=list.map(x=>[x.programName,x.month,x.dateFrom||'',x.dateTo||'',x.execDays,x.method,x.teachersCount,x.studentsCount,x.memPages,x.memParts,x.revPages,x.revParts,x.completionPct]);
+    exportToExcel('تقرير_الأنشطة_القرآنية.xlsx', ['اسم البرنامج','الشهر','من','إلى','أيام التنفيذ','آلية التسميع','المعلمين','الطلاب','صفحات الحفظ','الأجزاء المحفوظة','صفحات المراجعة','الأجزاء المراجعة','نسبة الإنجاز %'], rows, 'تقرير الأنشطة القرآنية');
+  };
+  function printIt(){
+    const list=getList();
+    const t=totalsOf(list);
+    const avgPct = list.length ? (t.pctSum/list.length).toFixed(1) : '0';
+    const rows=list.map(x=>[escapeHtml(x.programName),x.month,`${x.dateFrom||''} — ${x.dateTo||''}`,x.execDays,escapeHtml(x.method),x.teachersCount,x.studentsCount,x.memPages,x.memParts,x.revPages,x.revParts,x.completionPct+'%']);
+    doPrintDoc(buildReportDoc({
+      titleAr:'تقرير الأنشطة القرآنية — روح والرحيق', subtitle:`عدد السجلات: ${list.length}`,
+      kpis:[{v:t.teachersCount,l:'إجمالي المعلمين'},{v:t.studentsCount,l:'إجمالي الطلاب'},{v:t.memPages,l:'إجمالي صفحات الحفظ'},{v:t.revPages,l:'إجمالي صفحات المراجعة'},{v:avgPct+'%',l:'متوسط نسبة الإنجاز'}],
+      headers:['اسم البرنامج','الشهر','الفترة','أيام التنفيذ','آلية التسميع','المعلمين','الطلاب','صفحات الحفظ','الأجزاء المحفوظة','صفحات المراجعة','الأجزاء المراجعة','نسبة الإنجاز'],
+      rows
+    }), true, 'A4');
+  }
+  document.getElementById('qr_print').onclick=printIt;
+  document.getElementById('qr_pdf').onclick=printIt;
+  draw();
+}
+function editQuranRecord(id){ editingQuranId=id; quranSubTab='entry'; render(); }
+async function deleteQuranRecord(id){
+  if(!confirm('هل تريد حذف هذا السجل؟')) return;
+  state.quranActivities = state.quranActivities.filter(x=>x.id!==id);
+  await saveState(); render();
 }
 
 /* ============ Reports Page ============ */
@@ -1441,16 +1640,18 @@ function renderReportsPage(c){
     <button class="tab-btn" id="rt_hours">تقرير ساعات مقدمي الفعالية</button>
     <button class="tab-btn" id="rt_eval">تقرير التقييمات</button>
     <button class="tab-btn" id="rt_general">تقرير عام</button>
+    <button class="tab-btn" id="rt_stats">الإحصائيات</button>
   </div>
   <div id="reportContent"></div>`;
   let mode='trainer';
-  const tabs = {trainer:'rt_trainer', school:'rt_school', hours:'rt_hours', eval:'rt_eval', general:'rt_general'};
+  const tabs = {trainer:'rt_trainer', school:'rt_school', hours:'rt_hours', eval:'rt_eval', general:'rt_general', stats:'rt_stats'};
   function setActive(){ Object.entries(tabs).forEach(([k,id])=>document.getElementById(id).classList.toggle('active', mode===k)); }
   document.getElementById('rt_trainer').onclick=()=>{mode='trainer'; drawTrainer(); setActive();};
   document.getElementById('rt_school').onclick=()=>{mode='school'; drawSchool(); setActive();};
   document.getElementById('rt_hours').onclick=()=>{mode='hours'; drawHours(); setActive();};
   document.getElementById('rt_eval').onclick=()=>{mode='eval'; drawEval(); setActive();};
   document.getElementById('rt_general').onclick=()=>{mode='general'; drawGeneral(); setActive();};
+  document.getElementById('rt_stats').onclick=()=>{mode='stats'; renderStatsPage(document.getElementById('reportContent')); setActive();};
 
   function drawGeneral(){
     const box=document.getElementById('reportContent');
@@ -1462,11 +1663,11 @@ function renderReportsPage(c){
           <option value="trainers">مقدمو الفعاليات</option>
           <option value="tasks">المهام</option>
         </select></div>
-        <div class="field"><label>من تاريخ</label><input id="gn_from" type="date"></div>
-        <div class="field"><label>إلى تاريخ</label><input id="gn_to" type="date"></div>
+        <div class="field"><label>من تاريخ</label><input id="gn_from" type="date" lang="en"></div>
+        <div class="field"><label>إلى تاريخ</label><input id="gn_to" type="date" lang="en"></div>
       </div>
       <button class="btn btn-primary" id="gn_go">عرض</button>
-      <button class="btn btn-outline" id="gn_print">🖨️ طباعة / حفظ PDF</button>
+      <button class="btn btn-outline" id="gn_print">🖨️ طباعة</button>
       <button class="btn btn-outline" id="gn_excel">📊 استخراج إكسل</button>
       <div id="gn_result" style="margin-top:16px;"></div>
     </div>`;
@@ -1502,7 +1703,7 @@ function renderReportsPage(c){
   function drawEval(){
     const box=document.getElementById('reportContent');
     box.innerHTML = `<div class="card"><h2>تقرير التقييمات — الفعاليات المنفذة</h2>
-      <div class="grid"><div class="field"><label>من تاريخ</label><input id="ev_from" type="date"></div><div class="field"><label>إلى تاريخ</label><input id="ev_to" type="date"></div></div>
+      <div class="grid"><div class="field"><label>من تاريخ</label><input id="ev_from" type="date" lang="en"></div><div class="field"><label>إلى تاريخ</label><input id="ev_to" type="date" lang="en"></div></div>
       <button class="btn btn-primary" id="ev_go">عرض</button>
       <button class="btn btn-outline" id="ev_print">🖨️ طباعة / حفظ PDF</button>
       <button class="btn btn-outline" id="ev_excel">📊 تنزيل Excel</button>
@@ -1556,8 +1757,8 @@ function renderReportsPage(c){
     box.innerHTML = `<div class="card"><h2>تقرير مقدم فعالية</h2>
       <div class="grid">
         <div class="field"><label>مقدم الفعالية</label><select id="rp_trainer">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
-        <div class="field"><label>من تاريخ</label><input id="rp_from" type="date"></div>
-        <div class="field"><label>إلى تاريخ</label><input id="rp_to" type="date"></div>
+        <div class="field"><label>من تاريخ</label><input id="rp_from" type="date" lang="en"></div>
+        <div class="field"><label>إلى تاريخ</label><input id="rp_to" type="date" lang="en"></div>
       </div>
       <button class="btn btn-primary" id="rp_go">عرض الجدول</button>
       <button class="btn btn-outline" id="rp_print">🖨️ طباعة / حفظ PDF</button>
@@ -1581,11 +1782,11 @@ function renderReportsPage(c){
       const {list,title,from,to}=gen();
       const rows = await Promise.all(list.map(async o=>{
         const school=state.schools.find(s=>s.id===o.schoolId);
-        const bar = generateBarcodeDataUrl(barcodeTextForOrder(o));
-        return [o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', trainerMiniTable(o), o.completionStatus||'لم تنجز', bar?`<img src="${bar}" style="width:22mm;height:auto;">`:''];
+        const qr = await generateQRDataUrl(qrTextForOrder(o));
+        return [o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', trainerMiniTable(o), o.completionStatus||'لم تنجز', qr?`<img src="${qr}" style="width:16mm;height:16mm;">`:''];
       }));
       doPrintDoc(buildReportDoc({ titleAr:title, subtitle:`من ${from||'—'} إلى ${to||'—'}`, kpis:[{v:list.length,l:'عدد الفعاليات'}],
-        headers:['م','العنوان','التاريخ','الوقت','المدرسة','مقدم المبادرة','الإنجاز','الباركود'], rows }), true, 'A4');
+        headers:['م','العنوان','التاريخ','الوقت','المدرسة','مقدم المبادرة','الإنجاز','QR'], rows }), true, 'A4');
     };
   }
   function drawSchool(){
@@ -1593,8 +1794,8 @@ function renderReportsPage(c){
     box.innerHTML = `<div class="card"><h2>تقرير مدرسة</h2>
       <div class="grid">
         <div class="field"><label>المدرسة</label><select id="rp_school">${state.schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select></div>
-        <div class="field"><label>من تاريخ</label><input id="rp_from2" type="date"></div>
-        <div class="field"><label>إلى تاريخ</label><input id="rp_to2" type="date"></div>
+        <div class="field"><label>من تاريخ</label><input id="rp_from2" type="date" lang="en"></div>
+        <div class="field"><label>إلى تاريخ</label><input id="rp_to2" type="date" lang="en"></div>
       </div>
       <button class="btn btn-primary" id="rp_go2">عرض الجدول</button>
       <button class="btn btn-outline" id="rp_print2">🖨️ طباعة / حفظ PDF</button>
@@ -1617,11 +1818,11 @@ function renderReportsPage(c){
     document.getElementById('rp_print2').onclick=async ()=>{
       const {list,title,from,to}=gen();
       const rows = await Promise.all(list.map(async o=>{
-        const bar = generateBarcodeDataUrl(barcodeTextForOrder(o));
-        return [o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), trainerMiniTable(o), o.completionStatus||'لم تنجز', bar?`<img src="${bar}" style="width:22mm;height:auto;">`:''];
+        const qr = await generateQRDataUrl(qrTextForOrder(o));
+        return [o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), trainerMiniTable(o), o.completionStatus||'لم تنجز', qr?`<img src="${qr}" style="width:16mm;height:16mm;">`:''];
       }));
       doPrintDoc(buildReportDoc({ titleAr:title, subtitle:`من ${from||'—'} إلى ${to||'—'}`, kpis:[{v:list.length,l:'عدد الفعاليات'}],
-        headers:['م','العنوان','التاريخ','الوقت','مقدم المبادرة','الإنجاز','الباركود'], rows }), true, 'A4');
+        headers:['م','العنوان','التاريخ','الوقت','مقدم المبادرة','الإنجاز','QR'], rows }), true, 'A4');
     };
   }
   function drawHours(){
@@ -1629,8 +1830,8 @@ function renderReportsPage(c){
     box.innerHTML = `<div class="card"><h2>تقرير ساعات مقدمي الفعالية</h2>
       <div class="grid">
         <div class="field"><label>مقدم الفعالية</label><select id="hr_trainer">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
-        <div class="field"><label>من تاريخ</label><input id="hr_from" type="date"></div>
-        <div class="field"><label>إلى تاريخ</label><input id="hr_to" type="date"></div>
+        <div class="field"><label>من تاريخ</label><input id="hr_from" type="date" lang="en"></div>
+        <div class="field"><label>إلى تاريخ</label><input id="hr_to" type="date" lang="en"></div>
       </div>
       <button class="btn btn-primary" id="hr_go">احتساب الساعات</button>
       <button class="btn btn-outline" id="hr_print">🖨️ طباعة / حفظ PDF</button>
@@ -1717,7 +1918,7 @@ function renderStatsPage(c){
   c.innerHTML = `
   <div class="card">
     <h2>تقرير تصنيفيات</h2>
-    <div class="grid"><div class="field"><label>من تاريخ</label><input id="st_from" type="date"></div><div class="field"><label>إلى تاريخ</label><input id="st_to" type="date"></div></div>
+    <div class="grid"><div class="field"><label>من تاريخ</label><input id="st_from" type="date" lang="en"></div><div class="field"><label>إلى تاريخ</label><input id="st_to" type="date" lang="en"></div></div>
     <button class="btn btn-primary" id="st_go">احتساب</button>
     <button class="btn btn-outline" id="st_excel">📊 تنزيل Excel (كل التصنيفات)</button>
   </div>
@@ -1730,12 +1931,18 @@ function renderStatsPage(c){
     const byField = state.fields.map(f=>{
       const rel = inRange.filter(o=>o.fieldId===f.id);
       const schoolsSet = new Set(rel.map(o=>o.schoolId).filter(Boolean));
-      return {name:f.name, programs:rel.length, participants: rel.reduce((s,o)=>s+(Number(o.participantsCount)||0),0), schools:schoolsSet.size};
+      const trainersSet = new Set(); rel.forEach(o=>(o.trainerIds||[]).forEach(id=>trainersSet.add(id)));
+      const daysSet = new Set(rel.map(o=>o.date).filter(Boolean));
+      let hours=0; rel.forEach(o=>{ if(o.timeFrom&&o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); if(s&&e) hours+=Math.max(0,(e-s)/3600000); } });
+      return {name:f.name, programs:rel.length, participants: rel.reduce((s,o)=>s+(Number(o.participantsCount)||0),0), schools:schoolsSet.size, hours, trainers:trainersSet.size, days:daysSet.size};
     });
     const byType = state.programTypes.map(p=>{
       const rel = inRange.filter(o=>o.programTypeId===p.id);
       const schoolsSet = new Set(rel.map(o=>o.schoolId).filter(Boolean));
-      return {name:p.name, programs:rel.length, participants: rel.reduce((s,o)=>s+(Number(o.participantsCount)||0),0), schools:schoolsSet.size};
+      const trainersSet = new Set(); rel.forEach(o=>(o.trainerIds||[]).forEach(id=>trainersSet.add(id)));
+      const daysSet = new Set(rel.map(o=>o.date).filter(Boolean));
+      let hours=0; rel.forEach(o=>{ if(o.timeFrom&&o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); if(s&&e) hours+=Math.max(0,(e-s)/3600000); } });
+      return {name:p.name, programs:rel.length, participants: rel.reduce((s,o)=>s+(Number(o.participantsCount)||0),0), schools:schoolsSet.size, hours, trainers:trainersSet.size, days:daysSet.size};
     });
     const levels=['ابتدائي','إعدادي','ثانوي','مركز خاص','غير ذلك'];
     const byLevel = levels.map(lv=>{
@@ -1745,8 +1952,8 @@ function renderStatsPage(c){
     });
     return {byField, byType, byLevel, from, to};
   }
-  function tableFrom(arr){ return `<table class="print-table"><thead><tr><th>البند</th><th>عدد البرامج</th><th>عدد المشاركين</th><th>عدد المدارس</th></tr></thead><tbody>
-      ${arr.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.programs}</td><td>${x.participants}</td><td>${x.schools}</td></tr>`).join('')}</tbody></table>`; }
+  function tableFrom(arr){ return `<table class="print-table"><thead><tr><th>البند</th><th>عدد المدارس</th><th>عدد المبادرات</th><th>عدد الساعات</th><th>عدد الأيام</th><th>عدد المدربين</th><th>عدد الطلاب</th></tr></thead><tbody>
+      ${arr.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.schools}</td><td>${x.programs}</td><td>${x.hours.toFixed(1)}</td><td>${x.days}</td><td>${x.trainers}</td><td>${x.participants}</td></tr>`).join('')}</tbody></table>`; }
   function tableLevel(arr){ return `<table class="print-table"><thead><tr><th>المرحلة</th><th>عدد البرامج المنفذة</th></tr></thead><tbody>
       ${arr.map(x=>`<tr><td>${escapeHtml(x.name)}</td><td>${x.programs}</td></tr>`).join('')}</tbody></table>`; }
 
@@ -1756,27 +1963,27 @@ function renderStatsPage(c){
     window.__lastStatsData = {byField, byType, byLevel, from, to};
 
     const fCard=document.getElementById('st_field_card'); fCard.style.display='block';
-    fCard.innerHTML = `<h2>البند — حسب مجال المبادرة <button class="btn btn-outline btn-sm" id="pr_field">🖨️ طباعة / PDF</button></h2>${tableFrom(byField)} ${svgDonutChart(byField.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byField.map(x=>({name:x.name, value:x.programs})))}`;
+    fCard.innerHTML = `<h2>البند — حسب مجال المبادرة <button class="btn btn-outline btn-sm" id="pr_field">🖨️ طباعة منفصلة</button></h2>${tableFrom(byField)} ${svgDonutChart(byField.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byField.map(x=>({name:x.name, value:x.programs})))}`;
     document.getElementById('pr_field').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير التصنيفيات — البند (مجال المبادرة)', subtitle,
-      kpis:[{v:byField.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'},{v:byField.reduce((s,x)=>s+x.participants,0),l:'إجمالي المشاركين'}],
-      headers:['البند','عدد البرامج','عدد المشاركين','عدد المدارس'],
-      rows:byField.map(x=>[escapeHtml(x.name),x.programs,x.participants,x.schools]),
+      kpis:[{v:byField.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'},{v:byField.reduce((s,x)=>s+x.participants,0),l:'إجمالي الطلاب'},{v:byField.reduce((s,x)=>s+x.hours,0).toFixed(1),l:'إجمالي الساعات'},{v:byField.reduce((s,x)=>s+x.days,0),l:'إجمالي الأيام'}],
+      headers:['البند','عدد المدارس','عدد المبادرات','عدد الساعات','عدد الأيام','عدد المدربين','عدد الطلاب'],
+      rows:byField.map(x=>[escapeHtml(x.name),x.schools,x.programs,x.hours.toFixed(1),x.days,x.trainers,x.participants]),
       extraHtml:`<div class="sec-t">📊 الرسم البياني</div>${svgBarChart(byField.map(x=>({name:x.name, value:x.programs})))}`
     }), true, 'A4');
 
     const tCard=document.getElementById('st_type_card'); tCard.style.display='block';
-    tCard.innerHTML = `<h2>حسب نوع البرنامج (مسار المبادرة) <button class="btn btn-outline btn-sm" id="pr_type">🖨️ طباعة / PDF</button></h2>${tableFrom(byType)} ${svgDonutChart(byType.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byType.map(x=>({name:x.name, value:x.programs})))}`;
+    tCard.innerHTML = `<h2>حسب نوع البرنامج (مسار المبادرة) <button class="btn btn-outline btn-sm" id="pr_type">🖨️ طباعة منفصلة</button></h2>${tableFrom(byType)} ${svgDonutChart(byType.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byType.map(x=>({name:x.name, value:x.programs})))}`;
     document.getElementById('pr_type').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير التصنيفيات — حسب نوع البرنامج', subtitle,
-      kpis:[{v:byType.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'},{v:byType.reduce((s,x)=>s+x.participants,0),l:'إجمالي المشاركين'}],
-      headers:['البند','عدد البرامج','عدد المشاركين','عدد المدارس'],
-      rows:byType.map(x=>[escapeHtml(x.name),x.programs,x.participants,x.schools]),
+      kpis:[{v:byType.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'},{v:byType.reduce((s,x)=>s+x.participants,0),l:'إجمالي الطلاب'},{v:byType.reduce((s,x)=>s+x.hours,0).toFixed(1),l:'إجمالي الساعات'},{v:byType.reduce((s,x)=>s+x.days,0),l:'إجمالي الأيام'}],
+      headers:['البند','عدد المدارس','عدد المبادرات','عدد الساعات','عدد الأيام','عدد المدربين','عدد الطلاب'],
+      rows:byType.map(x=>[escapeHtml(x.name),x.schools,x.programs,x.hours.toFixed(1),x.days,x.trainers,x.participants]),
       extraHtml:`<div class="sec-t">📊 الرسم البياني</div>${svgBarChart(byType.map(x=>({name:x.name, value:x.programs})))}`
     }), true, 'A4');
 
     const lCard=document.getElementById('st_level_card'); lCard.style.display='block';
-    lCard.innerHTML = `<h2>حسب نوع المرحلة الدراسية للمدارس <button class="btn btn-outline btn-sm" id="pr_level">🖨️ طباعة / PDF</button></h2>${tableLevel(byLevel)} ${svgDonutChart(byLevel.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byLevel.map(x=>({name:x.name, value:x.programs})))}`;
+    lCard.innerHTML = `<h2>حسب نوع المرحلة الدراسية للمدارس <button class="btn btn-outline btn-sm" id="pr_level">🖨️ طباعة منفصلة</button></h2>${tableLevel(byLevel)} ${svgDonutChart(byLevel.map(x=>({name:x.name, value:x.programs})).filter(x=>x.value>0))} ${svgBarChart(byLevel.map(x=>({name:x.name, value:x.programs})))}`;
     document.getElementById('pr_level').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير التصنيفيات — حسب المرحلة الدراسية', subtitle,
       kpis:[{v:byLevel.reduce((s,x)=>s+x.programs,0),l:'إجمالي البرامج'}],
@@ -1789,8 +1996,8 @@ function renderStatsPage(c){
     if(!window.__lastStatsData){ toast('اضغط "احتساب" أولاً'); return; }
     const {byField, byType, byLevel, from, to} = window.__lastStatsData;
     exportToExcelMultiSheet('تقرير_التصنيفيات.xlsx', [
-      {name:'حسب المجال', headers:['البند','عدد البرامج','عدد المشاركين','عدد المدارس'], rows:byField.map(x=>[x.name,x.programs,x.participants,x.schools])},
-      {name:'حسب نوع البرنامج', headers:['البند','عدد البرامج','عدد المشاركين','عدد المدارس'], rows:byType.map(x=>[x.name,x.programs,x.participants,x.schools])},
+      {name:'حسب المجال', headers:['البند','عدد المدارس','عدد المبادرات','عدد الساعات','عدد الأيام','عدد المدربين','عدد الطلاب'], rows:byField.map(x=>[x.name,x.schools,x.programs,x.hours.toFixed(1),x.days,x.trainers,x.participants])},
+      {name:'حسب نوع البرنامج', headers:['البند','عدد المدارس','عدد المبادرات','عدد الساعات','عدد الأيام','عدد المدربين','عدد الطلاب'], rows:byType.map(x=>[x.name,x.schools,x.programs,x.hours.toFixed(1),x.days,x.trainers,x.participants])},
       {name:'حسب المرحلة', headers:['المرحلة','عدد البرامج المنفذة'], rows:byLevel.map(x=>[x.name,x.programs])},
     ], `تقرير التصنيفيات (من ${from||'—'} إلى ${to||'—'})`);
   };
@@ -1801,8 +2008,8 @@ function renderTasksPage(c){
   c.innerHTML = `<div class="card"><h2>إضافة مهمة</h2>
     <div class="grid">
       <div class="field"><label>اسم المهمة</label><input id="tk_title"></div>
-      <div class="field"><label>تاريخ البدء</label><input id="tk_start" type="date"></div>
-      <div class="field"><label>تاريخ الاستحقاق</label><input id="tk_due" type="date"></div>
+      <div class="field"><label>تاريخ البدء</label><input id="tk_start" type="date" lang="en"></div>
+      <div class="field"><label>تاريخ الاستحقاق</label><input id="tk_due" type="date" lang="en"></div>
       <div class="field"><label>مرتبطة بمنفذ مبادرة</label><select id="tk_trainer"><option value="">— بدون —</option>${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
       <div class="field"><label>الأولوية</label><select id="tk_priority"><option value="منخفضة">منخفضة</option><option value="متوسطة" selected>متوسطة</option><option value="عالية">عالية</option></select></div>
       <div class="field"><label>الحالة</label><select id="tk_status"><option value="لم تبدأ" selected>لم تبدأ</option><option value="قيد التنفيذ">قيد التنفيذ</option><option value="مكتملة">مكتملة</option></select></div>
@@ -1857,14 +2064,14 @@ function renderResultsPage(c){
   <div class="card">
     <h2>النتائج والتقييمات</h2>
     <div class="grid">
-      <div class="field"><label>من تاريخ</label><input id="res_from" type="date"></div>
-      <div class="field"><label>إلى تاريخ</label><input id="res_to" type="date"></div>
+      <div class="field"><label>من تاريخ</label><input id="res_from" type="date" lang="en"></div>
+      <div class="field"><label>إلى تاريخ</label><input id="res_to" type="date" lang="en"></div>
       <div class="field"><label>عرض</label><select id="res_filter">
         <option value="all">الكل</option><option value="evaluated">المقيَّمة فقط</option><option value="notEvaluated">غير المقيَّمة فقط</option>
       </select></div>
     </div>
     <button class="btn btn-primary" id="res_go">عرض</button>
-    <button class="btn btn-outline" id="res_print">🖨️ طباعة / حفظ PDF</button>
+    <button class="btn btn-outline" id="res_print">🖨️ طباعة</button>
     <button class="btn btn-outline" id="res_excel">📊 استخراج إكسل</button>
     <div id="res_result" style="margin-top:16px;"></div>
   </div>`;
@@ -1923,7 +2130,7 @@ function renderDistributionsPage(c){
     <h2>توزيع الفعاليات على مقدمي المبادرة</h2>
     <div class="grid">
       <div class="field"><label>الفترة</label><select id="dist_period"><option value="week">أسبوع</option><option value="month">شهر</option><option value="year">سنة</option></select></div>
-      <div class="field"><label>تاريخ ضمن الفترة</label><input id="dist_date" type="date" value="${today}"></div>
+      <div class="field"><label>تاريخ ضمن الفترة</label><input id="dist_date" type="date" lang="en" value="${today}"></div>
     </div>
     <button class="btn btn-primary" id="dist_go">عرض</button>
     <button class="btn btn-outline" id="dist_excel">📊 تنزيل Excel</button>
@@ -2056,14 +2263,14 @@ function renderTrainerPortalPage(c){
   }
 
   if(trainerPortalTab==='upcoming'){
-    box.innerHTML = `<div class="card"><h2 class="tp-h">فعالياتي القادمة <button class="btn btn-outline btn-sm" id="tp_print_up">🖨️ طباعة / PDF</button></h2>${upcomingTableOnScreen(upcoming)}</div>`;
+    box.innerHTML = `<div class="card"><h2 class="tp-h">فعالياتي القادمة <button class="btn btn-outline btn-sm" id="tp_print_up">🖨️ طباعة</button></h2>${upcomingTableOnScreen(upcoming)}</div>`;
     document.getElementById('tp_print_up').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'فعاليات قادمة — '+(trainer?trainer.name:''), kpis:[{v:upcoming.length,l:'عدد الفعاليات'}],
       headers:['م','أمر التكليف','عنوان المبادرة','المكان','هاتف المشرف','التاريخ','الوقت','الطلبات المقدمة','الإنجاز'], rows:upcomingRowsForPrint(upcoming)
     }), true, 'A4');
 
   } else if(trainerPortalTab==='past'){
-    box.innerHTML = `<div class="card"><h2 class="tp-h">فعالياتي السابقة <button class="btn btn-outline btn-sm" id="tp_print_past">🖨️ طباعة / PDF</button></h2>${upcomingTableOnScreen(past)}</div>`;
+    box.innerHTML = `<div class="card"><h2 class="tp-h">فعالياتي السابقة <button class="btn btn-outline btn-sm" id="tp_print_past">🖨️ طباعة</button></h2>${upcomingTableOnScreen(past)}</div>`;
     document.getElementById('tp_print_past').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'فعاليات سابقة — '+(trainer?trainer.name:''), kpis:[{v:past.length,l:'عدد الفعاليات'}],
       headers:['م','أمر التكليف','عنوان المبادرة','المكان','هاتف المشرف','التاريخ','الوقت','الطلبات المقدمة','الإنجاز'], rows:upcomingRowsForPrint(past)
@@ -2075,7 +2282,7 @@ function renderTrainerPortalPage(c){
   } else if(trainerPortalTab==='daily'){
     box.innerHTML = `<div class="card">
       <h2 class="tp-h">فعالياتي اليومية</h2>
-      <div class="grid"><div class="field"><label>من تاريخ</label><input id="tpd_from" type="date" value="${today}"></div><div class="field"><label>إلى تاريخ</label><input id="tpd_to" type="date" value="${today}"></div></div>
+      <div class="grid"><div class="field"><label>من تاريخ</label><input id="tpd_from" type="date" lang="en" value="${today}"></div><div class="field"><label>إلى تاريخ</label><input id="tpd_to" type="date" lang="en" value="${today}"></div></div>
       <button class="btn btn-primary" id="tpd_go">عرض</button>
       <div id="tpd_result" style="margin-top:16px;"></div>
     </div>`;
@@ -2104,7 +2311,7 @@ function renderTrainerPortalPage(c){
       <table><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>عدد الساعات</th></tr></thead><tbody>
         ${rows.length?rows.map(r=>`<tr><td>${r.o.serial}</td><td>${escapeHtml(r.o.title)}</td><td>${r.o.date||''}</td><td>${r.o.timeFrom||''}-${r.o.timeTo||''}</td><td>${r.hrs.toFixed(1)}</td></tr>`).join(''):'<tr><td colspan="5" class="empty-state">لا توجد بيانات</td></tr>'}
       </tbody></table>
-      <button class="btn btn-outline btn-sm" style="margin-top:12px;" id="tp_print_hours">🖨️ طباعة / PDF</button>
+      <button class="btn btn-outline btn-sm" style="margin-top:12px;" id="tp_print_hours">🖨️ طباعة</button>
     </div>`;
     document.getElementById('tp_print_hours').onclick=()=>doPrintDoc(buildReportDoc({
       titleAr:'تقرير ساعات مقدم الفعالية: '+(trainer?trainer.name:''), kpis:[{v:myOrders.length,l:'عدد الفعاليات'},{v:totalHours.toFixed(1),l:'إجمالي الساعات'}],
@@ -2136,13 +2343,13 @@ function renderTrainerPortalPage(c){
       </div>
       <div class="grid" style="grid-template-columns:1fr;"><div class="field"><label>عنوان المبادرة المقترحة</label><input id="tr_title" style="font-size:18px;padding:13px 14px;"></div></div>
       <div class="grid" style="grid-template-columns:repeat(3,1fr);">
-        <div class="field"><label>التاريخ المقترح</label><input id="tr_date" type="date"></div>
-        <div class="field"><label>من الساعة</label><input id="tr_from" type="time"></div>
-        <div class="field"><label>إلى الساعة</label><input id="tr_to" type="time"></div>
+        <div class="field"><label>التاريخ المقترح</label><input id="tr_date" type="date" lang="en"></div>
+        <div class="field"><label>من الساعة</label><input id="tr_from" type="time" lang="en"></div>
+        <div class="field"><label>إلى الساعة</label><input id="tr_to" type="time" lang="en"></div>
       </div>
       <div class="grid" style="grid-template-columns:1.6fr 0.8fr;">
         <div class="field"><label>المدرسة المقترحة</label><select id="tr_school">${state.schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select></div>
-        <div class="field"><label>عدد المستهدفين</label><input id="tr_count" type="number" min="0"></div>
+        <div class="field"><label>عدد المستهدفين</label><input id="tr_count" type="number" lang="en" min="0"></div>
       </div>
       <div class="field" style="margin-bottom:14px;">
         <label>الطلبات الإدارية للبرنامج</label>
@@ -2159,6 +2366,14 @@ function renderTrainerPortalPage(c){
           return `<tr><td>${escapeHtml(r.title)}</td><td>${sch?escapeHtml(sch.name):''}</td><td>${r.date||''}</td><td>${statusBadge}</td></tr>`;
         }).join('')}</tbody></table>` : `<div class="empty-state">لا توجد طلبات بعد</div>`}
     </div>`;
+    document.getElementById('tr_from').addEventListener('change', (e)=>{
+      const toEl = document.getElementById('tr_to');
+      if(e.target.value && !toEl.value){
+        const [hh,mm] = e.target.value.split(':').map(Number);
+        const d = new Date(2000,0,1,hh,mm); d.setHours(d.getHours()+1);
+        toEl.value = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      }
+    });
     document.getElementById('tr_submit').onclick=async ()=>{
       const title=document.getElementById('tr_title').value.trim();
       const date=document.getElementById('tr_date').value;
@@ -2170,7 +2385,9 @@ function renderTrainerPortalPage(c){
       state.trainerRequests.push({ id:uid(), trainerId:loggedTrainerId, title, schoolId:document.getElementById('tr_school').value,
         fieldId:document.getElementById('tr_field').value, programTypeId:document.getElementById('tr_ptype').value, participantsCount:document.getElementById('tr_count').value,
         date, timeFrom, timeTo, note:document.getElementById('tr_note').value, adminRequests, status:'pending', createdAt:Date.now() });
-      await saveState(); toast('تم إرسال طلبك بانتظار موافقة مدير النظام'); render();
+      await saveState();
+      openAnnouncement('✅ تم إرسال طلبك', `تم استلام طلب/ترشيح المبادرة "${title}" بنجاح، وهو الآن بانتظار موافقة مدير النظام.`);
+      render();
     };
   }
 
@@ -2333,9 +2550,9 @@ function renderSettingsPage(c){
     <div class="grid">
       <div class="field"><label>اسم الجهة (للاستخدام الداخلي)</label><input id="set_orgName" value="${escapeHtml(state.orgName||'')}"></div>
       <div class="field"><label>الشعار (يفضّل PNG بخلفية شفافة)</label><input id="set_logo" type="file" accept="image/*"></div>
-      <div class="field"><label>سطر ١ في ترويسة الطباعة</label><input id="set_ph1" value="${escapeHtml(state.printHeader.line1)}"></div>
-      <div class="field"><label>سطر ٢ في ترويسة الطباعة</label><input id="set_ph2" value="${escapeHtml(state.printHeader.line2)}"></div>
-      <div class="field"><label>سطر ٣ في ترويسة الطباعة</label><input id="set_ph3" value="${escapeHtml(state.printHeader.line3)}"></div>
+      <div class="field"><label>سطر 1 في ترويسة الطباعة</label><input id="set_ph1" value="${escapeHtml(state.printHeader.line1)}"></div>
+      <div class="field"><label>سطر 2 في ترويسة الطباعة</label><input id="set_ph2" value="${escapeHtml(state.printHeader.line2)}"></div>
+      <div class="field"><label>سطر 3 في ترويسة الطباعة</label><input id="set_ph3" value="${escapeHtml(state.printHeader.line3)}"></div>
     </div>
     <button class="btn btn-primary" id="set_saveOrg">حفظ</button>
   </div>
@@ -2451,8 +2668,11 @@ async function importOrdersExcel(file){
       const schoolName=(r[4]||'').toString().trim(); const participantsCount=(r[5]||'').toString().trim();
       let sch = state.schools.find(s=>s.name===schoolName);
       if(!sch && schoolName){ sch={id:uid(), name:schoolName, level:'غير ذلك', supervisors:[]}; state.schools.push(sch); }
+      const orderYear = (date || todayStr()).slice(0,4);
+      const yearOrders = state.orders.filter(o=>o.date && o.date.slice(0,4)===orderYear);
+      const maxSerialThisYear = yearOrders.reduce((m,o)=>Math.max(m,o.serial||0),0);
       state.orders.push({
-        id:uid(), serial: state.nextSerial++, createdAt:Date.now(), title, fieldId: state.fields[0]?state.fields[0].id:'',
+        id:uid(), serial: maxSerialThisYear+1, createdAt:Date.now(), title, fieldId: state.fields[0]?state.fields[0].id:'',
         participantsCount, date, timeFrom, timeTo, programTypeId: state.programTypes[0]?state.programTypes[0].id:'',
         schoolId: sch?sch.id:'', supervisorId:'', trainerIds:[], requesterNote:'', adminNote:'مستورد من إكسل',
         adminRequests:[], completionStatus:'', notDoneReason:'', supervisorRating:0, schoolRating:0, studentsRating:0, recommendSchool:'', evaluatedBy:'', status:'active'
@@ -2545,7 +2765,7 @@ async function importSchoolsExcel(file){
 function exportToExcel(filename, headers, rows, titleAr){
   const now = new Date();
   const dateStr = todayStr();
-  const timeStr = now.toLocaleTimeString('ar-QA', {hour:'2-digit', minute:'2-digit'});
+  const timeStr = now.toLocaleTimeString('ar-QA-u-nu-latn', {hour:'2-digit', minute:'2-digit'});
   const aoa = [];
   if(titleAr){ aoa.push([titleAr]); aoa.push([`تاريخ التصدير: ${dateStr}    وقت التصدير: ${timeStr}`]); aoa.push([]); }
   aoa.push(headers);
@@ -2559,7 +2779,7 @@ function exportToExcel(filename, headers, rows, titleAr){
 function exportToExcelMultiSheet(filename, sheets, titleAr){
   // sheets: [{name, headers, rows}]
   const now = new Date();
-  const dateStr = todayStr(), timeStr = now.toLocaleTimeString('ar-QA', {hour:'2-digit', minute:'2-digit'});
+  const dateStr = todayStr(), timeStr = now.toLocaleTimeString('ar-QA-u-nu-latn', {hour:'2-digit', minute:'2-digit'});
   const wb = XLSX.utils.book_new();
   sheets.forEach(s=>{
     const aoa = [];
@@ -2606,8 +2826,11 @@ function quickAddSupervisorSettings(schoolId){
 async function acceptTrainerRequest(id){
   const r = state.trainerRequests.find(x=>x.id===id); if(!r) return;
   r.status='accepted';
+  const orderYear = (r.date || todayStr()).slice(0,4);
+  const yearOrders = state.orders.filter(o=>o.date && o.date.slice(0,4)===orderYear);
+  const maxSerialThisYear = yearOrders.reduce((m,o)=>Math.max(m,o.serial||0),0);
   const order = {
-    id:uid(), serial: state.nextSerial++, createdAt:Date.now(),
+    id:uid(), serial: maxSerialThisYear+1, createdAt:Date.now(),
     title:r.title, fieldId: r.fieldId || (state.fields[0]?state.fields[0].id:''), participantsCount:r.participantsCount||'',
     date:r.date, timeFrom:r.timeFrom, timeTo:r.timeTo, programTypeId: r.programTypeId || (state.programTypes[0]?state.programTypes[0].id:''),
     schoolId:r.schoolId, supervisorId:'', trainerIds:[r.trainerId], requesterNote:r.note||'', adminNote:'مضاف من ترشيح مقدم فعالية',
