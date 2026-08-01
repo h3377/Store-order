@@ -92,9 +92,9 @@
   .presenter-chip:has(input:checked){background:var(--maroon-800); border-color:var(--maroon-800); color:#fff; font-weight:800;}
   .presenter-chip:has(input:disabled){opacity:.45;}
   .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px;}
-  .stat-box{background:#fff; border:1.5px solid var(--maroon-800); border-radius:10px; padding:10px; text-align:center;}
-  .stat-box .num{font-size:19px; font-weight:800; font-family:var(--font-head); font-style:italic; color:var(--maroon-800);}
-  .stat-box .lbl{font-size:11px; color:#7a5560; margin-top:2px;}
+  .stat-box{background:#fff; border:1.5px solid var(--maroon-800); border-radius:8px; padding:6px; text-align:center;}
+  .stat-box .num{font-size:15px; font-weight:800; font-family:var(--font-head); font-style:italic; color:var(--maroon-800);}
+  .stat-box .lbl{font-size:9.5px; color:#7a5560; margin-top:1px;}
   .tabs{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; background:var(--maroon-50); padding:8px; border-radius:12px;}
   .tab-btn{all:unset; cursor:pointer; padding:11px 20px; font-size:14px; font-weight:700; color:#8a5a66; border-radius:10px; transition:.15s;}
   .tab-btn:hover{background:var(--maroon-50);}
@@ -261,10 +261,8 @@ async function saveState(){
 const PAGES = [
   {id:'home', label:'الصفحة الرئيسية', icon:'🏠', roles:['admin','user']},
   {id:'order', label:'طلبات الفعاليات والمبادرات', icon:'📋', roles:['admin','user']},
-  {id:'results', label:'النتائج', icon:'🏁', roles:['admin','user']},
-  {id:'distributions', label:'التوزيعات', icon:'🗂️', roles:['admin','user']},
+  {id:'distributions', label:'الطلبات والتوزيعات والإداريات', icon:'🗂️', roles:['admin','user']},
   {id:'reports', label:'التقارير', icon:'📄', roles:['admin','user']},
-  {id:'adminRequestsReport', label:'الطلبات الإدارية', icon:'🗂️', roles:['admin','user']},
   {id:'quranActivities', label:'الأنشطة القرآنية', icon:'📖', roles:['admin','user']},
   {id:'tasks', label:'المهام', icon:'✅', roles:['admin','user']},
   {id:'trainerPortal', label:'بوابة مقدم الفعالية', icon:'🧑‍🏫', roles:['admin','user','trainer']},
@@ -293,6 +291,14 @@ function toast(msg){
 function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function fileToDataUrl(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
 function todayStr(){ return new Date().toISOString().slice(0,10); }
+/* يحوّل قيمة الشهر (YYYY-MM) إلى اسم الشهر بالعربية + السنة، مثل "يونيو 2026" */
+function monthNameAr(m){
+  if(!m) return '';
+  const names = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const [y, mm] = m.split('-');
+  const idx = parseInt(mm,10)-1;
+  return (names[idx]||mm) + ' ' + y;
+}
 
 /* ============ Modal helper ============ */
 function openModal(title, fieldsConfig, onSubmit){
@@ -543,6 +549,19 @@ function renderHome(c){
   const tasksInProgress = state.tasks.filter(t=>t.status==='قيد التنفيذ').length;
   const tasksOverdue = state.tasks.filter(t=>t.due && t.due<today && t.status!=='مكتملة').length;
   c.innerHTML = `
+  <div class="stat-grid" style="margin-bottom:14px;">
+    <div class="stat-box"><div class="num">${totalOrders}</div><div class="lbl">إجمالي طلبات الفعاليات</div></div>
+    <div class="stat-box"><div class="num">${thisMonth}</div><div class="lbl">فعاليات هذا الشهر</div></div>
+    <div class="stat-box"><div class="num">${state.schools.length}</div><div class="lbl">عدد المدارس</div></div>
+    <div class="stat-box"><div class="num">${state.trainers.length}</div><div class="lbl">عدد مقدمي الفعاليات</div></div>
+    <div class="stat-box"><div class="num">${totalParticipants}</div><div class="lbl">إجمالي المستهدفين</div></div>
+    <div class="stat-box"><div class="num">${pendingReq}</div><div class="lbl">طلبات ترشيح بانتظار الرد</div></div>
+  </div>
+  <div class="stat-grid" style="margin-bottom:14px;">
+    <div class="stat-box"><div class="num">${tasksNotStarted}</div><div class="lbl">مهام لم تبدأ بعد</div></div>
+    <div class="stat-box"><div class="num">${tasksInProgress}</div><div class="lbl">مهام قيد التنفيذ</div></div>
+    <div class="stat-box" style="${tasksOverdue?'border-color:#9e2b2b;':''}"><div class="num" style="${tasksOverdue?'color:#9e2b2b;':''}">${tasksOverdue}</div><div class="lbl">⚠️ مهام متأخرة عن الاستحقاق</div></div>
+  </div>
   <div class="card">
     <h2>🔎 بحث سريع</h2>
     <div class="grid">
@@ -552,19 +571,6 @@ function renderHome(c){
     </div>
     <button class="btn btn-primary" id="hs_go">بحث</button>
     <div id="hs_result" style="margin-top:14px;"></div>
-  </div>
-  <div class="stat-grid" style="margin-bottom:20px;">
-    <div class="stat-box"><div class="num">${totalOrders}</div><div class="lbl">إجمالي طلبات الفعاليات</div></div>
-    <div class="stat-box"><div class="num">${thisMonth}</div><div class="lbl">فعاليات هذا الشهر</div></div>
-    <div class="stat-box"><div class="num">${state.schools.length}</div><div class="lbl">عدد المدارس</div></div>
-    <div class="stat-box"><div class="num">${state.trainers.length}</div><div class="lbl">عدد مقدمي الفعاليات</div></div>
-    <div class="stat-box"><div class="num">${totalParticipants}</div><div class="lbl">إجمالي المستهدفين</div></div>
-    <div class="stat-box"><div class="num">${pendingReq}</div><div class="lbl">طلبات ترشيح بانتظار الرد</div></div>
-  </div>
-  <div class="stat-grid" style="margin-bottom:20px;">
-    <div class="stat-box"><div class="num">${tasksNotStarted}</div><div class="lbl">مهام لم تبدأ بعد</div></div>
-    <div class="stat-box"><div class="num">${tasksInProgress}</div><div class="lbl">مهام قيد التنفيذ</div></div>
-    <div class="stat-box" style="${tasksOverdue?'border-color:#9e2b2b;':''}"><div class="num" style="${tasksOverdue?'color:#9e2b2b;':''}">${tasksOverdue}</div><div class="lbl">⚠️ مهام متأخرة عن الاستحقاق</div></div>
   </div>
   <div class="card"><h2>أحدث الطلبات</h2>${ordersTableHtml(state.orders.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,6), 'otbl_home_latest')}</div>
   <div class="card">
@@ -704,7 +710,7 @@ function ordersTableHtml(list, containerId){
   ${list.map(o=>{
     const field = state.fields.find(f=>f.id===o.fieldId);
     const school = state.schools.find(s=>s.id===o.schoolId);
-    const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>' : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : '<span class="badge">لم تنجز بعد</span>';
+    const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>' : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : o.completionStatus==='الغيت' ? '<span class="badge bad">أُلغيت</span>' : o.completionStatus==='المشرف لا يرد' ? '<span class="badge busy">المشرف لا يرد</span>' : '<span class="badge">لم تنجز بعد</span>';
     const orderStatusBadge = o.status==='cancelled' ? '<span class="badge bad">ملغاة</span>' : o.status==='postponed' ? '<span class="badge busy">مؤجّلة</span>' : '<span class="badge ok">نشطة</span>';
     return `<tr style="${o.status==='cancelled'?'opacity:.6;':''}">
       <td><input type="checkbox" class="otbl-check" data-id="${o.id}" onchange="otblSelect('${containerId}', this)"></td>
@@ -778,7 +784,7 @@ function renderOrderPage(c){
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:14px;">
         <div class="field"><label>🔎 بحث باسم المدرسة</label><input id="ord_schoolSearch" placeholder="اكتب اسم المدرسة..."></div>
         <div class="field"><label>مقدم المبادرة</label><select id="ord_trainerFilter"><option value="">الكل</option>${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
-        <div class="field"><label>الإنجاز</label><select id="ord_completionFilter"><option value="">الكل</option><option value="تم">تم الإنجاز</option><option value="لم يتم">لم يتم الإنجاز</option><option value="__pending">لم تنجز بعد</option></select></div>
+        <div class="field"><label>الإنجاز</label><select id="ord_completionFilter"><option value="">الكل</option><option value="تم">تم الإنجاز</option><option value="لم يتم">لم يتم الإنجاز</option><option value="الغيت">أُلغيت</option><option value="المشرف لا يرد">المشرف لا يرد</option><option value="__pending">لم تنجز بعد</option></select></div>
         <div class="field"><label>الحالة</label><select id="ord_statusFilter"><option value="">الكل</option><option value="active">نشطة</option><option value="cancelled">ملغاة</option><option value="postponed">مؤجّلة</option></select></div>
       </div>
       <div id="ord_listResult"></div></div>`;
@@ -1054,6 +1060,8 @@ function openEvaluationModal(orderId){
       <select id="ev_status"><option value="">-- اختر --</option>
         <option value="تم" ${o.completionStatus==='تم'?'selected':''}>تم الإنجاز</option>
         <option value="لم يتم" ${o.completionStatus==='لم يتم'?'selected':''}>لم يتم الإنجاز</option>
+        <option value="الغيت" ${o.completionStatus==='الغيت'?'selected':''}>أُلغيت</option>
+        <option value="المشرف لا يرد" ${o.completionStatus==='المشرف لا يرد'?'selected':''}>المشرف لا يرد</option>
       </select>
     </div>
     <div class="field" id="ev_reasonWrap" style="display:${o.completionStatus==='لم يتم'?'flex':'none'};margin-bottom:12px;">
@@ -1406,12 +1414,12 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
 async function printOrderSchoolCopy(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
   const html = await buildOrderPrintDoc(o, {showAdminNote:false}, 'نسخة الجهة الطالبة');
-  doPrintDoc(html, false, 'A4', o.title || ('أمر تكليف '+o.serial));
+  doPrintDoc(html, true, 'A4', o.title || ('أمر تكليف '+o.serial));
 }
 async function printOrderAdminCopy(id){
   const o=state.orders.find(x=>x.id===id); if(!o) return;
   const html = await buildOrderPrintDoc(o, {}, 'نسخة الإدارة (كاملة)');
-  doPrintDoc(html, false, 'A4', o.title || ('أمر تكليف '+o.serial));
+  doPrintDoc(html, true, 'A4', o.title || ('أمر تكليف '+o.serial));
 }
 async function openQrCodeModal(id){
   const o = state.orders.find(x=>x.id===id); if(!o) return;
@@ -1667,14 +1675,28 @@ function renderQuranEntryForm(sub){
       <div class="field"><label>عدد الأجزاء التي تمت مراجعتها (تلقائي: كل 20 صفحة = جزء)</label><input id="qa_revParts" type="number" lang="en" min="0" value="${editing?editing.revParts:0}" readonly style="background:#f4f6fa;"></div>
     </div>
     <div class="grid" style="grid-template-columns:repeat(2,1fr);">
-      <div class="field"><label>المستهدف الشهري (عدد الصفحات)</label><input id="qa_target" type="number" lang="en" min="0" value="${editing?editing.monthlyTarget||'':''}"></div>
-      <div class="field"><label>نسبة الإنجاز الشهري (%) — تلقائي = (الإنجاز الفعلي ÷ المستهدف الشهري) × 100</label><input id="qa_pct" type="number" lang="en" value="${editing?editing.completionPct:0}" readonly style="background:#f4f6fa;"></div>
+      <div class="field"><label>المنجز (تلقائي: مجموع الأجزاء المحفوظة + الأجزاء المراجعة)</label><input id="qa_achieved" type="number" lang="en" value="${editing?((editing.memParts||0)+(editing.revParts||0)):0}" readonly style="background:#f4f6fa;"></div>
+      <div class="field"><label>المستهدف الشهري (عدد الأجزاء)</label><input id="qa_target" type="number" lang="en" min="0" step="0.25" value="${editing?editing.monthlyTarget||'':''}"></div>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr;">
+      <div class="field"><label>نسبة الإنجاز الشهري (%) — تلقائي = (المنجز ÷ المستهدف) × 100</label><input id="qa_pct" type="number" lang="en" value="${editing?editing.completionPct:0}" readonly style="background:#f4f6fa;"></div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <button class="btn btn-primary" id="qa_save">${editing?'حفظ التعديلات':'حفظ البيانات'}</button>
       ${editing?'<button class="btn btn-outline" id="qa_cancelEdit">إلغاء التعديل</button>':''}
     </div>
   </div>`;
+
+  const defaultTargets = {'الرحيق':5, 'روح':450};
+  document.getElementById('qa_program').addEventListener('change', (e)=>{
+    const t = document.getElementById('qa_target');
+    if(!t.value) t.value = defaultTargets[e.target.value] || '';
+    recalc();
+  });
+  if(!editing){
+    const t = document.getElementById('qa_target');
+    if(!t.value) t.value = defaultTargets[document.getElementById('qa_program').value] || '';
+  }
 
   function partsFromPages(pages){
     // كل 20 صفحة = جزء، مع احتساب حتى الربع والنصف جزء (تقريب لأقرب 0.25)
@@ -1688,8 +1710,9 @@ function renderQuranEntryForm(sub){
     const revParts = partsFromPages(revPages);
     document.getElementById('qa_memParts').value = String(memParts);
     document.getElementById('qa_revParts').value = String(revParts);
-    const actual = memPages + revPages;
-    const pct = target>0 ? Math.round((actual/target)*1000)/10 : 0;
+    const achieved = memParts + revParts;
+    document.getElementById('qa_achieved').value = String(achieved);
+    const pct = target>0 ? Math.round((achieved/target)*1000)/10 : 0;
     document.getElementById('qa_pct').value = String(pct);
   }
   ['qa_memPages','qa_revPages','qa_target'].forEach(id=>document.getElementById(id).addEventListener('input', recalc));
@@ -1772,7 +1795,7 @@ function renderQuranReportTab(sub){
     const box = document.getElementById('qr_result');
     box.innerHTML = `<h2>النتائج (${list.length})</h2>
       <table><thead><tr><th>اسم البرنامج</th><th>الشهر</th><th>الفترة</th><th>أيام التنفيذ</th><th>آلية التسميع</th><th>المعلمين</th><th>الطلاب</th><th>صفحات الحفظ</th><th>الأجزاء المحفوظة</th><th>صفحات المراجعة</th><th>الأجزاء المراجعة</th><th>نسبة الإنجاز %</th>${currentRole==='admin'?'<th>إجراءات</th>':''}</tr></thead><tbody>
-        ${list.map(x=>`<tr><td>${escapeHtml(x.programName)}</td><td>${x.month}</td><td>${x.dateFrom||''} — ${x.dateTo||''}</td><td>${x.execDays}</td><td>${escapeHtml(x.method)}</td><td>${x.teachersCount}</td><td>${x.studentsCount}</td><td>${x.memPages}</td><td>${x.memParts}</td><td>${x.revPages}</td><td>${x.revParts}</td><td>${x.completionPct}%</td>${currentRole==='admin'?`<td><button class="icon-btn" title="تعديل" onclick="editQuranRecord('${x.id}')">✏️</button> <button class="icon-btn" title="حذف" onclick="deleteQuranRecord('${x.id}')">🗑️</button></td>`:''}</tr>`).join('') || `<tr><td colspan="13" class="empty-state">لا توجد سجلات مطابقة</td></tr>`}
+        ${list.map(x=>`<tr><td>${escapeHtml(x.programName)}</td><td>${monthNameAr(x.month)}</td><td>${x.dateFrom||''} — ${x.dateTo||''}</td><td>${x.execDays}</td><td>${escapeHtml(x.method)}</td><td>${x.teachersCount}</td><td>${x.studentsCount}</td><td>${x.memPages}</td><td>${x.memParts}</td><td>${x.revPages}</td><td>${x.revParts}</td><td>${x.completionPct}%</td>${currentRole==='admin'?`<td><button class="icon-btn" title="تعديل" onclick="editQuranRecord('${x.id}')">✏️</button> <button class="icon-btn" title="حذف" onclick="deleteQuranRecord('${x.id}')">🗑️</button></td>`:''}</tr>`).join('') || `<tr><td colspan="13" class="empty-state">لا توجد سجلات مطابقة</td></tr>`}
       </tbody>
       ${list.length?`<tfoot><tr style="font-weight:900;background:#f4f6fa;"><td colspan="3">الإجمالي</td><td>${t.execDays}</td><td></td><td>${t.teachersCount}</td><td>${t.studentsCount}</td><td>${t.memPages}</td><td>${t.memParts}</td><td>${t.revPages}</td><td>${t.revParts}</td><td>${avgPct}%</td>${currentRole==='admin'?'<td></td>':''}</tr></tfoot>`:''}
       </table>`;
@@ -1782,14 +1805,14 @@ function renderQuranReportTab(sub){
 
   document.getElementById('qr_excel').onclick=()=>{
     const list=getList();
-    const rows=list.map(x=>[x.programName,x.month,x.dateFrom||'',x.dateTo||'',x.execDays,x.method,x.teachersCount,x.studentsCount,x.memPages,x.memParts,x.revPages,x.revParts,x.completionPct]);
+    const rows=list.map(x=>[x.programName,monthNameAr(x.month),x.dateFrom||'',x.dateTo||'',x.execDays,x.method,x.teachersCount,x.studentsCount,x.memPages,x.memParts,x.revPages,x.revParts,x.completionPct]);
     exportToExcel('تقرير_الأنشطة_القرآنية.xlsx', ['اسم البرنامج','الشهر','من','إلى','أيام التنفيذ','آلية التسميع','المعلمين','الطلاب','صفحات الحفظ','الأجزاء المحفوظة','صفحات المراجعة','الأجزاء المراجعة','نسبة الإنجاز %'], rows, 'تقرير الأنشطة القرآنية');
   };
   function printIt(){
     const list=getList();
     const t=totalsOf(list);
     const avgPct = list.length ? (t.pctSum/list.length).toFixed(1) : '0';
-    const rows=list.map(x=>[escapeHtml(x.programName),x.month,`${x.dateFrom||''} — ${x.dateTo||''}`,x.execDays,escapeHtml(x.method),x.teachersCount,x.studentsCount,x.memPages,x.memParts,x.revPages,x.revParts,x.completionPct+'%']);
+    const rows=list.map(x=>[escapeHtml(x.programName),monthNameAr(x.month),`${x.dateFrom||''} — ${x.dateTo||''}`,x.execDays,escapeHtml(x.method),x.teachersCount,x.studentsCount,x.memPages,x.memParts,x.revPages,x.revParts,x.completionPct+'%']);
     doPrintDoc(buildReportDoc({
       titleAr:'تقرير الأنشطة القرآنية — روح والرحيق', subtitle:`عدد السجلات: ${list.length}`,
       kpis:[{v:t.teachersCount,l:'إجمالي المعلمين'},{v:t.studentsCount,l:'إجمالي الطلاب'},{v:t.memPages,l:'إجمالي صفحات الحفظ'},{v:t.revPages,l:'إجمالي صفحات المراجعة'},{v:avgPct+'%',l:'متوسط نسبة الإنجاز'}],
@@ -2335,7 +2358,25 @@ function renderResultsPage(c){
 }
 
 /* ============ Distributions Page (التوزيعات) ============ */
+/* ============ Combined Page: الطلبات والتوزيعات والإداريات ============ */
+let distSubTab = 'dist';
 function renderDistributionsPage(c){
+  c.innerHTML = `
+  <div class="tabs">
+    <button class="tab-btn ${distSubTab==='dist'?'active':''}" id="distTabDist">التوزيعات</button>
+    <button class="tab-btn ${distSubTab==='results'?'active':''}" id="distTabResults">النتائج</button>
+    <button class="tab-btn ${distSubTab==='adminReq'?'active':''}" id="distTabAdminReq">الطلبات الإدارية</button>
+  </div>
+  <div id="distSubContent"></div>`;
+  const sub = document.getElementById('distSubContent');
+  document.getElementById('distTabDist').onclick=()=>{distSubTab='dist'; render();};
+  document.getElementById('distTabResults').onclick=()=>{distSubTab='results'; render();};
+  document.getElementById('distTabAdminReq').onclick=()=>{distSubTab='adminReq'; render();};
+  if(distSubTab==='results'){ renderResultsPage(sub); return; }
+  if(distSubTab==='adminReq'){ renderAdminRequestsReportPage(sub); return; }
+  renderDistributionsTabContent(sub);
+}
+function renderDistributionsTabContent(c){
   const today = todayStr();
   c.innerHTML = `
   <div class="card">
@@ -2459,7 +2500,7 @@ function renderTrainerPortalPage(c){
         const school=state.schools.find(s=>s.id===o.schoolId);
         const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
         const reqs = (o.adminRequests||[]).map(id=>{const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:'';}).filter(Boolean).join('، ');
-        const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>' : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : '<span class="badge">لم تنجز بعد</span>';
+        const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>' : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : o.completionStatus==='الغيت' ? '<span class="badge bad">أُلغيت</span>' : o.completionStatus==='المشرف لا يرد' ? '<span class="badge busy">المشرف لا يرد</span>' : '<span class="badge">لم تنجز بعد</span>';
         return `<tr><td>${i+1}</td><td><span class="badge">${o.serial}</span></td><td>${escapeHtml(o.title)}</td><td>${school?escapeHtml(school.name):''}</td>
           <td>${supervisor?escapeHtml(supervisor.phone||''):''}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td><td>${reqs||'—'}</td>
           <td>${statusBadge}</td><td><button class="icon-btn" title="تسجيل الإنجاز والتقييم" onclick="openEvaluationModal('${o.id}')">📝</button></td></tr>`;
@@ -2683,7 +2724,7 @@ function trainerOrdersTable(list){
   return `<table><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>الوقت</th><th>المدرسة</th><th>الإنجاز</th><th>إجراءات</th></tr></thead><tbody>
     ${list.map(o=>{
       const school=state.schools.find(s=>s.id===o.schoolId);
-      const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>' : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : '<span class="badge">لم تنجز بعد</span>';
+      const statusBadge = o.completionStatus==='تم' ? '<span class="badge ok">تم</span>' : o.completionStatus==='لم يتم' ? '<span class="badge bad">لم يتم</span>' : o.completionStatus==='الغيت' ? '<span class="badge bad">أُلغيت</span>' : o.completionStatus==='المشرف لا يرد' ? '<span class="badge busy">المشرف لا يرد</span>' : '<span class="badge">لم تنجز بعد</span>';
       return `<tr><td><span class="badge">${o.serial}</span></td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${o.timeFrom||''}-${o.timeTo||''}</td>
         <td>${school?escapeHtml(school.name):''}</td><td>${statusBadge}</td>
         <td><button class="icon-btn" title="تسجيل الإنجاز والتقييم" onclick="openEvaluationModal('${o.id}')">📝</button></td></tr>`;
