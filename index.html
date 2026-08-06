@@ -186,8 +186,14 @@ function defaultState(){
     ],
     trainers:(function(){ const t1=uid(), t2=uid(); window.__seedTrainerIds=[t1,t2]; return [{id:t1, name:'أ. أحمد النعيمي', phone:'55011122'},{id:t2, name:'أ. فيصل السليطي', phone:'55033344'}]; })(),
     adminRequestsList:[
-      {id:uid(), name:'توفير سيارة'},{id:uid(), name:'توفير مندوب لإيصال المدرب'},{id:uid(), name:'حجز مخيم'},
-      {id:uid(), name:'حجز استراحة المؤسسة'},{id:uid(), name:'توفير مقر مركز عيد الثقافي'},
+      {id:uid(), name:'توفير سيارة', category:'إداري'},
+      {id:uid(), name:'حجز مخيم', category:'إداري'},
+      {id:uid(), name:'حجز استراحة المؤسسة', category:'إداري'},
+      {id:uid(), name:'توفير مندوب لإيصال المدرب', category:'إداري'},
+      {id:uid(), name:'تصوير وتوثيق', category:'إعلامي'},
+      {id:uid(), name:'مونتاج', category:'إعلامي'},
+      {id:uid(), name:'تغذية', category:'ضيافة'},
+      {id:uid(), name:'قفشات ومياه', category:'ضيافة'},
     ],
     users:[
       {id:uid(), username:'admin', password:'admin123', role:'admin', trainerId:'', displayName:'مدير النظام', active:true},
@@ -766,7 +772,7 @@ function renderOrderPage(c){
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
       ${state.trainers.map(t=>{
         const list = thisWeek.filter(o=>(o.trainerIds||[]).includes(t.id));
-        let hrs=0; list.forEach(o=>{ if(o.timeFrom&&o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); if(s&&e) hrs+=Math.max(0,(e-s)/3600000); } });
+        let hrs=0; list.forEach(o=>{ if(o.timeFrom&&o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); if(s&&e) hrs+=Math.max(0,(e-s)/3600000)*daysCount(o.date,o.dateTo); } });
         return `<div class="stat-box"><div style="font-weight:800;color:var(--maroon-800);margin-bottom:6px;">${escapeHtml(t.name)}</div>
           <div class="num">${list.length}</div><div class="lbl">عدد الفعاليات</div>
           <div style="margin-top:6px;font-size:13px;color:#7a5560;">${hrs.toFixed(1)} ساعة</div></div>`;
@@ -849,8 +855,10 @@ function renderOrderForm(sub){
       <div class="field"><label>وقت المبادرة من</label><input id="f_timeFrom" type="time" lang="en" value="${editing?editing.timeFrom:''}"></div>
       <div class="field"><label>وقت المبادرة إلى</label><input id="f_timeTo" type="time" lang="en" value="${editing?editing.timeTo:''}"></div>
     </div>
-    <div class="grid" style="grid-template-columns:1fr;">
-      <div class="field"><label>تاريخ الانتهاء (اتركه فارغًا إن كانت الفعالية ليوم واحد فقط)</label><input id="f_dateTo" type="date" lang="en" value="${editing?editing.dateTo||'':''}"></div>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="field"><label>تاريخ الانتهاء</label><input id="f_dateTo" type="date" lang="en" value="${editing?editing.dateTo||'':''}"></div>
+      <div class="field"><label>عدد الأيام (تلقائي)</label><input id="f_daysCount" type="text" lang="en" readonly style="background:#f4f6fa;" value="${editing?daysCount(editing.date, editing.dateTo):''}"></div>
+      <div class="field"><label>المدة بالساعات (تلقائي)</label><input id="f_hoursCount" type="text" lang="en" readonly style="background:#f4f6fa;" value="${editing?hoursDuration(editing.timeFrom, editing.timeTo, editing.date, editing.dateTo):''}"></div>
     </div>
 
     <div class="grid" style="grid-template-columns:1.6fr 1.4fr 0.8fr;">
@@ -940,6 +948,12 @@ function renderOrderForm(sub){
   }
   document.getElementById('f_school').addEventListener('change', refreshSupervisors);
   document.getElementById('f_supervisor').addEventListener('change', updateSupervisorInfo);
+  function recalcDurations(){
+    document.getElementById('f_daysCount').value = document.getElementById('f_date').value ? daysCount(document.getElementById('f_date').value, document.getElementById('f_dateTo').value) : '';
+    document.getElementById('f_hoursCount').value = hoursDuration(document.getElementById('f_timeFrom').value, document.getElementById('f_timeTo').value, document.getElementById('f_date').value, document.getElementById('f_dateTo').value);
+  }
+  ['f_date','f_dateTo','f_timeFrom','f_timeTo'].forEach(id=>document.getElementById(id).addEventListener('input', recalcDurations));
+  recalcDurations();
   ['f_date','f_dateTo','f_timeTo'].forEach(id=>document.getElementById(id).addEventListener('change', refreshTrainerChips));
   document.getElementById('f_timeFrom').addEventListener('change', (e)=>{
     const v = e.target.value;
@@ -959,22 +973,80 @@ function renderOrderForm(sub){
   });
 
   const reqBox = document.getElementById('adminReqList');
+  const selectedReqIds = new Set(editing && editing.adminRequests ? editing.adminRequests : []);
   function renderReqChips(){
-    reqBox.innerHTML = state.adminRequestsList.map(r=>{
-      const checked = editing && editing.adminRequests && editing.adminRequests.includes(r.id) ? 'checked':'';
-      return `<label class="checkbox-chip"><input type="checkbox" value="${r.id}" ${checked}> ${escapeHtml(r.name)}</label>`;
-    }).join('') || '<span class="helper">لا توجد طلبات إدارية بعد</span>';
-    reqBox.querySelectorAll('input[type=checkbox]').forEach(cb=>{
-      cb.addEventListener('change', ()=>{
-        if(!cb.checked) return;
-        const date = currentDate(); if(!date) return;
-        const conflictOrder = state.orders.find(o=> (!editing || o.id!==editing.id) && o.date===date && (o.adminRequests||[]).includes(cb.value));
-        if(conflictOrder){
-          const ok = confirm(`تنبيه: هذا الطلب الإداري "${state.adminRequestsList.find(r=>r.id===cb.value)?.name||''}" مطلوب مسبقًا لبرنامج آخر (${conflictOrder.title}) في نفس التاريخ. قد يكون هناك تداخل. هل تريد المواصلة؟`);
-          if(!ok){ cb.checked=false; }
+    const categories = ['إداري','إعلامي','ضيافة'];
+    function selectedTagsHtml(){
+      const tags = Array.from(selectedReqIds).map(id=>{
+        const r = state.adminRequestsList.find(x=>x.id===id);
+        return r ? `<span class="checkbox-chip" style="display:inline-flex;align-items:center;gap:6px;">${escapeHtml(r.name)} <a href="#" data-remove-id="${id}" style="color:var(--maroon-800);font-weight:900;text-decoration:none;">✕</a></span>` : '';
+      }).join(' ');
+      return tags || '<span class="helper">لم يتم اختيار أي بند بعد</span>';
+    }
+    reqBox.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;margin-bottom:10px;">
+        <thead><tr>${categories.map(cat=>`<th style="background:var(--maroon-800);color:#fff;padding:6px 10px;border:1px solid var(--maroon-800);">${cat}</th>`).join('')}</tr></thead>
+        <tbody><tr>
+          ${categories.map(cat=>{
+            const items = state.adminRequestsList.filter(r=>(r.category||'إداري')===cat);
+            return `<td style="border:1px solid var(--line);padding:8px;vertical-align:top;">
+              <select class="req-cat-select" data-cat="${cat}" style="margin-bottom:6px;">
+                <option value="">-- اختر من ${cat} --</option>
+                ${items.map(r=>`<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('')}
+              </select>
+              <label class="checkbox-chip req-cat-check" data-cat="${cat}" style="display:none;"><input type="checkbox"> إضافة للطلب</label>
+            </td>`;
+          }).join('')}
+        </tr></tbody>
+      </table>
+      <div class="helper" style="margin-bottom:4px;">البنود المختارة:</div>
+      <div id="reqSelectedTags" style="display:flex;flex-wrap:wrap;gap:8px;">${selectedTagsHtml()}</div>
+      <div id="reqHiddenChecks" style="display:none;">${state.adminRequestsList.map(r=>`<input type="checkbox" value="${r.id}" ${selectedReqIds.has(r.id)?'checked':''}>`).join('')}</div>
+    `;
+    function syncHiddenChecks(){
+      reqBox.querySelectorAll('#reqHiddenChecks input[type=checkbox]').forEach(cb=>{ cb.checked = selectedReqIds.has(cb.value); });
+      document.getElementById('reqSelectedTags').innerHTML = selectedTagsHtml();
+      document.getElementById('reqSelectedTags').querySelectorAll('a[data-remove-id]').forEach(a=>{
+        a.addEventListener('click', (e)=>{ e.preventDefault(); selectedReqIds.delete(a.dataset.removeId); syncHiddenChecks(); refreshCategoryCheckState(); });
+      });
+    }
+    function refreshCategoryCheckState(){
+      reqBox.querySelectorAll('.req-cat-select').forEach(sel=>{
+        const wrap = reqBox.querySelector(`.req-cat-check[data-cat="${sel.dataset.cat}"]`);
+        const cb = wrap.querySelector('input');
+        if(sel.value){
+          wrap.style.display = 'inline-flex';
+          cb.checked = selectedReqIds.has(sel.value);
+        } else {
+          wrap.style.display = 'none';
         }
       });
+    }
+    reqBox.querySelectorAll('.req-cat-select').forEach(sel=>{
+      sel.addEventListener('change', refreshCategoryCheckState);
     });
+    reqBox.querySelectorAll('.req-cat-check input[type=checkbox]').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        const wrap = cb.closest('.req-cat-check');
+        const sel = reqBox.querySelector(`.req-cat-select[data-cat="${wrap.dataset.cat}"]`);
+        const id = sel.value; if(!id) return;
+        if(cb.checked){
+          const date = currentDate();
+          if(date){
+            const conflictOrder = state.orders.find(o=> (!editing || o.id!==editing.id) && o.date===date && (o.adminRequests||[]).includes(id));
+            if(conflictOrder){
+              const ok = confirm(`تنبيه: هذا الطلب الإداري "${state.adminRequestsList.find(r=>r.id===id)?.name||''}" مطلوب مسبقًا لبرنامج آخر (${conflictOrder.title}) في نفس التاريخ. قد يكون هناك تداخل. هل تريد المواصلة؟`);
+              if(!ok){ cb.checked=false; return; }
+            }
+          }
+          selectedReqIds.add(id);
+        } else {
+          selectedReqIds.delete(id);
+        }
+        syncHiddenChecks();
+      });
+    });
+    syncHiddenChecks();
   }
   renderReqChips();
 
@@ -998,7 +1070,7 @@ function renderOrderForm(sub){
         if(!ok) return;
       }
     }
-    const checkedReqs = Array.from(reqBox.querySelectorAll('input:checked')).map(i=>i.value);
+    const checkedReqs = Array.from(reqBox.querySelectorAll('#reqHiddenChecks input:checked')).map(i=>i.value);
     const orderData = {
       title, fieldId: document.getElementById('f_field').value, participantsCount: document.getElementById('f_count').value,
       date, dateTo: dateTo||'', timeFrom, timeTo, programTypeId: document.getElementById('f_ptype').value,
@@ -1219,8 +1291,11 @@ function quickAddTrainer(){
   });
 }
 function quickAddAdminRequest(){
-  openModal('إضافة طلب إداري جديد', [{name:'name', label:'اسم الطلب', required:true}], async v=>{
-    state.adminRequestsList.push({id:uid(), name:v.name}); await saveState(); render();
+  openModal('إضافة طلب إداري جديد', [
+    {name:'name', label:'اسم الطلب', required:true},
+    {name:'category', label:'التصنيف', type:'select', options:[{value:'إداري',label:'إداري'},{value:'إعلامي',label:'إعلامي'},{value:'ضيافة',label:'ضيافة'}]},
+  ], async v=>{
+    state.adminRequestsList.push({id:uid(), name:v.name, category:v.category||'إداري'}); await saveState(); render();
   });
 }
 
@@ -1322,6 +1397,24 @@ function trainerMiniTable(o){
       <span style="font-size:9pt;color:#555;">${t.phone?phoneLink(t.phone):'-'}</span>
     </div>`).join('');
 }
+/* عدد الأيام بين تاريخين (شامل يوم البداية والنهاية) */
+function daysCount(dateFrom, dateTo){
+  if(!dateFrom) return 0;
+  if(!dateTo || dateTo===dateFrom) return 1;
+  const d1 = new Date(dateFrom+'T00:00:00'), d2 = new Date(dateTo+'T00:00:00');
+  const diff = Math.round((d2-d1)/86400000)+1;
+  return diff>0 ? diff : 1;
+}
+/* المدة بالساعات بين وقتين (يدعم دورانها بعد منتصف الليل) */
+function hoursDuration(timeFrom, timeTo, dateFrom, dateTo){
+  if(!timeFrom || !timeTo) return 0;
+  const [h1,m1] = timeFrom.split(':').map(Number), [h2,m2] = timeTo.split(':').map(Number);
+  let mins = (h2*60+m2) - (h1*60+m1);
+  if(mins<0) mins += 24*60;
+  const perDayHours = mins/60;
+  const days = dateFrom ? daysCount(dateFrom, dateTo) : 1;
+  return Math.round(perDayHours*days*100)/100;
+}
 function fullTimeRange(from, to){
   if(!from && !to) return '';
   if(from && to) return `من الساعة ${from} إلى الساعة ${to}`;
@@ -1360,12 +1453,29 @@ function qrTextForOrder(o){
 function dashedPeopleBox(people){
   const list = people.filter(Boolean);
   if(!list.length) return '—';
-  return `<div style="display:flex;border:1.5px solid ${PRINT_LINE_COLOR};border-radius:8px;overflow:hidden;flex-wrap:wrap;">
-    ${list.map((p,i)=>`<div style="flex:1 1 0; min-width:110px; padding:1.5mm 3mm; text-align:center; ${i>0?`border-right:1.5px dashed ${PRINT_LINE_COLOR};`:''}">
-      <div style="font-size:9.5pt; color:#161616; font-weight:900; line-height:1.3;">${escapeHtml(p.name||'—')}</div>
-      <div style="font-size:8pt; color:#666; line-height:1.3;">${p.phone?phoneLink(p.phone):'-'}</div>
+  return `<div style="display:flex;border:1.5px solid ${PRINT_LINE_COLOR};border-radius:6px;overflow:hidden;flex-wrap:wrap;">
+    ${list.map((p,i)=>`<div style="flex:1 1 0; min-width:110px; padding:0.8mm 3mm; text-align:center; ${i>0?`border-right:1.5px dashed ${PRINT_LINE_COLOR};`:''}">
+      <div style="font-size:9.5pt; color:#161616; font-weight:900; line-height:1.25;">${escapeHtml(p.name||'—')}</div>
+      <div style="font-size:16pt; color:#666; line-height:1.25;">${p.phone?phoneLink(p.phone):'-'}</div>
     </div>`).join('')}
   </div>`;
+}
+/* يعرض الطلبات الإدارية المختارة لفعالية كجدول بثلاثة أعمدة: إداري، إعلامي، ضيافة */
+function adminRequestsTable(order){
+  const selectedIds = order.adminRequests||[];
+  const categories = ['إداري','إعلامي','ضيافة'];
+  const byCat = categories.map(cat=>({
+    cat,
+    items: state.adminRequestsList.filter(r=>(r.category||'إداري')===cat && selectedIds.includes(r.id))
+  }));
+  if(byCat.every(c=>c.items.length===0)) return '—';
+  const maxRows = Math.max(...byCat.map(c=>c.items.length));
+  let rowsHtml = '';
+  for(let i=0;i<maxRows;i++){
+    rowsHtml += `<tr>${byCat.map(c=>`<td style="border:1px solid ${PRINT_LINE_COLOR};padding:4px 10px;text-align:center;">${c.items[i]?escapeHtml(c.items[i].name):''}</td>`).join('')}</tr>`;
+  }
+  const fontFamily = "'Sakkal Majalla','Tajawal',sans-serif";
+  return `<table style="width:100%;border-collapse:collapse;font-family:${fontFamily};"><thead><tr>${categories.map(cat=>`<th style="border:1px solid ${PRINT_LINE_COLOR};background:${PRINT_LINE_COLOR};color:#fff;padding:5px 10px;font-size:10pt;font-weight:900;text-align:center;font-family:${fontFamily};">${cat}</th>`).join('')}</tr></thead><tbody>${rowsHtml}</tbody></table>`;
 }
 async function buildOrderPrintDoc(o, opts, copyLabel){
   opts = opts||{};
@@ -1382,18 +1492,18 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
     ['عدد المستهدفين', escapeHtml(o.participantsCount||'')],
     ['تاريخ المبادرة', o.dateTo && o.dateTo!==o.date ? escapeHtml(fullDateStr(o.date)+' — إلى — '+fullDateStr(o.dateTo)) : escapeHtml(fullDateStr(o.date))],
     ['وقت المبادرة', escapeHtml(fullTimeRange(o.timeFrom, o.timeTo))],
-    ['مكان المبادرة', escapeHtml(school?school.name:'')],
+    ['عدد الأيام والمدة', `عدد الأيام: (${daysCount(o.date, o.dateTo)})&nbsp;&nbsp;&nbsp;المدة بالساعات: (${hoursDuration(o.timeFrom, o.timeTo, o.date, o.dateTo)})`],
+    ['مكان المبادرة والمشرف', `<span>${escapeHtml(school?school.name:'')}</span>&nbsp;&nbsp;<span>${supervisor?escapeHtml(supervisor.name)+(supervisor.phone?' ('+phoneLink(supervisor.phone)+')':''):''}</span>`],
   ];
   const trainerIds = (o.trainerIds||[]);
   const trainerPeople = trainerIds.map(id=>state.trainers.find(t=>t.id===id)).filter(Boolean).map(t=>({name:t.name, phone:t.phone}));
   let rows = [
-    ['المشرف', dashedPeopleBox([supervisor?{name:supervisor.name, phone:supervisor.phone}:null])],
     ['مقدم المبادرة', dashedPeopleBox(trainerPeople)],
   ];
   if(opts.showRequesterNote!==false) rows.push(['ملاحظة الجهة الطالبة', escapeHtml(o.requesterNote||'')]);
   if(opts.showAdminNote!==false){
     rows.push(['ملاحظة الإدارة', escapeHtml(o.adminNote||'')]);
-    rows.push(['الطلبات الإدارية', escapeHtml(reqs.join('، ')||'—')]);
+    rows.push(['الطلبات الإدارية', adminRequestsTable(o)]);
   }
   let html = printDocOpen(PRINT_THEME);
   html += printDocHeaderBlock();
@@ -1509,7 +1619,7 @@ function renderAdminPage(c){
   function computeKpis(list){
     const trainerSet = new Set(); list.forEach(o=>(o.trainerIds||[]).forEach(id=>trainerSet.add(id)));
     const schoolSet = new Set(list.map(o=>o.schoolId).filter(Boolean));
-    let totalHours=0; list.forEach(o=>{ if(o.timeFrom&&o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); if(s&&e) totalHours+=Math.max(0,(e-s)/3600000); } });
+    let totalHours=0; list.forEach(o=>{ if(o.timeFrom&&o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); if(s&&e) totalHours+=Math.max(0,(e-s)/3600000)*daysCount(o.date,o.dateTo); } });
     let totalReqs=0; const reqCounts={};
     list.forEach(o=>(o.adminRequests||[]).forEach(id=>{ totalReqs++; reqCounts[id]=(reqCounts[id]||0)+1; }));
     return {events:list.length, trainers:trainerSet.size, hours:totalHours, schools:schoolSet.size, reqs:totalReqs, reqCounts};
@@ -1576,17 +1686,35 @@ function renderAdminRequestsReportPage(c){
   <div class="card">
     <h2>تقرير الطلبات الإدارية</h2>
     <div class="grid">
-      <div class="field"><label>من تاريخ</label><input id="arq_from" type="date" lang="en"></div>
-      <div class="field"><label>إلى تاريخ</label><input id="arq_to" type="date" lang="en"></div>
+      <div class="field"><label>البحث خلال</label><select id="arq_range"><option value="">فترة مخصصة (من/إلى)</option><option value="week">أسبوع بدءًا من</option><option value="month">شهر بدءًا من</option></select></div>
+      <div class="field"><label>من تاريخ / تاريخ البداية</label><input id="arq_from" type="date" lang="en"></div>
+      <div class="field" id="arq_toWrap"><label>إلى تاريخ</label><input id="arq_to" type="date" lang="en"></div>
     </div>
     <button class="btn btn-primary" id="arq_go">عرض</button>
-    <button class="icon-btn rect" id="arq_print" title="طباعة">🖨️</button>
-    <button class="icon-btn rect" id="arq_excel" title="تنزيل Excel">📊</button>
-    <button class="icon-btn rect" id="arq_pdf" title="تنزيل PDF">📄</button>
+    <button class="icon-btn rect" id="arq_print" title="طباعة الكل">🖨️ الكل</button>
+    <button class="icon-btn rect" id="arq_excel" title="تنزيل Excel للكل">📊 الكل</button>
+    <button class="icon-btn rect" id="arq_pdf" title="تنزيل PDF للكل">📄 الكل</button>
+    <span style="margin-inline-start:10px;"></span>
+    <button class="icon-btn rect" id="arq_printSel" title="طباعة المحدد فقط">🖨️ المحدد</button>
+    <button class="icon-btn rect" id="arq_excelSel" title="تنزيل Excel للمحدد فقط">📊 المحدد</button>
+    <button class="icon-btn rect" id="arq_pdfSel" title="تنزيل PDF للمحدد فقط">📄 المحدد</button>
   </div>
   <div class="card" id="arq_result"></div>`;
+
+  document.getElementById('arq_range').addEventListener('change', (e)=>{
+    document.getElementById('arq_toWrap').style.display = e.target.value ? 'none' : '';
+  });
+
   function getList(){
-    const from=document.getElementById('arq_from').value, to=document.getElementById('arq_to').value;
+    const range = document.getElementById('arq_range').value;
+    const fromInput = document.getElementById('arq_from').value;
+    let from = fromInput, to = document.getElementById('arq_to').value;
+    if(range && fromInput){
+      const d = new Date(fromInput+'T00:00:00');
+      if(range==='week') d.setDate(d.getDate()+6);
+      else if(range==='month') d.setMonth(d.getMonth()+1), d.setDate(d.getDate()-1);
+      to = d.toISOString().slice(0,10);
+    }
     const list = state.orders.filter(o=> (o.adminRequests||[]).length>0 && (!from||o.date>=from) && (!to||o.date<=to))
       .sort((a,b)=> (a.date||'').localeCompare(b.date||'') || a.serial-b.serial);
     return {list, from, to};
@@ -1594,8 +1722,9 @@ function renderAdminRequestsReportPage(c){
   function rowsOf(list){
     return list.map(o=>{
       const school = state.schools.find(s=>s.id===o.schoolId);
+      const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
       const reqs = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean).join('، ');
-      return {o, school, reqs};
+      return {o, school, supervisor, reqs};
     });
   }
   function draw(){
@@ -1603,30 +1732,58 @@ function renderAdminRequestsReportPage(c){
     const rows = rowsOf(list);
     const box = document.getElementById('arq_result');
     box.innerHTML = `<h2>النتائج (${list.length})</h2>
-      <table><thead><tr><th>أمر التكليف</th><th>عنوان الفعالية</th><th>من الساعة</th><th>إلى الساعة</th><th>المكان</th><th>مقدم البرنامج</th><th>الطلبات الإدارية للبرنامج</th></tr></thead><tbody>
-        ${rows.map(r=>`<tr><td>${r.o.serial}</td><td>${escapeHtml(r.o.title)}</td><td>${r.o.timeFrom||''}</td><td>${r.o.timeTo||''}</td><td>${r.school?escapeHtml(r.school.name):''}</td><td>${trainerMiniTable(r.o)}</td><td>${escapeHtml(r.reqs)}</td></tr>`).join('') || '<tr><td colspan="7" class="empty-state">لا توجد طلبات إدارية ضمن هذه الفترة</td></tr>'}
+      <table><thead><tr><th></th><th>أمر التكليف</th><th>عنوان الفعالية</th><th>من تاريخ</th><th>إلى تاريخ</th><th>عدد الأيام</th><th>من الساعة</th><th>إلى الساعة</th><th>عدد الساعات</th><th>المكان</th><th>مقدم البرنامج</th><th>الطلبات الإدارية للبرنامج</th></tr></thead><tbody>
+        ${rows.map(r=>`<tr><td><input type="checkbox" class="arq-check" data-id="${r.o.id}"></td><td>${r.o.serial}</td><td>${escapeHtml(r.o.title)}</td><td>${r.o.date||''}</td><td>${r.o.dateTo||r.o.date||''}</td><td>${daysCount(r.o.date,r.o.dateTo)}</td><td>${r.o.timeFrom||''}</td><td>${r.o.timeTo||''}</td><td>${hoursDuration(r.o.timeFrom,r.o.timeTo,r.o.date,r.o.dateTo)}</td><td>${r.school?escapeHtml(r.school.name):''}</td><td>${trainerMiniTable(r.o)}</td><td>${escapeHtml(r.reqs)}</td></tr>`).join('') || '<tr><td colspan="12" class="empty-state">لا توجد طلبات إدارية ضمن هذه الفترة</td></tr>'}
       </tbody></table>`;
     enhanceReportTable(box);
   }
   document.getElementById('arq_go').onclick=draw;
+
+  function selectedRows(){
+    const ids = Array.from(document.querySelectorAll('.arq-check:checked')).map(cb=>cb.dataset.id);
+    const {list} = getList();
+    return rowsOf(list.filter(o=>ids.includes(o.id)));
+  }
+  function excelRowsOf(rows){
+    return rows.map(r=>[r.o.serial, r.o.title, r.o.date||'', r.o.dateTo||r.o.date||'', daysCount(r.o.date,r.o.dateTo), hoursDuration(r.o.timeFrom,r.o.timeTo,r.o.date,r.o.dateTo), r.school?r.school.name:'', r.supervisor?r.supervisor.phone||'':'', trainerPhones(r.o), r.reqs]);
+  }
+  const excelHeaders = ['أمر التكليف','عنوان الفعالية','من تاريخ','إلى تاريخ','عدد الأيام','عدد الساعات','مكان الفعالية','هاتف المشرف','هاتف مقدم المبادرة','الطلبات الإدارية'];
+
   document.getElementById('arq_excel').onclick=()=>{
     const {list, from, to} = getList();
-    const rows = rowsOf(list).map(r=>[r.o.serial, r.o.title, r.o.timeFrom||'', r.o.timeTo||'', r.school?r.school.name:'', trainerNames(r.o), r.reqs]);
-    exportToExcel('الطلبات_الإدارية.xlsx', ['أمر التكليف','عنوان الفعالية','من الساعة','إلى الساعة','المكان','مقدم البرنامج','الطلبات الإدارية للبرنامج'], rows, `تقرير الطلبات الإدارية (من ${from||'—'} إلى ${to||'—'})`);
+    exportToExcel('الطلبات_الإدارية.xlsx', excelHeaders, excelRowsOf(rowsOf(list)), `تقرير الطلبات الإدارية (من ${from||'—'} إلى ${to||'—'})`);
   };
+  document.getElementById('arq_excelSel').onclick=()=>{
+    const rows = selectedRows();
+    if(!rows.length){ toast('يرجى تحديد فعالية واحدة على الأقل'); return; }
+    exportToExcel('الطلبات_الإدارية_محدد.xlsx', excelHeaders, excelRowsOf(rows), 'الطلبات الإدارية — فعاليات محددة');
+  };
+
+  function buildPrintRows(rows){
+    return rows.map(r=>[r.o.serial, escapeHtml(r.o.title), r.o.date||'', r.o.dateTo||r.o.date||'', daysCount(r.o.date,r.o.dateTo), hoursDuration(r.o.timeFrom,r.o.timeTo,r.o.date,r.o.dateTo), r.school?escapeHtml(r.school.name):'', r.supervisor&&r.supervisor.phone?phoneLink(r.supervisor.phone):'', escapeHtml(trainerPhones(r.o)), escapeHtml(r.reqs)]);
+  }
   async function printIt(){
     const {list, from, to} = getList();
-    const rows = rowsOf(list).map(r=>[r.o.serial, escapeHtml(r.o.title), r.o.timeFrom||'', r.o.timeTo||'', r.school?escapeHtml(r.school.name):'', trainerMiniTable(r.o), escapeHtml(r.reqs)]);
     doPrintDoc(buildReportDoc({
       titleAr:'تقرير الطلبات الإدارية', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
       kpis:[{v:list.length,l:'عدد الفعاليات'}],
-      headers:['أمر التكليف','عنوان الفعالية','من الساعة','إلى الساعة','المكان','مقدم البرنامج','الطلبات الإدارية للبرنامج'],
-      rows
+      headers:excelHeaders,
+      rows: buildPrintRows(rowsOf(list))
+    }), true, 'A4');
+  }
+  async function printSelected(){
+    const rows = selectedRows();
+    if(!rows.length){ toast('يرجى تحديد فعالية واحدة على الأقل'); return; }
+    doPrintDoc(buildReportDoc({
+      titleAr:'الطلبات الإدارية — فعاليات محددة', subtitle:`عدد الفعاليات المحددة: ${rows.length}`,
+      headers:excelHeaders,
+      rows: buildPrintRows(rows)
     }), true, 'A4');
   }
   document.getElementById('arq_print').onclick=printIt;
-  /* "تنزيل PDF": يفتح نفس نافذة الطباعة، ومن حوار الطباعة يختار المستخدم "حفظ كـ PDF" كوجهة — بدون الحاجة لأي مكتبة خارجية إضافية */
   document.getElementById('arq_pdf').onclick=printIt;
+  document.getElementById('arq_printSel').onclick=printSelected;
+  document.getElementById('arq_pdfSel').onclick=printSelected;
   draw();
 }
 
@@ -2060,7 +2217,7 @@ function renderReportsPage(c){
       const from=document.getElementById('hr_from').value, to=document.getElementById('hr_to').value;
       const list = state.orders.filter(o=>(o.trainerIds||[]).includes(tId) && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
       let totalHours=0;
-      const rows = list.map(o=>{ let hrs=0; if(o.timeFrom && o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); hrs = Math.max(0,(e-s)/3600000); } totalHours+=hrs; return {o,hrs}; });
+      const rows = list.map(o=>{ let hrs=0; if(o.timeFrom && o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); hrs = Math.max(0,(e-s)/3600000)*daysCount(o.date,o.dateTo); } totalHours+=hrs; return {o,hrs}; });
       const trainer=state.trainers.find(t=>t.id===tId);
       const table = `<table class="print-table"><thead><tr><th>م</th><th>عنوان الفعالية</th><th>التاريخ</th><th>الوقت</th><th>عدد الساعات</th></tr></thead><tbody>
         ${rows.map(r=>`<tr><td>${r.o.serial}</td><td>${escapeHtml(r.o.title)}</td><td>${r.o.date||''}</td><td>${r.o.timeFrom||''}-${r.o.timeTo||''}</td><td>${r.hrs.toFixed(1)}</td></tr>`).join('') || '<tr><td colspan="5" class="empty-state">لا توجد بيانات</td></tr>'}
@@ -2074,7 +2231,7 @@ function renderReportsPage(c){
       const list = state.orders.filter(o=>(o.trainerIds||[]).includes(tId) && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
       const trainer=state.trainers.find(t=>t.id===tId);
       let totalHours=0;
-      const rows = list.map(o=>{ let hrs=0; if(o.timeFrom && o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); hrs=Math.max(0,(e-s)/3600000); } totalHours+=hrs; return [o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), hrs.toFixed(1)]; });
+      const rows = list.map(o=>{ let hrs=0; if(o.timeFrom && o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); hrs=Math.max(0,(e-s)/3600000)*daysCount(o.date,o.dateTo); } totalHours+=hrs; return [o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), hrs.toFixed(1)]; });
       rows.push(['', '', '', 'الإجمالي', totalHours.toFixed(1)]);
       exportToExcel('تقرير_ساعات.xlsx', ['م','عنوان الفعالية','التاريخ','الوقت','عدد الساعات'], rows, `تقرير ساعات مقدم الفعالية: ${trainer?trainer.name:''} (من ${from||'—'} إلى ${to||'—'})`);
     };
@@ -2084,7 +2241,7 @@ function renderReportsPage(c){
       const list = state.orders.filter(o=>(o.trainerIds||[]).includes(tId) && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
       const trainer=state.trainers.find(t=>t.id===tId);
       let totalHours=0;
-      const rows = list.map(o=>{ let hrs=0; if(o.timeFrom && o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); hrs = Math.max(0,(e-s)/3600000); } totalHours+=hrs;
+      const rows = list.map(o=>{ let hrs=0; if(o.timeFrom && o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); hrs = Math.max(0,(e-s)/3600000)*daysCount(o.date,o.dateTo); } totalHours+=hrs;
         return [o.serial, escapeHtml(o.title), o.date||'', (o.timeFrom||'')+'-'+(o.timeTo||''), hrs.toFixed(1)]; });
       doPrintDoc(buildReportDoc({ titleAr:`تقرير ساعات مقدم الفعالية: ${trainer?trainer.name:''}`, subtitle:`من ${from||'—'} إلى ${to||'—'}`,
         kpis:[{v:list.length,l:'عدد الفعاليات'},{v:totalHours.toFixed(1),l:'إجمالي الساعات'}],
@@ -2152,7 +2309,7 @@ function renderStatsPage(c){
       const schoolsSet = new Set(rel.map(o=>o.schoolId).filter(Boolean));
       const trainersSet = new Set(); rel.forEach(o=>(o.trainerIds||[]).forEach(id=>trainersSet.add(id)));
       const daysSet = new Set(rel.map(o=>o.date).filter(Boolean));
-      let hours=0; rel.forEach(o=>{ if(o.timeFrom&&o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); if(s&&e) hours+=Math.max(0,(e-s)/3600000); } });
+      let hours=0; rel.forEach(o=>{ if(o.timeFrom&&o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); if(s&&e) hours+=Math.max(0,(e-s)/3600000)*daysCount(o.date,o.dateTo); } });
       return {name:f.name, programs:rel.length, participants: rel.reduce((s,o)=>s+(Number(o.participantsCount)||0),0), schools:schoolsSet.size, hours, trainers:trainersSet.size, days:daysSet.size};
     });
     const byType = state.programTypes.map(p=>{
@@ -2160,7 +2317,7 @@ function renderStatsPage(c){
       const schoolsSet = new Set(rel.map(o=>o.schoolId).filter(Boolean));
       const trainersSet = new Set(); rel.forEach(o=>(o.trainerIds||[]).forEach(id=>trainersSet.add(id)));
       const daysSet = new Set(rel.map(o=>o.date).filter(Boolean));
-      let hours=0; rel.forEach(o=>{ if(o.timeFrom&&o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); if(s&&e) hours+=Math.max(0,(e-s)/3600000); } });
+      let hours=0; rel.forEach(o=>{ if(o.timeFrom&&o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); if(s&&e) hours+=Math.max(0,(e-s)/3600000)*daysCount(o.date,o.dateTo); } });
       return {name:p.name, programs:rel.length, participants: rel.reduce((s,o)=>s+(Number(o.participantsCount)||0),0), schools:schoolsSet.size, hours, trainers:trainersSet.size, days:daysSet.size};
     });
     const levels=['ابتدائي','إعدادي','ثانوي','مركز خاص','غير ذلك'];
@@ -2412,7 +2569,7 @@ function renderDistributionsTabContent(c){
     const {start,end} = periodBounds(period, dateStr);
     const sheets = state.trainers.map(t=>{
       const list = state.orders.filter(o=>(o.trainerIds||[]).includes(t.id) && o.date>=start && o.date<=end).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-      return {name:t.name, headers:['العنوان','التاريخ','الوقت','المدرسة','الإنجاز'], rows:list.map(o=>{ const s=state.schools.find(x=>x.id===o.schoolId); return [o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), s?s.name:'', o.completionStatus||'لم تنجز']; })};
+      return {name:t.name, headers:['العنوان','من تاريخ','إلى تاريخ','عدد الأيام','الوقت','عدد الساعات','المدرسة','الإنجاز'], rows:list.map(o=>{ const s=state.schools.find(x=>x.id===o.schoolId); return [o.title, o.date||'', o.dateTo||o.date||'', daysCount(o.date,o.dateTo), fullTimeRange(o.timeFrom,o.timeTo), hoursDuration(o.timeFrom,o.timeTo,o.date,o.dateTo), s?s.name:'', o.completionStatus||'لم تنجز']; })};
     });
     exportToExcelMultiSheet('التوزيعات.xlsx', sheets, `التوزيعات (${start} إلى ${end})`);
   };
@@ -2426,9 +2583,10 @@ function renderDistributionsTabContent(c){
         <h2 style="font-size:16px;">${escapeHtml(t.name)} <span class="badge">${list.length}</span></h2>
         ${list.length? list.map(o=>{
           const school=state.schools.find(s=>s.id===o.schoolId);
+          const dateRange = o.dateTo && o.dateTo!==o.date ? `${o.date||''} — إلى — ${o.dateTo}` : (o.date||'');
           return `<div style="border-bottom:1px dashed var(--line); padding:8px 0; font-size:13px; line-height:1.8;">
             <strong>${escapeHtml(o.title)}</strong><br>
-            📅 ${o.date||''} — ⏰ ${o.timeFrom||''}-${o.timeTo||''}<br>
+            📅 ${dateRange} (${daysCount(o.date,o.dateTo)} يوم) — ⏰ ${o.timeFrom||''}-${o.timeTo||''} (${hoursDuration(o.timeFrom,o.timeTo,o.date,o.dateTo)} ساعة)<br>
             🏫 ${school?escapeHtml(school.name):''} — الإنجاز: ${o.completionStatus||'لم تنجز'}
           </div>`;
         }).join('') : `<div class="empty-state" style="padding:16px;">لا توجد فعاليات ضمن هذه الفترة</div>`}
@@ -2555,7 +2713,7 @@ function renderTrainerPortalPage(c){
   } else if(trainerPortalTab==='reports'){
     let totalHours=0;
     const rows = myOrders.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')).map(o=>{
-      let hrs=0; if(o.timeFrom && o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); hrs=Math.max(0,(e-s)/3600000); } totalHours+=hrs;
+      let hrs=0; if(o.timeFrom && o.timeTo){ const s=parseDT(o.date,o.timeFrom), e=parseDT(o.date,o.timeTo); hrs=Math.max(0,(e-s)/3600000)*daysCount(o.date,o.dateTo); } totalHours+=hrs;
       return {o,hrs};
     });
     const evaluatedCount = myOrders.filter(o=>o.date<today && o.completionStatus).length;
@@ -2612,7 +2770,13 @@ function renderTrainerPortalPage(c){
       </div>
       <div class="field" style="margin-bottom:14px;">
         <label>الطلبات الإدارية للبرنامج</label>
-        <div class="checkbox-list">${state.adminRequestsList.map(r=>`<label class="checkbox-chip"><input type="checkbox" value="${r.id}"> ${escapeHtml(r.name)}</label>`).join('') || '<span class="helper">لا توجد طلبات إدارية معرّفة</span>'}</div>
+        <div class="checkbox-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;">
+          ${['إداري','إعلامي','ضيافة'].map(cat=>{
+            const items = state.adminRequestsList.filter(r=>(r.category||'إداري')===cat);
+            return `<div><div style="font-weight:800;color:var(--maroon-800);background:var(--maroon-50);padding:6px 10px;border-radius:6px;margin-bottom:6px;text-align:center;">${cat}</div>
+              ${items.map(r=>`<label class="checkbox-chip" style="display:block;margin-bottom:4px;"><input type="checkbox" value="${r.id}"> ${escapeHtml(r.name)}</label>`).join('') || '<span class="helper">لا توجد بنود</span>'}</div>`;
+          }).join('') || '<span class="helper">لا توجد طلبات إدارية معرّفة</span>'}
+        </div>
       </div>
       <div class="field" style="margin-bottom:14px;"><label>ملاحظات</label><textarea id="tr_note"></textarea></div>
       <button class="btn btn-primary" id="tr_submit">إرسال الطلب</button>
