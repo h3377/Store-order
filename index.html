@@ -341,22 +341,30 @@ function wireStars(container){
 
 /* ============ Scheduling conflict helpers ============ */
 function parseDT(dateStr, timeStr){ if(!dateStr) return null; return new Date(dateStr+'T'+(timeStr||'00:00')+':00'); }
-function trainerConflictSingle(trainerId, date, timeFrom, timeTo, excludeOrderId){
+function dateRangesOverlap(aFrom, aTo, bFrom, bTo){
+  return aFrom <= (bTo||aFrom) && (aTo||aFrom) >= bFrom;
+}
+function trainerConflictSingle(trainerId, date, timeFrom, timeTo, excludeOrderId, dateTo){
   if(!trainerId || !date) return null;
-  const newStart = parseDT(date, timeFrom||'00:00'), newEnd = parseDT(date, timeTo||timeFrom||'23:59');
+  const dTo = dateTo || date;
   const bufferMs = 90*60*1000;
+  // نقارن وقت اليوم فقط (بغض النظر عن التاريخ الفعلي) باستخدام يوم مرجعي ثابت،
+  // لأن الفعالية متعددة الأيام تتكرر بنفس الفترة الزمنية كل يوم ضمن مدتها
+  const refDay = '2000-01-01';
+  const newStart = parseDT(refDay, timeFrom||'00:00'), newEnd = parseDT(refDay, timeTo||timeFrom||'23:59');
   return state.orders.find(o=>{
     if(o.id===excludeOrderId) return false;
     if(!(o.trainerIds||[]).includes(trainerId)) return false;
-    if(o.date!==date) return false;
-    const exStart = parseDT(o.date, o.timeFrom||'00:00'), exEnd = parseDT(o.date, o.timeTo||o.timeFrom||'23:59');
+    const oTo = o.dateTo || o.date;
+    if(!dateRangesOverlap(date, dTo, o.date, oTo)) return false;
+    const exStart = parseDT(refDay, o.timeFrom||'00:00'), exEnd = parseDT(refDay, o.timeTo||o.timeFrom||'23:59');
     const winStart = new Date(exStart.getTime()-bufferMs), winEnd = new Date(exEnd.getTime()+bufferMs);
     return newStart < winEnd && newEnd > winStart;
   }) || null;
 }
-function anyTrainerConflict(trainerIds, date, timeFrom, timeTo, excludeOrderId){
+function anyTrainerConflict(trainerIds, date, timeFrom, timeTo, excludeOrderId, dateTo){
   for(const tId of (trainerIds||[])){
-    const c = trainerConflictSingle(tId, date, timeFrom, timeTo, excludeOrderId);
+    const c = trainerConflictSingle(tId, date, timeFrom, timeTo, excludeOrderId, dateTo);
     if(c) return {trainerId:tId, order:c};
   }
   return null;
@@ -386,12 +394,6 @@ function renderGate(root){
     <div class="field" style="text-align:right; margin-bottom:6px;"><label>كلمة المرور</label><input id="lg_pass" type="password" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="helper" id="lg_err" style="display:none;color:#9e2b2b;font-weight:700;margin-bottom:8px;">اسم المستخدم أو كلمة المرور غير صحيحة</div>
     <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:10px;" onclick="doLogin()">🔐 دخول</button>
-    <div class="helper" style="margin-top:16px; text-align:right; line-height:1.9;">
-      حسابات تجريبية:<br>
-      مدير نظام: admin / admin123<br>
-      مستخدم: user / user123<br>
-      مقدم فعالية: trainer1 / trainer123
-    </div>
   </div></div>`;
   document.getElementById('lg_user').focus();
 }
@@ -843,9 +845,12 @@ function renderOrderForm(sub){
     </div>
 
     <div class="grid" style="grid-template-columns:repeat(3,1fr);">
-      <div class="field"><label>تاريخ المبادرة</label><input id="f_date" type="date" lang="en" value="${editing?editing.date:''}"></div>
+      <div class="field"><label>تاريخ المبادرة (من)</label><input id="f_date" type="date" lang="en" value="${editing?editing.date:''}"></div>
       <div class="field"><label>وقت المبادرة من</label><input id="f_timeFrom" type="time" lang="en" value="${editing?editing.timeFrom:''}"></div>
       <div class="field"><label>وقت المبادرة إلى</label><input id="f_timeTo" type="time" lang="en" value="${editing?editing.timeTo:''}"></div>
+    </div>
+    <div class="grid" style="grid-template-columns:1fr;">
+      <div class="field"><label>تاريخ الانتهاء (اتركه فارغًا إن كانت الفعالية ليوم واحد فقط)</label><input id="f_dateTo" type="date" lang="en" value="${editing?editing.dateTo||'':''}"></div>
     </div>
 
     <div class="grid" style="grid-template-columns:1.6fr 1.4fr 0.8fr;">
@@ -901,16 +906,17 @@ function renderOrderForm(sub){
   </div>`;
 
   function currentDate(){ return document.getElementById('f_date').value; }
+  function currentDateTo(){ return document.getElementById('f_dateTo').value; }
   function currentTimeFrom(){ return document.getElementById('f_timeFrom').value; }
   function currentTimeTo(){ return document.getElementById('f_timeTo').value; }
 
   function refreshTrainerChips(){
-    const date = currentDate(), tf=currentTimeFrom(), tt=currentTimeTo();
+    const date = currentDate(), dateTo = currentDateTo(), tf=currentTimeFrom(), tt=currentTimeTo();
     const box = document.getElementById('trainerChipList');
     const previouslyChecked = Array.from(box.querySelectorAll('input:checked')).map(i=>i.value);
     const checkedSet = new Set(previouslyChecked.length ? previouslyChecked : selectedTrainerIds);
     box.innerHTML = state.trainers.map(t=>{
-      const conflict = date ? trainerConflictSingle(t.id, date, tf, tt, editing?editing.id:null) : null;
+      const conflict = date ? trainerConflictSingle(t.id, date, tf, tt, editing?editing.id:null, dateTo) : null;
       const busy = !!conflict && !checkedSet.has(t.id);
       const checked = checkedSet.has(t.id);
       return `<label class="presenter-chip">
@@ -934,7 +940,7 @@ function renderOrderForm(sub){
   }
   document.getElementById('f_school').addEventListener('change', refreshSupervisors);
   document.getElementById('f_supervisor').addEventListener('change', updateSupervisorInfo);
-  ['f_date','f_timeTo'].forEach(id=>document.getElementById(id).addEventListener('change', refreshTrainerChips));
+  ['f_date','f_dateTo','f_timeTo'].forEach(id=>document.getElementById(id).addEventListener('change', refreshTrainerChips));
   document.getElementById('f_timeFrom').addEventListener('change', (e)=>{
     const v = e.target.value;
     if(v){
@@ -977,13 +983,13 @@ function renderOrderForm(sub){
   document.getElementById('saveOrderBtn').onclick=async ()=>{
     const title=document.getElementById('f_title').value.trim();
     if(!title){ toast('يرجى إدخال عنوان المبادرة'); return; }
-    const date=document.getElementById('f_date').value, timeFrom=document.getElementById('f_timeFrom').value, timeTo=document.getElementById('f_timeTo').value;
+    const date=document.getElementById('f_date').value, dateTo=document.getElementById('f_dateTo').value, timeFrom=document.getElementById('f_timeFrom').value, timeTo=document.getElementById('f_timeTo').value;
     const schoolId=document.getElementById('f_school').value;
     const trainerIds = Array.from(document.getElementById('trainerChipList').querySelectorAll('input:checked')).map(i=>i.value);
 
     if(trainerIds.length && date){
-      const conflict = anyTrainerConflict(trainerIds, date, timeFrom, timeTo, editing?editing.id:null);
-      if(conflict){ toast('لا يمكن اختيار أحد مقدمي المبادرة: لديه فعالية أخرى في نفس اليوم ولم يمر ساعة ونصف على وقتها.'); return; }
+      const conflict = anyTrainerConflict(trainerIds, date, timeFrom, timeTo, editing?editing.id:null, dateTo);
+      if(conflict){ toast('لا يمكن اختيار أحد مقدمي المبادرة: لديه فعالية أخرى بنفس الفترة الزمنية ضمن مدة هذه الفعالية.'); return; }
     }
     if(schoolId && date){
       const schConf = schoolSameDay(schoolId, date, editing?editing.id:null);
@@ -995,7 +1001,7 @@ function renderOrderForm(sub){
     const checkedReqs = Array.from(reqBox.querySelectorAll('input:checked')).map(i=>i.value);
     const orderData = {
       title, fieldId: document.getElementById('f_field').value, participantsCount: document.getElementById('f_count').value,
-      date, timeFrom, timeTo, programTypeId: document.getElementById('f_ptype').value,
+      date, dateTo: dateTo||'', timeFrom, timeTo, programTypeId: document.getElementById('f_ptype').value,
       schoolId, supervisorId: document.getElementById('f_supervisor').value, trainerIds,
       requesterNote: document.getElementById('f_reqNote').value, adminNote: document.getElementById('f_adminNote').value,
       adminRequests: checkedReqs,
@@ -1374,7 +1380,7 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
     ['مجال المبادرة', escapeHtml(field?field.name:'')],
     ['مسار المبادرة', escapeHtml(ptype?ptype.name:'')],
     ['عدد المستهدفين', escapeHtml(o.participantsCount||'')],
-    ['تاريخ المبادرة', escapeHtml(fullDateStr(o.date))],
+    ['تاريخ المبادرة', o.dateTo && o.dateTo!==o.date ? escapeHtml(fullDateStr(o.date)+' — إلى — '+fullDateStr(o.dateTo)) : escapeHtml(fullDateStr(o.date))],
     ['وقت المبادرة', escapeHtml(fullTimeRange(o.timeFrom, o.timeTo))],
     ['مكان المبادرة', escapeHtml(school?school.name:'')],
   ];
