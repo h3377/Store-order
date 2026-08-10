@@ -681,15 +681,21 @@ function enhanceReportTable(container){
 }
 let __orderTableSelections = {};
 function otblSelect(containerId, checkbox){
-  const container = document.getElementById(containerId);
-  container.querySelectorAll('.otbl-check').forEach(cb=>{ if(cb!==checkbox) cb.checked=false; });
-  __orderTableSelections[containerId] = checkbox.checked ? checkbox.dataset.id : null;
+  if(!__orderTableSelections[containerId]) __orderTableSelections[containerId] = new Set();
+  const set = __orderTableSelections[containerId];
+  if(checkbox.checked) set.add(checkbox.dataset.id); else set.delete(checkbox.dataset.id);
   const toolbar = document.getElementById(containerId+'_toolbar');
-  if(toolbar) toolbar.querySelectorAll('button').forEach(b=>{ b.disabled = !checkbox.checked; });
+  if(toolbar){
+    toolbar.querySelectorAll('button.single-only').forEach(b=>{ b.disabled = set.size!==1; });
+    toolbar.querySelectorAll('button.multi-ok').forEach(b=>{ b.disabled = set.size<1; });
+    const select = toolbar.querySelector('.bulk-status-select');
+    if(select) select.disabled = set.size<1;
+  }
 }
 function otblAction(containerId, action){
-  const id = __orderTableSelections[containerId];
-  if(!id){ toast('الرجاء تحديد الطلب أولًا عبر مربع الاختيار'); return; }
+  const set = __orderTableSelections[containerId] || new Set();
+  const id = set.size===1 ? Array.from(set)[0] : null;
+  if(!id){ toast('الرجاء تحديد طلب واحد فقط عبر مربع الاختيار لهذا الإجراء'); return; }
   if(action==='edit') editOrder(id);
   else if(action==='eval') openEvaluationModal(id);
   else if(action==='postpone') openPostponeModal(id);
@@ -700,19 +706,42 @@ function otblAction(containerId, action){
   else if(action==='email') emailOrder(id);
   else if(action==='delete') deleteOrder(id);
 }
+async function otblBulkStatus(containerId){
+  const set = __orderTableSelections[containerId] || new Set();
+  if(set.size<1){ toast('الرجاء تحديد فعالية واحدة على الأقل'); return; }
+  const select = document.getElementById(containerId+'_bulkStatus');
+  const status = select.value;
+  if(!status){ toast('اختر حالة الإنجاز أولًا'); return; }
+  const ok = confirm(`سيتم تغيير حالة الإنجاز إلى "${status}" لعدد ${set.size} فعالية محددة. هل تريد المتابعة؟`);
+  if(!ok) return;
+  set.forEach(id=>{
+    const o = state.orders.find(x=>x.id===id);
+    if(o) o.completionStatus = status;
+  });
+  await saveState(); toast('تم تحديث حالة الإنجاز'); render();
+}
 function ordersTableHtml(list, containerId){
   containerId = containerId || ('otbl_'+uid());
   if(!list.length) return `<div class="empty-state">لا توجد طلبات بعد</div>`;
-  const toolbar = `<div class="table-toolbar" id="${containerId}_toolbar" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
-    <button class="icon-btn rect" disabled title="تعديل" onclick="otblAction('${containerId}','edit')">✏️ تعديل</button>
-    <button class="icon-btn rect" disabled title="تقييم وإنجاز" onclick="otblAction('${containerId}','eval')">📝 تقييم</button>
-    <button class="icon-btn rect" disabled title="ترحيل / تأجيل" onclick="otblAction('${containerId}','postpone')">⏩ ترحيل</button>
-    <button class="icon-btn rect" disabled title="إلغاء / تراجع عن الإلغاء" onclick="otblAction('${containerId}','cancel')">❌ إلغاء</button>
-    <button class="icon-btn rect" disabled title="رمز QR" onclick="otblAction('${containerId}','qr')">🔲 QR</button>
-    <button class="icon-btn rect" disabled title="طباعة نسخة الجهة الطالبة" onclick="otblAction('${containerId}','printSchool')">🏫🖨️ نسخة الجهة الطالبة</button>
-    <button class="icon-btn rect" disabled title="طباعة نسخة الإدارة" onclick="otblAction('${containerId}','printAdmin')">🏢🖨️ نسخة الإدارة</button>
-    <button class="icon-btn rect" disabled title="إرسال بالبريد" onclick="otblAction('${containerId}','email')">✉️ بريد</button>
-    <button class="icon-btn rect danger" disabled title="حذف" onclick="otblAction('${containerId}','delete')">🗑️ حذف</button>
+  const toolbar = `<div class="table-toolbar" id="${containerId}_toolbar" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+    <button class="icon-btn rect single-only" disabled title="تعديل" onclick="otblAction('${containerId}','edit')">✏️ تعديل</button>
+    <button class="icon-btn rect single-only" disabled title="تقييم وإنجاز" onclick="otblAction('${containerId}','eval')">📝 تقييم</button>
+    <button class="icon-btn rect single-only" disabled title="ترحيل / تأجيل" onclick="otblAction('${containerId}','postpone')">⏩ ترحيل</button>
+    <button class="icon-btn rect single-only" disabled title="إلغاء / تراجع عن الإلغاء" onclick="otblAction('${containerId}','cancel')">❌ إلغاء</button>
+    <button class="icon-btn rect single-only" disabled title="رمز QR" onclick="otblAction('${containerId}','qr')">🔲 QR</button>
+    <button class="icon-btn rect single-only" disabled title="طباعة نسخة الجهة الطالبة" onclick="otblAction('${containerId}','printSchool')">🏫🖨️ نسخة الجهة الطالبة</button>
+    <button class="icon-btn rect single-only" disabled title="طباعة نسخة الإدارة" onclick="otblAction('${containerId}','printAdmin')">🏢🖨️ نسخة الإدارة</button>
+    <button class="icon-btn rect single-only" disabled title="إرسال بالبريد" onclick="otblAction('${containerId}','email')">✉️ بريد</button>
+    <button class="icon-btn rect danger single-only" disabled title="حذف" onclick="otblAction('${containerId}','delete')">🗑️ حذف</button>
+    <span style="border-right:1.5px solid var(--line); height:24px; margin:0 4px;"></span>
+    <select class="bulk-status-select" id="${containerId}_bulkStatus" disabled style="width:auto;">
+      <option value="">-- تغيير حالة الإنجاز للمحدد --</option>
+      <option value="تم">تم الإنجاز</option>
+      <option value="لم يتم">لم يتم الإنجاز</option>
+      <option value="الغيت">أُلغيت</option>
+      <option value="المشرف لا يرد">المشرف لا يرد</option>
+    </select>
+    <button class="icon-btn rect multi-ok" disabled title="تطبيق على المحدد" onclick="otblBulkStatus('${containerId}')">✅ تطبيق</button>
   </div>`;
   const table = `<table><thead><tr><th></th><th>م</th><th>العنوان</th><th>التاريخ</th><th>المجال</th><th>المدرسة</th><th>مقدم المبادرة</th><th>الإنجاز</th><th>الحالة</th></tr></thead><tbody>
   ${list.map(o=>{
@@ -3040,6 +3069,7 @@ function renderSettingsPage(c){
       <button class="btn btn-outline" id="dm_refresh">🔄 تحديث البيانات من الخادم</button>
       <button class="btn btn-outline" onclick="document.getElementById('dm_ordersFile').click()">📊 استيراد فعاليات من إكسل</button>
       <input type="file" id="dm_ordersFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importOrdersExcel(this.files[0])">
+      <label class="checkbox-chip"><input type="checkbox" id="dm_importAsDone"> تعليم الفعاليات المستوردة كـ "منجزة"</label>
     </div>
     <div class="helper" style="margin-top:8px;">أعمدة ملف استيراد الفعاليات: عنوان المبادرة، التاريخ (YYYY-MM-DD)، من الساعة، إلى الساعة، اسم المدرسة، عدد المستهدفين، مسار البرنامج (اختياري)، المدربون بصيغة "الاسم:الهاتف، الاسم:الهاتف" (اختياري). المدارس والمسارات والمدربون غير الموجودين يُنشأون تلقائيًا.</div>
   </div>
@@ -3157,6 +3187,7 @@ async function restoreBackup(file){
 async function importOrdersExcel(file){
   if(!file) return;
   try{
+    const markDone = document.getElementById('dm_importAsDone') && document.getElementById('dm_importAsDone').checked;
     const rows = await readExcelFile(file);
     let added=0;
     rows.slice(1).forEach(r=>{
@@ -3196,7 +3227,7 @@ async function importOrdersExcel(file){
         id:uid(), serial: maxSerialThisYear+1, createdAt:Date.now(), title, fieldId: state.fields[0]?state.fields[0].id:'',
         participantsCount, date, timeFrom, timeTo, programTypeId,
         schoolId: sch?sch.id:'', supervisorId:'', trainerIds, requesterNote:'', adminNote:'مستورد من إكسل',
-        adminRequests:[], completionStatus:'', notDoneReason:'', supervisorRating:0, schoolRating:0, studentsRating:0, recommendSchool:'', evaluatedBy:'', status:'active'
+        adminRequests:[], completionStatus: markDone?'تم':'', notDoneReason:'', supervisorRating:0, schoolRating:0, studentsRating:0, recommendSchool:'', evaluatedBy:'', status:'active'
       });
       added++;
     });
