@@ -809,6 +809,7 @@ function renderOrderPage(c){
     <button class="tab-btn ${orderSubTab==='new'?'active':''}" id="tabNew">فعاليات ومبادرات جديدة</button>
     <button class="tab-btn ${orderSubTab==='list'?'active':''}" id="tabList">كل الطلبات</button>
     <button class="tab-btn ${orderSubTab==='adminDaily'?'active':''}" id="tabAdminDaily">الإداريات اليومية</button>
+    <button class="tab-btn ${orderSubTab==='sheet'?'active':''}" id="tabSheet">تعديل سريع (جدول)</button>
   </div>
   <div id="orderSubContent"></div>
   <div class="stat-grid" style="margin:18px 0;">
@@ -831,9 +832,14 @@ function renderOrderPage(c){
   document.getElementById('tabNew').onclick=()=>{orderSubTab='new'; editingOrderId=null; render();};
   document.getElementById('tabList').onclick=()=>{orderSubTab='list'; render();};
   document.getElementById('tabAdminDaily').onclick=()=>{orderSubTab='adminDaily'; render();};
+  document.getElementById('tabSheet').onclick=()=>{orderSubTab='sheet'; render();};
   const sub = document.getElementById('orderSubContent');
   if(orderSubTab==='adminDaily'){
     renderAdminPage(sub);
+    return;
+  }
+  if(orderSubTab==='sheet'){
+    renderQuickEditSheet(sub);
     return;
   }
   if(orderSubTab==='list'){
@@ -869,6 +875,72 @@ function renderOrderPage(c){
     return;
   }
   renderOrderForm(sub);
+}
+
+/* ============ جدول تعديل سريع (بشكل إكسل) ============ */
+function renderQuickEditSheet(sub){
+  sub.innerHTML = `<div class="card">
+    <h2>تعديل سريع (جدول)</h2>
+    <div class="helper" style="margin-bottom:10px;">عدّل أي خلية مباشرة وسيُحفظ التغيير تلقائيًا فور الخروج منها. استخدم أيقونتي التأجيل والحذف للإجراءات السريعة.</div>
+    <div class="field" style="max-width:320px;margin-bottom:10px;"><input id="qs_search" placeholder="🔎 بحث بعنوان الفعالية أو المدرسة..."></div>
+    <div id="qs_tableWrap" class="tbl-scroll"></div>
+  </div>`;
+
+  function draw(){
+    const q = document.getElementById('qs_search').value.trim();
+    let list = state.orders.slice().sort((a,b)=>b.serial-a.serial);
+    if(q){
+      list = list.filter(o=>{
+        const s = state.schools.find(x=>x.id===o.schoolId);
+        return o.title.includes(q) || (s && s.name.includes(q));
+      });
+    }
+    const wrap = document.getElementById('qs_tableWrap');
+    wrap.innerHTML = `<table><thead><tr>
+        <th>رقم</th><th style="min-width:220px;">العنوان</th><th>التاريخ</th><th>من الساعة</th><th>إلى الساعة</th><th style="min-width:180px;">المدرسة</th><th>الإنجاز</th><th>إجراءات</th>
+      </tr></thead><tbody>
+        ${list.map(o=>`<tr data-order-id="${o.id}" style="${o.status==='cancelled'?'opacity:.55;':''}">
+          <td><span class="badge">${o.serial}</span></td>
+          <td><input type="text" class="qs-field" data-field="title" value="${escapeHtml(o.title)}"></td>
+          <td><input type="date" lang="en" class="qs-field" data-field="date" value="${o.date||''}"></td>
+          <td><input type="time" lang="en" class="qs-field" data-field="timeFrom" value="${o.timeFrom||''}"></td>
+          <td><input type="time" lang="en" class="qs-field" data-field="timeTo" value="${o.timeTo||''}"></td>
+          <td><select class="qs-field" data-field="schoolId">
+            <option value="">—</option>
+            ${state.schools.map(s=>`<option value="${s.id}" ${o.schoolId===s.id?'selected':''}>${escapeHtml(s.name)}</option>`).join('')}
+          </select></td>
+          <td><select class="qs-field" data-field="completionStatus">
+            <option value="" ${!o.completionStatus?'selected':''}>لم تنجز بعد</option>
+            <option value="تم" ${o.completionStatus==='تم'?'selected':''}>تم</option>
+            <option value="لم يتم" ${o.completionStatus==='لم يتم'?'selected':''}>لم يتم</option>
+            <option value="الغيت" ${o.completionStatus==='الغيت'?'selected':''}>أُلغيت</option>
+            <option value="المشرف لا يرد" ${o.completionStatus==='المشرف لا يرد'?'selected':''}>المشرف لا يرد</option>
+          </select></td>
+          <td>
+            <button class="icon-btn" title="ترحيل / تأجيل" onclick="openPostponeModal('${o.id}')">⏩</button>
+            <button class="icon-btn danger" title="حذف" onclick="qsDeleteRow('${o.id}')">🗑️</button>
+          </td>
+        </tr>`).join('') || `<tr><td colspan="8" class="empty-state">لا توجد فعاليات مطابقة</td></tr>`}
+      </tbody></table>`;
+    wrap.querySelectorAll('.qs-field').forEach(el=>{
+      el.addEventListener('change', async ()=>{
+        const tr = el.closest('tr');
+        const id = tr.dataset.orderId;
+        const o = state.orders.find(x=>x.id===id); if(!o) return;
+        const field = el.dataset.field;
+        o[field] = el.value;
+        await saveState();
+        toast('تم الحفظ');
+      });
+    });
+  }
+  document.getElementById('qs_search').addEventListener('input', draw);
+  draw();
+}
+async function qsDeleteRow(id){
+  if(!confirm('هل تريد حذف هذه الفعالية؟')) return;
+  state.orders = state.orders.filter(o=>o.id!==id);
+  await saveState(); toast('تم الحذف'); render();
 }
 
 function renderOrderForm(sub){
