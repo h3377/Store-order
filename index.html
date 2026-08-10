@@ -900,6 +900,12 @@ function renderQuickEditSheet(sub){
         ${state.fields.map(f=>`<option value="${f.id}">${escapeHtml(f.name)}</option>`).join('')}
       </select>
       <button class="icon-btn rect" id="qs_bulkApply" disabled title="تطبيق على المحدد">✅ تطبيق</button>
+      <span style="border-right:1.5px solid var(--line); height:24px; margin:0 4px;"></span>
+      <select id="qs_bulkPath" disabled style="width:auto;">
+        <option value="">-- تعديل مسار المبادرة للمحدد --</option>
+        ${state.programTypes.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('')}
+      </select>
+      <button class="icon-btn rect" id="qs_bulkApplyPath" disabled title="تطبيق على المحدد">✅ تطبيق</button>
     </div>
     <div id="qs_tableWrap" class="tbl-scroll"></div>
   </div>`;
@@ -908,6 +914,8 @@ function renderQuickEditSheet(sub){
   function updateBulkToolbar(){
     document.getElementById('qs_bulkField').disabled = selectedIds.size<1;
     document.getElementById('qs_bulkApply').disabled = selectedIds.size<1;
+    document.getElementById('qs_bulkPath').disabled = selectedIds.size<1;
+    document.getElementById('qs_bulkApplyPath').disabled = selectedIds.size<1;
   }
   document.getElementById('qs_bulkApply').onclick = async ()=>{
     const fieldId = document.getElementById('qs_bulkField').value;
@@ -918,6 +926,16 @@ function renderQuickEditSheet(sub){
     if(!ok) return;
     selectedIds.forEach(id=>{ const o=state.orders.find(x=>x.id===id); if(o) o.fieldId=fieldId; });
     await saveState(); toast('تم تحديث مجال المبادرة'); selectedIds.clear(); draw();
+  };
+  document.getElementById('qs_bulkApplyPath').onclick = async ()=>{
+    const pathId = document.getElementById('qs_bulkPath').value;
+    if(!pathId){ toast('اختر مسار المبادرة أولًا'); return; }
+    if(selectedIds.size<1){ toast('حدد فعالية واحدة على الأقل'); return; }
+    const pathName = state.programTypes.find(p=>p.id===pathId)?.name || '';
+    const ok = confirm(`سيتم تغيير مسار المبادرة إلى "${pathName}" لعدد ${selectedIds.size} فعالية محددة. متابعة؟`);
+    if(!ok) return;
+    selectedIds.forEach(id=>{ const o=state.orders.find(x=>x.id===id); if(o) o.programTypeId=pathId; });
+    await saveState(); toast('تم تحديث مسار المبادرة'); selectedIds.clear(); draw();
   };
 
   function draw(){
