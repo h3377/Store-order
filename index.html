@@ -2728,6 +2728,13 @@ function renderDistributionsTabContent(c){
     const activeGroups = groups.filter(g=>g.list.length>0);
     if(!activeGroups.length) return '';
     const allLevels = Array.from(new Set(state.schools.map(s=>s.level).filter(Boolean)));
+    const totals = {
+      events: activeGroups.reduce((s,g)=>s+g.stats.events,0),
+      daysTotal: activeGroups.reduce((s,g)=>s+g.stats.daysTotal,0),
+      hoursTotal: Math.round(activeGroups.reduce((s,g)=>s+g.stats.hoursTotal,0)*100)/100,
+      pathsCount: activeGroups.reduce((s,g)=>s+g.stats.pathsCount,0),
+      schoolsTotal: activeGroups.reduce((s,g)=>s+g.stats.schoolsTotal,0),
+    };
     return `<table style="text-align:center;"><thead><tr>
         <th>اسم مقدم المبادرة</th><th>عدد الفعاليات</th><th>عدد الأيام</th><th>عدد الساعات</th><th>عدد المسارات المقدَّمة</th><th>عدد المدارس</th>
         ${allLevels.map(lvl=>`<th>${escapeHtml(lvl)}</th>`).join('')}
@@ -2736,12 +2743,22 @@ function renderDistributionsTabContent(c){
           <td>${escapeHtml(t.name)}</td><td>${stats.events}</td><td>${stats.daysTotal}</td><td>${stats.hoursTotal}</td><td>${stats.pathsCount}</td><td>${stats.schoolsTotal}</td>
           ${allLevels.map(lvl=>{ const found = stats.byLevel.find(x=>x.level===lvl); return `<td>${found?found.count:0}</td>`; }).join('')}
         </tr>`).join('')}
-      </tbody></table>`;
+      </tbody>
+      <tfoot><tr style="font-weight:900;background:#f4f6fa;">
+        <td>الإجمالي</td><td>${totals.events}</td><td>${totals.daysTotal}</td><td>${totals.hoursTotal}</td><td>${totals.pathsCount}</td><td>${totals.schoolsTotal}</td>
+        ${allLevels.map(lvl=>{ const sum = activeGroups.reduce((s,g)=>{ const found=g.stats.byLevel.find(x=>x.level===lvl); return s+(found?found.count:0); },0); return `<td>${sum}</td>`; }).join('')}
+      </tr></tfoot>
+      </table>`;
   }
   function draw(){
     const {groups} = trainerGroups();
     const box = document.getElementById('dist_result');
-    box.innerHTML = `<div class="card" style="grid-column:1/-1;"><h2>جدول ملخّص لكل مقدم مبادرة</h2>${summaryTableHtml(groups) || '<div class="empty-state">لا توجد بيانات ضمن هذه الفترة</div>'}</div>`
+    box.innerHTML = `<div class="card" style="grid-column:1/-1;"><h2>جدول ملخّص لكل مقدم مبادرة
+        <span style="display:flex;gap:6px;">
+          <button class="icon-btn rect" id="dist_summary_print" title="طباعة الجدول الملخّص">🖨️</button>
+          <button class="icon-btn rect" id="dist_summary_pdf" title="تنزيل PDF للجدول الملخّص">📄</button>
+        </span>
+      </h2>${summaryTableHtml(groups) || '<div class="empty-state">لا توجد بيانات ضمن هذه الفترة</div>'}</div>`
       + (groups.map(({t,list,stats})=>`<div class="card" style="margin-bottom:0;">
         <h2 style="font-size:16px;">${escapeHtml(t.name)} <span class="badge">${list.length}</span></h2>
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
@@ -2762,6 +2779,15 @@ function renderDistributionsTabContent(c){
         }).join('') : `<div class="empty-state" style="padding:16px;">لا توجد فعاليات ضمن هذه الفترة</div>`}
       </div>`).join('') || `<div class="empty-state">لا يوجد مقدمو فعاليات</div>`);
     enhanceReportTable(document.getElementById('dist_result'));
+    document.getElementById('dist_summary_print').onclick = printSummaryOnly;
+    document.getElementById('dist_summary_pdf').onclick = printSummaryOnly;
+  }
+  function printSummaryOnly(){
+    const {start, end, groups} = trainerGroups();
+    doPrintDoc(buildReportDoc({
+      titleAr:'جدول ملخّص لكل مقدم مبادرة', subtitle:`من ${start} إلى ${end}`,
+      extraHtml: summaryTableHtml(groups) || '<div>لا توجد بيانات</div>'
+    }), true, 'A4');
   }
   function printIt(){
     const {start, end, groups} = trainerGroups();
