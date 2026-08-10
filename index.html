@@ -2003,7 +2003,7 @@ function renderReportsPage(c){
     <button class="tab-btn" id="rt_hours">تقرير ساعات مقدمي الفعالية</button>
     <button class="tab-btn" id="rt_eval">تقرير التقييمات</button>
     <button class="tab-btn" id="rt_general">تقرير عام</button>
-    <button class="tab-btn" id="rt_bypath">تقرير شامل حسب المسار</button>
+    <button class="tab-btn" id="rt_bypath">تقرير حسب مسار المبادرة</button>
     <button class="tab-btn" id="rt_stats">الإحصائيات</button>
   </div>
   <div id="reportContent"></div>`;
@@ -2020,10 +2020,10 @@ function renderReportsPage(c){
 
   function drawByPath(){
     const box=document.getElementById('reportContent');
-    box.innerHTML = `<div class="card"><h2>تقرير شامل حسب مسار المبادرة</h2>
+    box.innerHTML = `<div class="card"><h2>تقرير حسب مسار المبادرة</h2>
       <div class="grid">
-        <div class="field"><label>من تاريخ</label><input id="bp_from" type="date" lang="en"></div>
-        <div class="field"><label>إلى تاريخ</label><input id="bp_to" type="date" lang="en"></div>
+        <div class="field"><label>من تاريخ</label><input id="bp_from" type="date" lang="en" value="2025-08-11"></div>
+        <div class="field"><label>إلى تاريخ</label><input id="bp_to" type="date" lang="en" value="2026-06-16"></div>
       </div>
       <button class="btn btn-primary" id="bp_go">عرض</button>
       <button class="icon-btn rect" id="bp_print" title="طباعة">🖨️ طباعة</button>
@@ -2034,10 +2034,17 @@ function renderReportsPage(c){
     function gen(){
       const from=document.getElementById('bp_from').value, to=document.getElementById('bp_to').value;
       return state.programTypes.map(pt=>{
-        const list = state.orders.filter(o=>o.programTypeId===pt.id && (!from||o.date>=from) && (!to||o.date<=to))
+        const list = state.orders.filter(o=>o.programTypeId===pt.id && o.completionStatus==='تم' && (!from||o.date>=from) && (!to||o.date<=to))
           .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
         return {pt, list};
       }).filter(g=>g.list.length>0);
+    }
+    function kpisOf(groups){
+      const allOrders = groups.flatMap(g=>g.list);
+      const participantsTotal = allOrders.reduce((s,o)=>s+(Number(o.participantsCount)||0),0);
+      const schoolsTotal = new Set(allOrders.map(o=>o.schoolId).filter(Boolean)).size;
+      const daysTotal = allOrders.reduce((s,o)=>s+daysCount(o.date,o.dateTo),0);
+      return {events:allOrders.length, participantsTotal, schoolsTotal, daysTotal};
     }
     function rowsOf(o){
       const s = state.schools.find(x=>x.id===o.schoolId);
@@ -2049,9 +2056,9 @@ function renderReportsPage(c){
       const box = document.getElementById('bp_result');
       box.innerHTML = groups.length ? groups.map(g=>`
         <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin:14px 0 8px;">${escapeHtml(g.pt.name)} <span class="badge">${g.list.length}</span></h3>
-        <table><thead><tr>${headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>
-          ${g.list.map(o=>`<tr>${rowsOf(o).map(c=>`<td>${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}
-        </tbody></table>`).join('') : `<div class="empty-state">لا توجد فعاليات ضمن هذه الفترة</div>`;
+        <table style="text-align:center;"><thead><tr>${headers.map(h=>`<th style="text-align:center;${h==='التاريخ'?'min-width:130px;':''}">${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>
+          ${g.list.map(o=>`<tr>${rowsOf(o).map((c,i)=>`<td style="text-align:center;${headers[i]==='التاريخ'?'min-width:130px;':''}">${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}
+        </tbody></table>`).join('') : `<div class="empty-state">لا توجد فعاليات منجزة ضمن هذه الفترة</div>`;
       enhanceReportTable(box);
     };
     document.getElementById('bp_excel').onclick=()=>{
@@ -2059,20 +2066,25 @@ function renderReportsPage(c){
       const from=document.getElementById('bp_from').value, to=document.getElementById('bp_to').value;
       if(!groups.length){ toast('لا توجد بيانات لتصديرها'); return; }
       const sheets = groups.map(g=>({name:g.pt.name.slice(0,30), headers, rows:g.list.map(rowsOf)}));
-      exportToExcelMultiSheet('تقرير_شامل_حسب_المسار.xlsx', sheets, `تقرير شامل حسب المسار (من ${from||'—'} إلى ${to||'—'})`);
+      exportToExcelMultiSheet('تقرير_حسب_مسار_المبادرة.xlsx', sheets, `تقرير حسب مسار المبادرة (من ${from||'—'} إلى ${to||'—'})`);
     };
     function printIt(){
       const groups = gen();
+      const k = kpisOf(groups);
       const from=document.getElementById('bp_from').value, to=document.getElementById('bp_to').value;
-      const extraHtml = groups.map(g=>`
+      const dateBox = `<div style="text-align:center;margin-bottom:5mm;font-size:11pt;font-weight:700;">
+        من <span style="display:inline-block;border:1.5px solid ${PRINT_LINE_COLOR};border-radius:6px;padding:1.5mm 6mm;margin:0 3mm;font-weight:900;">${from||'—'}</span>
+        إلى <span style="display:inline-block;border:1.5px solid ${PRINT_LINE_COLOR};border-radius:6px;padding:1.5mm 6mm;margin:0 3mm;font-weight:900;">${to||'—'}</span>
+      </div>`;
+      const groupsHtml = groups.map(g=>`
         <div class="sec-t">${escapeHtml(g.pt.name)} (${g.list.length})</div>
-        <table><thead><tr>${headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>
-          ${g.list.map(o=>`<tr>${rowsOf(o).map(c=>`<td>${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}
+        <table style="text-align:center;"><thead><tr>${headers.map(h=>`<th style="text-align:center;${h==='التاريخ'?'min-width:26mm;':''}">${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>
+          ${g.list.map(o=>`<tr>${rowsOf(o).map((c,i)=>`<td style="text-align:center;${headers[i]==='التاريخ'?'min-width:26mm;':''}">${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}
         </tbody></table>`).join('');
       doPrintDoc(buildReportDoc({
-        titleAr:'تقرير شامل حسب مسار المبادرة', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
-        kpis:[{v:groups.reduce((s,g)=>s+g.list.length,0),l:'إجمالي الفعاليات'},{v:groups.length,l:'عدد المسارات النشطة'}],
-        extraHtml
+        titleAr:'تقرير حسب مسار المبادرة',
+        kpis:[{v:k.events,l:'عدد الفعاليات المنجزة'},{v:k.participantsTotal,l:'عدد المستهدفين'},{v:k.schoolsTotal,l:'عدد المدارس'},{v:k.daysTotal,l:'عدد الأيام'},{v:k.participantsTotal,l:'عدد الطلاب'}],
+        extraHtml: dateBox + groupsHtml
       }), true, 'A4');
     }
     document.getElementById('bp_print').onclick=printIt;
