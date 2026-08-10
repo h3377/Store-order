@@ -3178,8 +3178,9 @@ function renderSettingsPage(c){
       <button class="btn btn-outline" onclick="document.getElementById('dm_ordersFile').click()">📊 استيراد فعاليات من إكسل</button>
       <input type="file" id="dm_ordersFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importOrdersExcel(this.files[0])">
       <label class="checkbox-chip"><input type="checkbox" id="dm_importAsDone"> تعليم الفعاليات المستوردة كـ "منجزة"</label>
+      <button class="icon-btn rect danger" id="dm_dedupe" title="حذف الفعاليات المكررة (نفس العنوان والتاريخ والمدرسة)">🗑️ حذف المكرر من الفعاليات</button>
     </div>
-    <div class="helper" style="margin-top:8px;">أعمدة ملف استيراد الفعاليات: عنوان المبادرة، التاريخ (YYYY-MM-DD)، من الساعة، إلى الساعة، اسم المدرسة، عدد المستهدفين، مسار البرنامج (اختياري)، المدربون بصيغة "الاسم:الهاتف، الاسم:الهاتف" (اختياري). المدارس والمسارات والمدربون غير الموجودين يُنشأون تلقائيًا.</div>
+    <div class="helper" style="margin-top:8px;">أعمدة ملف استيراد الفعاليات: عنوان المبادرة، التاريخ (YYYY-MM-DD)، من الساعة، إلى الساعة، اسم المدرسة، عدد المستهدفين، مسار البرنامج (اختياري)، المدربون بصيغة "الاسم:الهاتف، الاسم:الهاتف" (اختياري). المدارس والمسارات والمدربون غير الموجودين يُنشأون تلقائيًا. الاستيراد يتجاهل تلقائيًا أي صف مطابق (نفس العنوان والتاريخ والمدرسة) لفعالية موجودة مسبقًا.</div>
   </div>
   <div class="card">
     <h2>بيانات الجهة والشعار وترويسة الطباعة</h2>
@@ -3280,6 +3281,21 @@ function renderSettingsPage(c){
     toast('تم تحديث البيانات من الخادم');
     render();
   };
+  document.getElementById('dm_dedupe').onclick=async ()=>{
+    function normTitle(s){ return (s||'').toString().trim().replace(/\s+/g,' '); }
+    const seen = new Map(); // key -> kept order
+    const toDelete = [];
+    // نرتب حسب رقم التكليف تصاعديًا حتى نُبقي أول (أقدم) نسخة من كل تكرار
+    state.orders.slice().sort((a,b)=>(a.serial||0)-(b.serial||0)).forEach(o=>{
+      const key = normTitle(o.title)+'|'+(o.date||'')+'|'+(o.schoolId||'');
+      if(seen.has(key)){ toDelete.push(o.id); } else { seen.set(key, o.id); }
+    });
+    if(!toDelete.length){ toast('لا توجد فعاليات مكررة'); return; }
+    const ok = confirm(`تم العثور على ${toDelete.length} فعالية مكررة (نفس العنوان والتاريخ والمدرسة). سيتم حذفها والإبقاء على أقدم نسخة من كل مجموعة. هل تريد المتابعة؟`);
+    if(!ok) return;
+    state.orders = state.orders.filter(o=>!toDelete.includes(o.id));
+    await saveState(); toast(`تم حذف ${toDelete.length} فعالية مكررة`); render();
+  };
 }
 async function restoreBackup(file){
   if(!file) return;
@@ -3297,7 +3313,8 @@ async function importOrdersExcel(file){
   try{
     const markDone = document.getElementById('dm_importAsDone') && document.getElementById('dm_importAsDone').checked;
     const rows = await readExcelFile(file);
-    let added=0;
+    let added=0, skipped=0;
+    function normTitle(s){ return (s||'').toString().trim().replace(/\s+/g,' '); }
     rows.slice(1).forEach(r=>{
       const title=(r[0]||'').toString().trim(); if(!title) return;
       let date=r[1]; if(date instanceof Date){ date = date.toISOString().slice(0,10); } else { date=(date||'').toString().trim(); }
@@ -3308,6 +3325,10 @@ async function importOrdersExcel(file){
       const trainersRaw=(r[7]||'').toString().trim();
 
       let sch = state.schools.find(s=>s.name===schoolName);
+      // فحص التكرار: نفس عنوان المبادرة + نفس التاريخ + نفس المدرسة (سواء موجودة مسبقًا أو ستُنشأ الآن)
+      const isDup = state.orders.some(o => normTitle(o.title)===normTitle(title) && o.date===date && sch && o.schoolId===sch.id);
+      if(isDup){ skipped++; return; }
+
       if(!sch && schoolName){ sch={id:uid(), name:schoolName, level:'غير ذلك', supervisors:[]}; state.schools.push(sch); }
 
       let programTypeId = state.programTypes[0]?state.programTypes[0].id:'';
@@ -3339,7 +3360,7 @@ async function importOrdersExcel(file){
       });
       added++;
     });
-    await saveState(); toast(`تم استيراد ${added} فعالية`); render();
+    await saveState(); toast(`تم استيراد ${added} فعالية${skipped?` — تم تجاهل ${skipped} فعالية مكررة (نفس العنوان والتاريخ والمدرسة)`:''}`); render();
   }catch(e){ toast('تعذّرت قراءة الملف، تأكد من صيغته'); console.error(e); }
 }
 function simpleListTable(list, key){
