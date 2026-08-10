@@ -690,7 +690,7 @@ function otblSelectAll(containerId, headerCheckbox){
   if(headerCheckbox.checked){ rowChecks.forEach(cb=>set.add(cb.dataset.id)); }
   const toolbar = document.getElementById(containerId+'_toolbar');
   if(toolbar){
-    toolbar.querySelectorAll('button.single-only').forEach(b=>{ b.disabled = set.size!==1; });
+    toolbar.querySelectorAll('.single-only').forEach(b=>{ b.disabled = set.size!==1; });
     toolbar.querySelectorAll('button.multi-ok').forEach(b=>{ b.disabled = set.size<1; });
     const select = toolbar.querySelector('.bulk-status-select');
     if(select) select.disabled = set.size<1;
@@ -706,7 +706,7 @@ function otblSelect(containerId, checkbox){
   if(headerCheckbox) headerCheckbox.checked = allChecks.length>0 && Array.from(allChecks).every(cb=>cb.checked);
   const toolbar = document.getElementById(containerId+'_toolbar');
   if(toolbar){
-    toolbar.querySelectorAll('button.single-only').forEach(b=>{ b.disabled = set.size!==1; });
+    toolbar.querySelectorAll('.single-only').forEach(b=>{ b.disabled = set.size!==1; });
     toolbar.querySelectorAll('button.multi-ok').forEach(b=>{ b.disabled = set.size<1; });
     const select = toolbar.querySelector('.bulk-status-select');
     if(select) select.disabled = set.size<1;
@@ -726,6 +726,13 @@ function otblAction(containerId, action){
   else if(action==='email') emailOrder(id);
   else if(action==='delete') deleteOrder(id);
 }
+function otblActionFromSelect(containerId){
+  const select = document.getElementById(containerId+'_actionSelect');
+  const action = select.value;
+  if(!action){ toast('اختر إجراءً أولًا من القائمة'); return; }
+  otblAction(containerId, action);
+  select.value = '';
+}
 async function otblBulkStatus(containerId){
   const set = __orderTableSelections[containerId] || new Set();
   if(set.size<1){ toast('الرجاء تحديد فعالية واحدة على الأقل'); return; }
@@ -744,15 +751,19 @@ function ordersTableHtml(list, containerId){
   containerId = containerId || ('otbl_'+uid());
   if(!list.length) return `<div class="empty-state">لا توجد طلبات بعد</div>`;
   const toolbar = `<div class="table-toolbar" id="${containerId}_toolbar" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
-    <button class="icon-btn rect single-only" disabled title="تعديل" onclick="otblAction('${containerId}','edit')">✏️ تعديل</button>
-    <button class="icon-btn rect single-only" disabled title="تقييم وإنجاز" onclick="otblAction('${containerId}','eval')">📝 تقييم</button>
-    <button class="icon-btn rect single-only" disabled title="ترحيل / تأجيل" onclick="otblAction('${containerId}','postpone')">⏩ ترحيل</button>
-    <button class="icon-btn rect single-only" disabled title="إلغاء / تراجع عن الإلغاء" onclick="otblAction('${containerId}','cancel')">❌ إلغاء</button>
-    <button class="icon-btn rect single-only" disabled title="رمز QR" onclick="otblAction('${containerId}','qr')">🔲 QR</button>
-    <button class="icon-btn rect single-only" disabled title="طباعة نسخة الجهة الطالبة" onclick="otblAction('${containerId}','printSchool')">🏫🖨️ نسخة الجهة الطالبة</button>
-    <button class="icon-btn rect single-only" disabled title="طباعة نسخة الإدارة" onclick="otblAction('${containerId}','printAdmin')">🏢🖨️ نسخة الإدارة</button>
-    <button class="icon-btn rect single-only" disabled title="إرسال بالبريد" onclick="otblAction('${containerId}','email')">✉️ بريد</button>
-    <button class="icon-btn rect danger single-only" disabled title="حذف" onclick="otblAction('${containerId}','delete')">🗑️ حذف</button>
+    <select class="single-action-select single-only" id="${containerId}_actionSelect" disabled style="width:auto;">
+      <option value="">-- اختر إجراءً للمحدد --</option>
+      <option value="edit">✏️ تعديل</option>
+      <option value="eval">📝 تقييم وإنجاز</option>
+      <option value="postpone">⏩ ترحيل / تأجيل</option>
+      <option value="cancel">❌ إلغاء / تراجع عن الإلغاء</option>
+      <option value="qr">🔲 رمز QR</option>
+      <option value="printSchool">🏫🖨️ طباعة نسخة الجهة الطالبة</option>
+      <option value="printAdmin">🏢🖨️ طباعة نسخة الإدارة</option>
+      <option value="email">✉️ إرسال بالبريد</option>
+      <option value="delete">🗑️ حذف</option>
+    </select>
+    <button class="icon-btn rect single-only" disabled title="تنفيذ الإجراء المحدد" onclick="otblActionFromSelect('${containerId}')">▶️ تنفيذ</button>
     <span style="border-right:1.5px solid var(--line); height:24px; margin:0 4px;"></span>
     <select class="bulk-status-select" id="${containerId}_bulkStatus" disabled style="width:auto;">
       <option value="">-- تغيير حالة الإنجاز للمحدد --</option>
@@ -881,10 +892,33 @@ function renderOrderPage(c){
 function renderQuickEditSheet(sub){
   sub.innerHTML = `<div class="card">
     <h2>تعديل سريع (جدول)</h2>
-    <div class="helper" style="margin-bottom:10px;">عدّل أي خلية مباشرة وسيُحفظ التغيير تلقائيًا فور الخروج منها. استخدم أيقونتي التأجيل والحذف للإجراءات السريعة.</div>
+    <div class="helper" style="margin-bottom:10px;">عدّل أي خلية مباشرة وسيُحفظ التغيير تلقائيًا فور الخروج منها. حدّد عدة فعاليات بمربعات الاختيار لتعديل مجال المبادرة لها دفعة واحدة.</div>
     <div class="field" style="max-width:320px;margin-bottom:10px;"><input id="qs_search" placeholder="🔎 بحث بعنوان الفعالية أو المدرسة..."></div>
+    <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+      <select id="qs_bulkField" disabled style="width:auto;">
+        <option value="">-- تعديل مجال المبادرة للمحدد --</option>
+        ${state.fields.map(f=>`<option value="${f.id}">${escapeHtml(f.name)}</option>`).join('')}
+      </select>
+      <button class="icon-btn rect" id="qs_bulkApply" disabled title="تطبيق على المحدد">✅ تطبيق</button>
+    </div>
     <div id="qs_tableWrap" class="tbl-scroll"></div>
   </div>`;
+
+  const selectedIds = new Set();
+  function updateBulkToolbar(){
+    document.getElementById('qs_bulkField').disabled = selectedIds.size<1;
+    document.getElementById('qs_bulkApply').disabled = selectedIds.size<1;
+  }
+  document.getElementById('qs_bulkApply').onclick = async ()=>{
+    const fieldId = document.getElementById('qs_bulkField').value;
+    if(!fieldId){ toast('اختر مجال المبادرة أولًا'); return; }
+    if(selectedIds.size<1){ toast('حدد فعالية واحدة على الأقل'); return; }
+    const fieldName = state.fields.find(f=>f.id===fieldId)?.name || '';
+    const ok = confirm(`سيتم تغيير مجال المبادرة إلى "${fieldName}" لعدد ${selectedIds.size} فعالية محددة. متابعة؟`);
+    if(!ok) return;
+    selectedIds.forEach(id=>{ const o=state.orders.find(x=>x.id===id); if(o) o.fieldId=fieldId; });
+    await saveState(); toast('تم تحديث مجال المبادرة'); selectedIds.clear(); draw();
+  };
 
   function draw(){
     const q = document.getElementById('qs_search').value.trim();
@@ -897,9 +931,11 @@ function renderQuickEditSheet(sub){
     }
     const wrap = document.getElementById('qs_tableWrap');
     wrap.innerHTML = `<table><thead><tr>
+        <th><input type="checkbox" id="qs_selectAll" title="تحديد الكل"></th>
         <th>رقم</th><th style="min-width:220px;">العنوان</th><th>التاريخ</th><th>من الساعة</th><th>إلى الساعة</th><th style="min-width:180px;">المدرسة</th><th>الإنجاز</th><th>إجراءات</th>
       </tr></thead><tbody>
         ${list.map(o=>`<tr data-order-id="${o.id}" style="${o.status==='cancelled'?'opacity:.55;':''}">
+          <td><input type="checkbox" class="qs-check" data-id="${o.id}" ${selectedIds.has(o.id)?'checked':''}></td>
           <td><span class="badge">${o.serial}</span></td>
           <td><input type="text" class="qs-field" data-field="title" value="${escapeHtml(o.title)}"></td>
           <td><input type="date" lang="en" class="qs-field" data-field="date" value="${o.date||''}"></td>
@@ -920,7 +956,7 @@ function renderQuickEditSheet(sub){
             <button class="icon-btn" title="ترحيل / تأجيل" onclick="openPostponeModal('${o.id}')">⏩</button>
             <button class="icon-btn danger" title="حذف" onclick="qsDeleteRow('${o.id}')">🗑️</button>
           </td>
-        </tr>`).join('') || `<tr><td colspan="8" class="empty-state">لا توجد فعاليات مطابقة</td></tr>`}
+        </tr>`).join('') || `<tr><td colspan="9" class="empty-state">لا توجد فعاليات مطابقة</td></tr>`}
       </tbody></table>`;
     wrap.querySelectorAll('.qs-field').forEach(el=>{
       el.addEventListener('change', async ()=>{
@@ -933,6 +969,26 @@ function renderQuickEditSheet(sub){
         toast('تم الحفظ');
       });
     });
+    wrap.querySelectorAll('.qs-check').forEach(cb=>{
+      cb.addEventListener('change', ()=>{
+        if(cb.checked) selectedIds.add(cb.dataset.id); else selectedIds.delete(cb.dataset.id);
+        const all = wrap.querySelectorAll('.qs-check');
+        const selectAll = document.getElementById('qs_selectAll');
+        if(selectAll) selectAll.checked = all.length>0 && Array.from(all).every(c=>c.checked);
+        updateBulkToolbar();
+      });
+    });
+    const selectAll = document.getElementById('qs_selectAll');
+    if(selectAll){
+      selectAll.addEventListener('change', ()=>{
+        wrap.querySelectorAll('.qs-check').forEach(cb=>{
+          cb.checked = selectAll.checked;
+          if(selectAll.checked) selectedIds.add(cb.dataset.id); else selectedIds.delete(cb.dataset.id);
+        });
+        updateBulkToolbar();
+      });
+    }
+    updateBulkToolbar();
   }
   document.getElementById('qs_search').addEventListener('input', draw);
   draw();
