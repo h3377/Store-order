@@ -2699,7 +2699,13 @@ function renderDistributionsTabContent(c){
     const hoursTotal = list.reduce((s,o)=>s+hoursDuration(o.timeFrom,o.timeTo,o.date,o.dateTo),0);
     const schoolsTotal = new Set(list.map(o=>o.schoolId).filter(Boolean)).size;
     const byPath = state.programTypes.map(pt=>({name:pt.name, count:list.filter(o=>o.programTypeId===pt.id).length})).filter(x=>x.count>0);
-    return {events:list.length, daysTotal, hoursTotal:Math.round(hoursTotal*100)/100, schoolsTotal, byPath};
+    const pathsCount = byPath.length;
+    const allLevels = Array.from(new Set(state.schools.map(s=>s.level).filter(Boolean)));
+    const byLevel = allLevels.map(lvl=>({
+      level: lvl,
+      count: list.filter(o=>{ const s=state.schools.find(x=>x.id===o.schoolId); return s && s.level===lvl; }).length
+    })).filter(x=>x.count>0);
+    return {events:list.length, daysTotal, hoursTotal:Math.round(hoursTotal*100)/100, schoolsTotal, byPath, pathsCount, byLevel};
   }
   document.getElementById('dist_excel').onclick=()=>{
     const period=document.getElementById('dist_period').value, dateStr=document.getElementById('dist_date').value || today;
@@ -2718,10 +2724,25 @@ function renderDistributionsTabContent(c){
       return {t, list, stats: statsFor(list)};
     })};
   }
+  function summaryTableHtml(groups){
+    const activeGroups = groups.filter(g=>g.list.length>0);
+    if(!activeGroups.length) return '';
+    const allLevels = Array.from(new Set(state.schools.map(s=>s.level).filter(Boolean)));
+    return `<table style="text-align:center;"><thead><tr>
+        <th>اسم مقدم المبادرة</th><th>عدد الفعاليات</th><th>عدد الأيام</th><th>عدد الساعات</th><th>عدد المسارات المقدَّمة</th><th>عدد المدارس</th>
+        ${allLevels.map(lvl=>`<th>${escapeHtml(lvl)}</th>`).join('')}
+      </tr></thead><tbody>
+        ${activeGroups.map(({t,stats})=>`<tr>
+          <td>${escapeHtml(t.name)}</td><td>${stats.events}</td><td>${stats.daysTotal}</td><td>${stats.hoursTotal}</td><td>${stats.pathsCount}</td><td>${stats.schoolsTotal}</td>
+          ${allLevels.map(lvl=>{ const found = stats.byLevel.find(x=>x.level===lvl); return `<td>${found?found.count:0}</td>`; }).join('')}
+        </tr>`).join('')}
+      </tbody></table>`;
+  }
   function draw(){
     const {groups} = trainerGroups();
     const box = document.getElementById('dist_result');
-    box.innerHTML = groups.map(({t,list,stats})=>`<div class="card" style="margin-bottom:0;">
+    box.innerHTML = `<div class="card" style="grid-column:1/-1;"><h2>جدول ملخّص لكل مقدم مبادرة</h2>${summaryTableHtml(groups) || '<div class="empty-state">لا توجد بيانات ضمن هذه الفترة</div>'}</div>`
+      + (groups.map(({t,list,stats})=>`<div class="card" style="margin-bottom:0;">
         <h2 style="font-size:16px;">${escapeHtml(t.name)} <span class="badge">${list.length}</span></h2>
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
           <span class="stat-box" style="min-width:70px;"><div class="num">${stats.events}</div><div class="lbl">فعاليات</div></span>
@@ -2739,11 +2760,13 @@ function renderDistributionsTabContent(c){
             🏫 ${school?escapeHtml(school.name):''} — الإنجاز: ${o.completionStatus||'لم تنجز'}
           </div>`;
         }).join('') : `<div class="empty-state" style="padding:16px;">لا توجد فعاليات ضمن هذه الفترة</div>`}
-      </div>`).join('') || `<div class="empty-state">لا يوجد مقدمو فعاليات</div>`;
+      </div>`).join('') || `<div class="empty-state">لا يوجد مقدمو فعاليات</div>`);
+    enhanceReportTable(document.getElementById('dist_result'));
   }
   function printIt(){
     const {start, end, groups} = trainerGroups();
-    const extraHtml = groups.filter(g=>g.list.length>0).map(({t,list,stats})=>`
+    const summaryHtml = `<div class="sec-t">جدول ملخّص لكل مقدم مبادرة</div>${summaryTableHtml(groups) || '<div>لا توجد بيانات</div>'}`;
+    const extraHtml = summaryHtml + groups.filter(g=>g.list.length>0).map(({t,list,stats})=>`
       <div class="sec-t">${escapeHtml(t.name)} (${stats.events} فعالية)</div>
       <div style="font-size:9.5pt;margin-bottom:2mm;">عدد الأيام: ${stats.daysTotal} — عدد الساعات: ${stats.hoursTotal} — عدد المدارس: ${stats.schoolsTotal}${stats.byPath.length?' — '+stats.byPath.map(p=>`${escapeHtml(p.name)}: ${p.count}`).join('، '):''}</div>
       <table><thead><tr><th>العنوان</th><th>التاريخ</th><th>عدد الأيام</th><th>الوقت</th><th>عدد الساعات</th><th>المدرسة</th><th>الإنجاز</th></tr></thead><tbody>
