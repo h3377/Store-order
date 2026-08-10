@@ -2003,18 +2003,81 @@ function renderReportsPage(c){
     <button class="tab-btn" id="rt_hours">تقرير ساعات مقدمي الفعالية</button>
     <button class="tab-btn" id="rt_eval">تقرير التقييمات</button>
     <button class="tab-btn" id="rt_general">تقرير عام</button>
+    <button class="tab-btn" id="rt_bypath">تقرير شامل حسب المسار</button>
     <button class="tab-btn" id="rt_stats">الإحصائيات</button>
   </div>
   <div id="reportContent"></div>`;
   let mode='trainer';
-  const tabs = {trainer:'rt_trainer', school:'rt_school', hours:'rt_hours', eval:'rt_eval', general:'rt_general', stats:'rt_stats'};
+  const tabs = {trainer:'rt_trainer', school:'rt_school', hours:'rt_hours', eval:'rt_eval', general:'rt_general', bypath:'rt_bypath', stats:'rt_stats'};
   function setActive(){ Object.entries(tabs).forEach(([k,id])=>document.getElementById(id).classList.toggle('active', mode===k)); }
   document.getElementById('rt_trainer').onclick=()=>{mode='trainer'; drawTrainer(); setActive();};
   document.getElementById('rt_school').onclick=()=>{mode='school'; drawSchool(); setActive();};
   document.getElementById('rt_hours').onclick=()=>{mode='hours'; drawHours(); setActive();};
   document.getElementById('rt_eval').onclick=()=>{mode='eval'; drawEval(); setActive();};
   document.getElementById('rt_general').onclick=()=>{mode='general'; drawGeneral(); setActive();};
+  document.getElementById('rt_bypath').onclick=()=>{mode='bypath'; drawByPath(); setActive();};
   document.getElementById('rt_stats').onclick=()=>{mode='stats'; renderStatsPage(document.getElementById('reportContent')); setActive();};
+
+  function drawByPath(){
+    const box=document.getElementById('reportContent');
+    box.innerHTML = `<div class="card"><h2>تقرير شامل حسب مسار المبادرة</h2>
+      <div class="grid">
+        <div class="field"><label>من تاريخ</label><input id="bp_from" type="date" lang="en"></div>
+        <div class="field"><label>إلى تاريخ</label><input id="bp_to" type="date" lang="en"></div>
+      </div>
+      <button class="btn btn-primary" id="bp_go">عرض</button>
+      <button class="icon-btn rect" id="bp_print" title="طباعة">🖨️ طباعة</button>
+      <button class="icon-btn rect" id="bp_pdf" title="تنزيل PDF">📄 تنزيل PDF</button>
+      <button class="btn btn-outline" id="bp_excel">📊 استخراج إكسل</button>
+      <div id="bp_result" style="margin-top:16px;"></div>
+    </div>`;
+    function gen(){
+      const from=document.getElementById('bp_from').value, to=document.getElementById('bp_to').value;
+      return state.programTypes.map(pt=>{
+        const list = state.orders.filter(o=>o.programTypeId===pt.id && (!from||o.date>=from) && (!to||o.date<=to))
+          .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+        return {pt, list};
+      }).filter(g=>g.list.length>0);
+    }
+    function rowsOf(o){
+      const s = state.schools.find(x=>x.id===o.schoolId);
+      return [o.serial, o.title, o.date||'', s?s.name:'', trainerNames(o), o.participantsCount||'', o.completionStatus||'لم تنجز'];
+    }
+    const headers = ['م','العنوان','التاريخ','المدرسة','مقدم المبادرة','عدد المستهدفين','الإنجاز'];
+    document.getElementById('bp_go').onclick=()=>{
+      const groups = gen();
+      const box = document.getElementById('bp_result');
+      box.innerHTML = groups.length ? groups.map(g=>`
+        <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin:14px 0 8px;">${escapeHtml(g.pt.name)} <span class="badge">${g.list.length}</span></h3>
+        <table><thead><tr>${headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>
+          ${g.list.map(o=>`<tr>${rowsOf(o).map(c=>`<td>${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}
+        </tbody></table>`).join('') : `<div class="empty-state">لا توجد فعاليات ضمن هذه الفترة</div>`;
+      enhanceReportTable(box);
+    };
+    document.getElementById('bp_excel').onclick=()=>{
+      const groups = gen();
+      const from=document.getElementById('bp_from').value, to=document.getElementById('bp_to').value;
+      if(!groups.length){ toast('لا توجد بيانات لتصديرها'); return; }
+      const sheets = groups.map(g=>({name:g.pt.name.slice(0,30), headers, rows:g.list.map(rowsOf)}));
+      exportToExcelMultiSheet('تقرير_شامل_حسب_المسار.xlsx', sheets, `تقرير شامل حسب المسار (من ${from||'—'} إلى ${to||'—'})`);
+    };
+    function printIt(){
+      const groups = gen();
+      const from=document.getElementById('bp_from').value, to=document.getElementById('bp_to').value;
+      const extraHtml = groups.map(g=>`
+        <div class="sec-t">${escapeHtml(g.pt.name)} (${g.list.length})</div>
+        <table><thead><tr>${headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>
+          ${g.list.map(o=>`<tr>${rowsOf(o).map(c=>`<td>${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}
+        </tbody></table>`).join('');
+      doPrintDoc(buildReportDoc({
+        titleAr:'تقرير شامل حسب مسار المبادرة', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
+        kpis:[{v:groups.reduce((s,g)=>s+g.list.length,0),l:'إجمالي الفعاليات'},{v:groups.length,l:'عدد المسارات النشطة'}],
+        extraHtml
+      }), true, 'A4');
+    }
+    document.getElementById('bp_print').onclick=printIt;
+    document.getElementById('bp_pdf').onclick=printIt;
+  }
 
   function drawGeneral(){
     const box=document.getElementById('reportContent');
@@ -2966,7 +3029,7 @@ function renderSettingsPage(c){
       <button class="btn btn-outline" onclick="document.getElementById('dm_ordersFile').click()">📊 استيراد فعاليات من إكسل</button>
       <input type="file" id="dm_ordersFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importOrdersExcel(this.files[0])">
     </div>
-    <div class="helper" style="margin-top:8px;">أعمدة ملف استيراد الفعاليات المتوقعة: عنوان المبادرة، التاريخ (YYYY-MM-DD)، من الساعة، إلى الساعة، اسم المدرسة، عدد المستهدفين.</div>
+    <div class="helper" style="margin-top:8px;">أعمدة ملف استيراد الفعاليات: عنوان المبادرة، التاريخ (YYYY-MM-DD)، من الساعة، إلى الساعة، اسم المدرسة، عدد المستهدفين، مسار البرنامج (اختياري)، المدربون بصيغة "الاسم:الهاتف، الاسم:الهاتف" (اختياري). المدارس والمسارات والمدربون غير الموجودين يُنشأون تلقائيًا.</div>
   </div>
   <div class="card">
     <h2>بيانات الجهة والشعار وترويسة الطباعة</h2>
@@ -3089,15 +3152,38 @@ async function importOrdersExcel(file){
       let date=r[1]; if(date instanceof Date){ date = date.toISOString().slice(0,10); } else { date=(date||'').toString().trim(); }
       const timeFrom=(r[2]||'').toString().trim(), timeTo=(r[3]||'').toString().trim();
       const schoolName=(r[4]||'').toString().trim(); const participantsCount=(r[5]||'').toString().trim();
+      // أعمدة اختيارية إضافية: G = مسار البرنامج (اسم), H = المدربون "الاسم:الهاتف، الاسم:الهاتف"
+      const ptypeName=(r[6]||'').toString().trim();
+      const trainersRaw=(r[7]||'').toString().trim();
+
       let sch = state.schools.find(s=>s.name===schoolName);
       if(!sch && schoolName){ sch={id:uid(), name:schoolName, level:'غير ذلك', supervisors:[]}; state.schools.push(sch); }
+
+      let programTypeId = state.programTypes[0]?state.programTypes[0].id:'';
+      if(ptypeName){
+        let pt = state.programTypes.find(p=>p.name===ptypeName);
+        if(!pt){ pt={id:uid(), name:ptypeName}; state.programTypes.push(pt); }
+        programTypeId = pt.id;
+      }
+
+      const trainerIds = [];
+      if(trainersRaw){
+        trainersRaw.split(/[،,]/).map(s=>s.trim()).filter(Boolean).forEach(entry=>{
+          const [nm, ph] = entry.split(':').map(s=>s?s.trim():'');
+          const name = nm||entry;
+          let tr = state.trainers.find(t=> (ph && t.phone===ph) || t.name===name);
+          if(!tr){ tr={id:uid(), name, phone:ph||''}; state.trainers.push(tr); }
+          trainerIds.push(tr.id);
+        });
+      }
+
       const orderYear = (date || todayStr()).slice(0,4);
       const yearOrders = state.orders.filter(o=>o.date && o.date.slice(0,4)===orderYear);
       const maxSerialThisYear = yearOrders.reduce((m,o)=>Math.max(m,o.serial||0),0);
       state.orders.push({
         id:uid(), serial: maxSerialThisYear+1, createdAt:Date.now(), title, fieldId: state.fields[0]?state.fields[0].id:'',
-        participantsCount, date, timeFrom, timeTo, programTypeId: state.programTypes[0]?state.programTypes[0].id:'',
-        schoolId: sch?sch.id:'', supervisorId:'', trainerIds:[], requesterNote:'', adminNote:'مستورد من إكسل',
+        participantsCount, date, timeFrom, timeTo, programTypeId,
+        schoolId: sch?sch.id:'', supervisorId:'', trainerIds, requesterNote:'', adminNote:'مستورد من إكسل',
         adminRequests:[], completionStatus:'', notDoneReason:'', supervisorRating:0, schoolRating:0, studentsRating:0, recommendSchool:'', evaluatedBy:'', status:'active'
       });
       added++;
