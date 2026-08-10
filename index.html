@@ -2671,13 +2671,19 @@ function renderDistributionsTabContent(c){
     <div class="grid">
       <div class="field"><label>الفترة</label><select id="dist_period"><option value="week">أسبوع</option><option value="month">شهر</option><option value="year">سنة</option></select></div>
       <div class="field"><label>تاريخ ضمن الفترة</label><input id="dist_date" type="date" lang="en" value="${today}"></div>
+      <div class="field"><label>أو من تاريخ (فترة مخصصة)</label><input id="dist_customFrom" type="date" lang="en"></div>
+      <div class="field"><label>إلى تاريخ (فترة مخصصة)</label><input id="dist_customTo" type="date" lang="en"></div>
     </div>
     <button class="btn btn-primary" id="dist_go">عرض</button>
+    <button class="icon-btn rect" id="dist_print" title="طباعة">🖨️ طباعة</button>
+    <button class="icon-btn rect" id="dist_pdf" title="تنزيل PDF">📄 تنزيل PDF</button>
     <button class="btn btn-outline" id="dist_excel">📊 تنزيل Excel</button>
   </div>
   <div id="dist_result" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));"></div>`;
 
   function periodBounds(period, dateStr){
+    const customFrom = document.getElementById('dist_customFrom').value, customTo = document.getElementById('dist_customTo').value;
+    if(customFrom && customTo) return {start:customFrom, end:customTo};
     const d = new Date(dateStr+'T00:00:00');
     if(period==='week') return getWeekBounds(dateStr);
     if(period==='month'){
@@ -2688,6 +2694,13 @@ function renderDistributionsTabContent(c){
     const start = new Date(d.getFullYear(),0,1), end = new Date(d.getFullYear(),11,31);
     return {start:start.toISOString().slice(0,10), end:end.toISOString().slice(0,10)};
   }
+  function statsFor(list){
+    const daysTotal = list.reduce((s,o)=>s+daysCount(o.date,o.dateTo),0);
+    const hoursTotal = list.reduce((s,o)=>s+hoursDuration(o.timeFrom,o.timeTo,o.date,o.dateTo),0);
+    const schoolsTotal = new Set(list.map(o=>o.schoolId).filter(Boolean)).size;
+    const byPath = state.programTypes.map(pt=>({name:pt.name, count:list.filter(o=>o.programTypeId===pt.id).length})).filter(x=>x.count>0);
+    return {events:list.length, daysTotal, hoursTotal:Math.round(hoursTotal*100)/100, schoolsTotal, byPath};
+  }
   document.getElementById('dist_excel').onclick=()=>{
     const period=document.getElementById('dist_period').value, dateStr=document.getElementById('dist_date').value || today;
     const {start,end} = periodBounds(period, dateStr);
@@ -2697,14 +2710,26 @@ function renderDistributionsTabContent(c){
     });
     exportToExcelMultiSheet('التوزيعات.xlsx', sheets, `التوزيعات (${start} إلى ${end})`);
   };
-  function draw(){
+  function trainerGroups(){
     const period=document.getElementById('dist_period').value, dateStr=document.getElementById('dist_date').value || today;
     const {start,end} = periodBounds(period, dateStr);
-    const box = document.getElementById('dist_result');
-    box.innerHTML = state.trainers.map(t=>{
+    return {start, end, groups: state.trainers.map(t=>{
       const list = state.orders.filter(o=>(o.trainerIds||[]).includes(t.id) && o.date>=start && o.date<=end).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-      return `<div class="card" style="margin-bottom:0;">
+      return {t, list, stats: statsFor(list)};
+    })};
+  }
+  function draw(){
+    const {groups} = trainerGroups();
+    const box = document.getElementById('dist_result');
+    box.innerHTML = groups.map(({t,list,stats})=>`<div class="card" style="margin-bottom:0;">
         <h2 style="font-size:16px;">${escapeHtml(t.name)} <span class="badge">${list.length}</span></h2>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
+          <span class="stat-box" style="min-width:70px;"><div class="num">${stats.events}</div><div class="lbl">فعاليات</div></span>
+          <span class="stat-box" style="min-width:70px;"><div class="num">${stats.daysTotal}</div><div class="lbl">أيام</div></span>
+          <span class="stat-box" style="min-width:70px;"><div class="num">${stats.hoursTotal}</div><div class="lbl">ساعات</div></span>
+          <span class="stat-box" style="min-width:70px;"><div class="num">${stats.schoolsTotal}</div><div class="lbl">مدارس</div></span>
+        </div>
+        ${stats.byPath.length?`<div class="helper" style="margin-bottom:8px;">${stats.byPath.map(p=>`${escapeHtml(p.name)}: ${p.count}`).join(' — ')}</div>`:''}
         ${list.length? list.map(o=>{
           const school=state.schools.find(s=>s.id===o.schoolId);
           const dateRange = o.dateTo && o.dateTo!==o.date ? `${o.date||''} — إلى — ${o.dateTo}` : (o.date||'');
@@ -2714,9 +2739,23 @@ function renderDistributionsTabContent(c){
             🏫 ${school?escapeHtml(school.name):''} — الإنجاز: ${o.completionStatus||'لم تنجز'}
           </div>`;
         }).join('') : `<div class="empty-state" style="padding:16px;">لا توجد فعاليات ضمن هذه الفترة</div>`}
-      </div>`;
-    }).join('') || `<div class="empty-state">لا يوجد مقدمو فعاليات</div>`;
+      </div>`).join('') || `<div class="empty-state">لا يوجد مقدمو فعاليات</div>`;
   }
+  function printIt(){
+    const {start, end, groups} = trainerGroups();
+    const extraHtml = groups.filter(g=>g.list.length>0).map(({t,list,stats})=>`
+      <div class="sec-t">${escapeHtml(t.name)} (${stats.events} فعالية)</div>
+      <div style="font-size:9.5pt;margin-bottom:2mm;">عدد الأيام: ${stats.daysTotal} — عدد الساعات: ${stats.hoursTotal} — عدد المدارس: ${stats.schoolsTotal}${stats.byPath.length?' — '+stats.byPath.map(p=>`${escapeHtml(p.name)}: ${p.count}`).join('، '):''}</div>
+      <table><thead><tr><th>العنوان</th><th>التاريخ</th><th>عدد الأيام</th><th>الوقت</th><th>عدد الساعات</th><th>المدرسة</th><th>الإنجاز</th></tr></thead><tbody>
+        ${list.map(o=>{ const s=state.schools.find(x=>x.id===o.schoolId); return `<tr><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${daysCount(o.date,o.dateTo)}</td><td>${escapeHtml(fullTimeRange(o.timeFrom,o.timeTo))}</td><td>${hoursDuration(o.timeFrom,o.timeTo,o.date,o.dateTo)}</td><td>${s?escapeHtml(s.name):''}</td><td>${o.completionStatus||'لم تنجز'}</td></tr>`; }).join('')}
+      </tbody></table>`).join('');
+    doPrintDoc(buildReportDoc({
+      titleAr:'توزيع الفعاليات على مقدمي المبادرة', subtitle:`من ${start} إلى ${end}`,
+      extraHtml
+    }), true, 'A4');
+  }
+  document.getElementById('dist_print').onclick=printIt;
+  document.getElementById('dist_pdf').onclick=printIt;
   document.getElementById('dist_go').onclick=draw;
   draw();
 }
