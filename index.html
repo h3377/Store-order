@@ -680,10 +680,30 @@ function enhanceReportTable(container){
   });
 }
 let __orderTableSelections = {};
+function otblSelectAll(containerId, headerCheckbox){
+  const container = document.getElementById(containerId);
+  const rowChecks = container.querySelectorAll('.otbl-check');
+  rowChecks.forEach(cb=>{ cb.checked = headerCheckbox.checked; });
+  if(!__orderTableSelections[containerId]) __orderTableSelections[containerId] = new Set();
+  const set = __orderTableSelections[containerId];
+  set.clear();
+  if(headerCheckbox.checked){ rowChecks.forEach(cb=>set.add(cb.dataset.id)); }
+  const toolbar = document.getElementById(containerId+'_toolbar');
+  if(toolbar){
+    toolbar.querySelectorAll('button.single-only').forEach(b=>{ b.disabled = set.size!==1; });
+    toolbar.querySelectorAll('button.multi-ok').forEach(b=>{ b.disabled = set.size<1; });
+    const select = toolbar.querySelector('.bulk-status-select');
+    if(select) select.disabled = set.size<1;
+  }
+}
 function otblSelect(containerId, checkbox){
   if(!__orderTableSelections[containerId]) __orderTableSelections[containerId] = new Set();
   const set = __orderTableSelections[containerId];
   if(checkbox.checked) set.add(checkbox.dataset.id); else set.delete(checkbox.dataset.id);
+  const container = document.getElementById(containerId);
+  const allChecks = container.querySelectorAll('.otbl-check');
+  const headerCheckbox = container.querySelector('.otbl-check-all');
+  if(headerCheckbox) headerCheckbox.checked = allChecks.length>0 && Array.from(allChecks).every(cb=>cb.checked);
   const toolbar = document.getElementById(containerId+'_toolbar');
   if(toolbar){
     toolbar.querySelectorAll('button.single-only').forEach(b=>{ b.disabled = set.size!==1; });
@@ -743,7 +763,7 @@ function ordersTableHtml(list, containerId){
     </select>
     <button class="icon-btn rect multi-ok" disabled title="تطبيق على المحدد" onclick="otblBulkStatus('${containerId}')">✅ تطبيق</button>
   </div>`;
-  const table = `<table><thead><tr><th></th><th>م</th><th>العنوان</th><th>التاريخ</th><th>المجال</th><th>المدرسة</th><th>مقدم المبادرة</th><th>الإنجاز</th><th>الحالة</th></tr></thead><tbody>
+  const table = `<table><thead><tr><th><input type="checkbox" class="otbl-check-all" title="تحديد الكل" onchange="otblSelectAll('${containerId}', this)"></th><th>م</th><th>العنوان</th><th>التاريخ</th><th>المجال</th><th>المدرسة</th><th>مقدم المبادرة</th><th>الإنجاز</th><th>الحالة</th></tr></thead><tbody>
   ${list.map(o=>{
     const field = state.fields.find(f=>f.id===o.fieldId);
     const school = state.schools.find(s=>s.id===o.schoolId);
