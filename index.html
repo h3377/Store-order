@@ -2232,7 +2232,7 @@ function renderReportsPage(c){
         const list = state.orders.filter(o=>o.programTypeId===pt.id && o.completionStatus==='تم' && (!from||o.date>=from) && (!to||o.date<=to))
           .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
         return {pt, list};
-      }).filter(g=>g.list.length>0);
+      }).filter(g=>g.list.length>0).sort((a,b)=>b.list.length-a.list.length);
     }
     function kpisOf(groups){
       const allOrders = groups.flatMap(g=>g.list);
@@ -2840,6 +2840,12 @@ function renderDistributionsTabContent(c){
     const start = new Date(d.getFullYear(),0,1), end = new Date(d.getFullYear(),11,31);
     return {start:start.toISOString().slice(0,10), end:end.toISOString().slice(0,10)};
   }
+  const LEVEL_ORDER = ['ابتدائي','إعدادي','ثانوي','غير ذلك'];
+  function sortedLevels(allLevels){
+    const known = LEVEL_ORDER.filter(l=>allLevels.includes(l));
+    const extra = allLevels.filter(l=>!LEVEL_ORDER.includes(l));
+    return [...known, ...extra];
+  }
   function statsFor(list){
     const daysTotal = list.reduce((s,o)=>s+daysCount(o.date,o.dateTo),0);
     const hoursTotal = list.reduce((s,o)=>s+hoursDuration(o.timeFrom,o.timeTo,o.date,o.dateTo),0);
@@ -2851,7 +2857,10 @@ function renderDistributionsTabContent(c){
       level: lvl,
       count: list.filter(o=>{ const s=state.schools.find(x=>x.id===o.schoolId); return s && s.level===lvl; }).length
     })).filter(x=>x.count>0);
-    return {events:list.length, daysTotal, hoursTotal:Math.round(hoursTotal*100)/100, schoolsTotal, byPath, pathsCount, byLevel};
+    // توضيح لتصنيف "غير ذلك": اسم المدرسة ورقم التكليف لكل فعالية ضمن هذا التصنيف
+    const otherDetails = list.filter(o=>{ const s=state.schools.find(x=>x.id===o.schoolId); return s && s.level==='غير ذلك'; })
+      .map(o=>{ const s=state.schools.find(x=>x.id===o.schoolId); return {serial:o.serial, school:s?s.name:''}; });
+    return {events:list.length, daysTotal, hoursTotal:Math.round(hoursTotal*100)/100, schoolsTotal, byPath, pathsCount, byLevel, otherDetails};
   }
   document.getElementById('dist_excel').onclick=()=>{
     const period=document.getElementById('dist_period').value, dateStr=document.getElementById('dist_date').value || today;
@@ -2873,7 +2882,7 @@ function renderDistributionsTabContent(c){
   function summaryTableHtml(groups){
     const activeGroups = groups.filter(g=>g.list.length>0);
     if(!activeGroups.length) return '';
-    const allLevels = Array.from(new Set(state.schools.map(s=>s.level).filter(Boolean)));
+    const allLevels = sortedLevels(Array.from(new Set(state.schools.map(s=>s.level).filter(Boolean))));
     const totals = {
       events: activeGroups.reduce((s,g)=>s+g.stats.events,0),
       daysTotal: activeGroups.reduce((s,g)=>s+g.stats.daysTotal,0),
@@ -2881,6 +2890,11 @@ function renderDistributionsTabContent(c){
       pathsCount: activeGroups.reduce((s,g)=>s+g.stats.pathsCount,0),
       schoolsTotal: activeGroups.reduce((s,g)=>s+g.stats.schoolsTotal,0),
     };
+    const otherNoteRows = activeGroups.filter(g=>g.stats.otherDetails.length>0);
+    const otherNote = otherNoteRows.length ? `<div class="helper" style="margin-top:8px;line-height:1.9;">
+        <strong>توضيح تصنيف "غير ذلك":</strong><br>
+        ${otherNoteRows.map(({t,stats})=>`${escapeHtml(t.name)}: ${stats.otherDetails.map(d=>`${escapeHtml(d.school)} (رقم التكليف ${d.serial})`).join('، ')}`).join('<br>')}
+      </div>` : '';
     return `<table style="text-align:center;"><thead><tr>
         <th>اسم مقدم المبادرة</th><th>عدد الفعاليات</th><th>عدد الأيام</th><th>عدد الساعات</th><th>عدد المسارات المقدَّمة</th><th>عدد المدارس</th>
         ${allLevels.map(lvl=>`<th>${escapeHtml(lvl)}</th>`).join('')}
@@ -2894,7 +2908,7 @@ function renderDistributionsTabContent(c){
         <td>الإجمالي</td><td>${totals.events}</td><td>${totals.daysTotal}</td><td>${totals.hoursTotal}</td><td>${totals.pathsCount}</td><td>${totals.schoolsTotal}</td>
         ${allLevels.map(lvl=>{ const sum = activeGroups.reduce((s,g)=>{ const found=g.stats.byLevel.find(x=>x.level===lvl); return s+(found?found.count:0); },0); return `<td>${sum}</td>`; }).join('')}
       </tr></tfoot>
-      </table>`;
+      </table>${otherNote}`;
   }
   function draw(){
     const {groups} = trainerGroups();
