@@ -168,6 +168,27 @@
 let state = null;
 /* تصنيف مكان المبادرة الموحّد: مراحل دراسية للمدارس الحكومية + أنواع جهات أخرى */
 const LOCATION_TYPES = ['ابتدائي','إعدادي','ثانوي','خاصة','جامعة','نادي','استراحة','مركز','غير ذلك'];
+/* يربط تصنيف "مكان التنفيذ" (مدارس حكومية/خاصة/نادي...) بقيم level الفعلية للمدرسة/الجهة */
+function levelsForPlaceType(typeName){
+  const map = {
+    'مدارس حكومية': ['ابتدائي','إعدادي','ثانوي'],
+    'مدارس خاصة': ['خاصة'],
+    'نادي': ['نادي'],
+    'مركز': ['مركز'],
+    'استراحة': ['استراحة'],
+    'مكان عام': ['غير ذلك','جامعة'],
+  };
+  return map[typeName] || [];
+}
+/* الاتجاه المعاكس: يحوّل level المدرسة إلى اسم تصنيف "مكان التنفيذ" لعرضه في التقارير */
+function placeTypeLabel(level){
+  if(['ابتدائي','إعدادي','ثانوي'].includes(level)) return 'مدارس حكومية';
+  if(level==='خاصة') return 'مدارس خاصة';
+  if(level==='نادي') return 'نادي';
+  if(level==='مركز') return 'مركز';
+  if(level==='استراحة') return 'استراحة';
+  return 'مكان عام';
+}
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
 function defaultState(){
@@ -196,6 +217,14 @@ function defaultState(){
       {id:uid(), name:'مونتاج', category:'إعلامي'},
       {id:uid(), name:'تغذية', category:'ضيافة'},
       {id:uid(), name:'قفشات ومياه', category:'ضيافة'},
+    ],
+    placeTypes:[
+      {id:uid(), name:'مدارس حكومية'},
+      {id:uid(), name:'مدارس خاصة'},
+      {id:uid(), name:'نادي'},
+      {id:uid(), name:'مركز'},
+      {id:uid(), name:'استراحة'},
+      {id:uid(), name:'مكان عام'},
     ],
     users:[
       {id:uid(), username:'admin', password:'admin123', role:'admin', trainerId:'', displayName:'مدير النظام', active:true},
@@ -233,6 +262,9 @@ async function loadState(){
       if(!state.adminNotifications) state.adminNotifications=[];
       if(!state.reminderFlags) state.reminderFlags={};
       if(!state.quranActivities) state.quranActivities=[];
+      if(!state.placeTypes || !state.placeTypes.length){
+        state.placeTypes = ['مدارس حكومية','مدارس خاصة','نادي','مركز','استراحة','مكان عام'].map(name=>({id:uid(), name}));
+      }
       if(!state.__locationTypesMigrated){
         (state.schools||[]).forEach(s=>{
           if(!LOCATION_TYPES.includes(s.level)){
@@ -1084,11 +1116,20 @@ function renderOrderForm(sub){
       <div class="field"><label>المدة بالساعات (تلقائي)</label><input id="f_hoursCount" type="text" lang="en" readonly style="background:#f4f6fa;" value="${editing?hoursDuration(editing.timeFrom, editing.timeTo, editing.date, editing.dateTo):''}"></div>
     </div>
 
+    <div class="grid" style="grid-template-columns:1fr;">
+      <div class="field"><label>مكان التنفيذ (نوع الجهة)</label>
+        <div class="row-inline"><select id="f_placeType">
+          <option value="">-- الكل --</option>
+          ${state.placeTypes.map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('')}
+        </select>
+        <button class="plus-btn" title="إضافة تصنيف مكان تنفيذ" onclick="quickAddPlaceType()">+</button></div>
+      </div>
+    </div>
     <div class="grid" style="grid-template-columns:1.6fr 1.4fr 0.8fr;">
-      <div class="field"><label>مكان المبادرة (${state.schools.length} مدرسة)</label>
-        <input id="f_schoolSearch" placeholder="🔎 اكتب للبحث عن المدرسة..." style="margin-bottom:6px;">
-        <div class="row-inline"><select id="f_school" size="1">${state.schools.map(s=>`<option value="${s.id}" ${editing&&editing.schoolId===s.id?'selected':''}>${escapeHtml(s.name)} — ${escapeHtml(s.level)}</option>`).join('')}</select>
-        <button class="plus-btn" title="إضافة مدرسة" onclick="quickAddSchool()">+</button></div>
+      <div class="field"><label>مكان المبادرة (${state.schools.length} مدرسة/جهة)</label>
+        <input id="f_schoolSearch" placeholder="🔎 اكتب للبحث..." style="margin-bottom:6px;">
+        <div class="row-inline"><select id="f_school" size="1">${state.schools.map(s=>`<option value="${s.id}" data-level="${escapeHtml(s.level||'')}" ${editing&&editing.schoolId===s.id?'selected':''}>${escapeHtml(s.name)} — ${escapeHtml(s.level)}</option>`).join('')}</select>
+        <button class="plus-btn" title="إضافة مدرسة/جهة" id="f_addSchoolBtn" onclick="quickAddSchool(document.getElementById('f_placeType').value ? (levelsForPlaceType(document.getElementById('f_placeType').value)[0]||'') : '')">+</button></div>
       </div>
       <div class="field"><label>المشرف</label>
         <div class="row-inline"><select id="f_supervisor"></select>
@@ -1189,11 +1230,24 @@ function renderOrderForm(sub){
     refreshTrainerChips();
   });
   refreshSupervisors(); refreshTrainerChips();
-  document.getElementById('f_schoolSearch').addEventListener('input', (e)=>{
-    const q = e.target.value.trim();
+  function filterSchoolOptions(){
+    const q = document.getElementById('f_schoolSearch').value.trim();
+    const cat = document.getElementById('f_placeType').value;
+    const levels = cat ? levelsForPlaceType(cat) : [];
     const sel = document.getElementById('f_school');
-    Array.from(sel.options).forEach(opt=>{ opt.style.display = (!q || opt.textContent.includes(q)) ? '' : 'none'; });
-  });
+    Array.from(sel.options).forEach(opt=>{
+      if(!opt.value){ opt.style.display=''; return; }
+      const matchesText = !q || opt.textContent.includes(q);
+      const matchesLevel = !levels.length || levels.includes(opt.dataset.level);
+      opt.style.display = (matchesText && matchesLevel) ? '' : 'none';
+    });
+  }
+  document.getElementById('f_schoolSearch').addEventListener('input', filterSchoolOptions);
+  document.getElementById('f_placeType').addEventListener('change', filterSchoolOptions);
+  if(editing){
+    const curSchool = state.schools.find(s=>s.id===editing.schoolId);
+    if(curSchool){ document.getElementById('f_placeType').value = placeTypeLabel(curSchool.level); filterSchoolOptions(); }
+  }
 
   const reqBox = document.getElementById('adminReqList');
   const selectedReqIds = new Set(editing && editing.adminRequests ? editing.adminRequests : []);
@@ -1463,19 +1517,20 @@ function findDuplicateSchool(name){
     return sn===n || sn.includes(n) || n.includes(sn);
   }) || null;
 }
-function quickAddSchool(){
-  openModal('إضافة مدرسة جديدة', [
-    {name:'name', label:'اسم المدرسة', required:true},
+function quickAddSchool(presetLevel){
+  openModal('إضافة مدرسة / جهة جديدة', [
+    {name:'name', label:'اسم المدرسة / الجهة', required:true},
     {name:'level', label:'مكان المبادرة (نوع الجهة)', type:'select', options:LOCATION_TYPES.map(t=>({value:t,label:t}))},
-    {name:'email', label:'البريد الإلكتروني للمدرسة (اختياري)'},
+    {name:'email', label:'البريد الإلكتروني (اختياري)'},
   ], async v=>{
     const dup = findDuplicateSchool(v.name);
-    if(dup){ toast(`⚠️ توجد مدرسة بنفس الاسم أو باسم مشابه: "${dup.name}" — لم تتم الإضافة`); return false; }
+    if(dup){ toast(`⚠️ توجد جهة بنفس الاسم أو باسم مشابه: "${dup.name}" — لم تتم الإضافة`); return false; }
     const item={id:uid(), name:v.name, level:v.level, email:v.email||'', supervisors:[]};
     state.schools.push(item); await saveState(); render();
     setTimeout(()=>{ const s=document.getElementById('f_school'); if(s){ s.value=item.id; s.dispatchEvent(new Event('change')); } },0);
     promptAddSupervisorFor(item.id, item.name);
   });
+  if(presetLevel){ const sel=document.getElementById('mf_level'); if(sel) sel.value=presetLevel; }
 }
 /* Opens a follow-up modal to enter the supervisor right after a school is added */
 function promptAddSupervisorFor(schoolId, schoolName){
@@ -1518,6 +1573,12 @@ function quickAddAdminRequest(){
     {name:'category', label:'التصنيف', type:'select', options:[{value:'إداري',label:'إداري'},{value:'إعلامي',label:'إعلامي'},{value:'ضيافة',label:'ضيافة'}]},
   ], async v=>{
     state.adminRequestsList.push({id:uid(), name:v.name, category:v.category||'إداري'}); await saveState(); render();
+  });
+}
+function quickAddPlaceType(){
+  openModal('إضافة تصنيف مكان تنفيذ جديد', [{name:'name', label:'اسم التصنيف', required:true}], async v=>{
+    if(state.placeTypes.some(p=>p.name===v.name)){ toast('هذا التصنيف موجود مسبقًا'); return false; }
+    state.placeTypes.push({id:uid(), name:v.name}); await saveState(); render();
   });
 }
 
@@ -2310,11 +2371,11 @@ function renderReportsPage(c){
     document.getElementById('bp_byPath').addEventListener('change', syncModeVisibility);
     document.getElementById('bp_byField').addEventListener('change', syncModeVisibility);
 
-    const baseCols = ['رقم التكليف','الفعالية','التاريخ','الوقت','المكان','هاتف المشرف','مقدم الفعالية','هاتف مقدم الفعالية','الإنجاز'];
+    const baseCols = ['رقم التكليف','الفعالية','التاريخ','الوقت','مكان التنفيذ','المكان','هاتف المشرف','مقدم الفعالية','هاتف مقدم الفعالية','الإنجاز'];
     function rowOf(o, extraCols){
       const school = state.schools.find(s=>s.id===o.schoolId);
       const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
-      const base = [o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), school?school.name:'', supervisor?supervisor.phone||'':'', trainerNames(o), trainerPhones(o), o.completionStatus||'لم تنجز'];
+      const base = [o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), school?placeTypeLabel(school.level):'', school?school.name:'', supervisor?supervisor.phone||'':'', trainerNames(o), trainerPhones(o), o.completionStatus||'لم تنجز'];
       const extra = (extraCols||[]).map(c=>{
         if(c==='مسار المبادرة'){ const pt=state.programTypes.find(p=>p.id===o.programTypeId); return pt?pt.name:''; }
         if(c==='مجال المبادرة'){ const f=state.fields.find(x=>x.id===o.fieldId); return f?f.name:''; }
@@ -2559,7 +2620,7 @@ function renderReportsPage(c){
     function selectedModes(){ return Array.from(document.querySelectorAll('.rp_modeChk:checked')).map(cb=>cb.value); }
     function columnsFor(modes){
       // الأعمدة الأساسية موجودة دائمًا، ثم تُضاف أعمدة إضافية حسب الأنماط المختارة
-      const base = ['رقم التكليف','الفعالية','التاريخ','الوقت','المكان','هاتف المشرف','مقدم الفعالية','هاتف مقدم الفعالية'];
+      const base = ['رقم التكليف','الفعالية','التاريخ','الوقت','مكان التنفيذ','المكان','هاتف المشرف','مقدم الفعالية','هاتف مقدم الفعالية'];
       const extra = [];
       if(modes.includes('hours')) extra.push('عدد الأيام','عدد الساعات');
       extra.push('الإنجاز');
@@ -2574,6 +2635,7 @@ function renderReportsPage(c){
         'الفعالية': o.title,
         'التاريخ': o.date||'',
         'الوقت': fullTimeRange(o.timeFrom,o.timeTo),
+        'مكان التنفيذ': school?placeTypeLabel(school.level):'',
         'المكان': school?school.name:'',
         'هاتف المشرف': supervisor?supervisor.phone||'':'',
         'مقدم الفعالية': trainerNames(o),
@@ -2663,11 +2725,11 @@ function renderReportsPage(c){
         row.style.display = !q || row.dataset.name.includes(q) ? '' : 'none';
       });
     });
-    const columns = ['رقم التكليف','الفعالية','التاريخ','الوقت','المكان','هاتف المشرف','مقدم الفعالية','هاتف مقدم الفعالية','الإنجاز'];
+    const columns = ['رقم التكليف','الفعالية','التاريخ','الوقت','مكان التنفيذ','المكان','هاتف المشرف','مقدم الفعالية','هاتف مقدم الفعالية','الإنجاز'];
     function rowOf(o){
       const school = state.schools.find(s=>s.id===o.schoolId);
       const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
-      return [o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), school?school.name:'', supervisor?supervisor.phone||'':'', trainerNames(o), trainerPhones(o), o.completionStatus||'لم تنجز'];
+      return [o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), school?placeTypeLabel(school.level):'', school?school.name:'', supervisor?supervisor.phone||'':'', trainerNames(o), trainerPhones(o), o.completionStatus||'لم تنجز'];
     }
     function gen(){
       const from=document.getElementById('rp_from2').value, to=document.getElementById('rp_to2').value;
