@@ -166,6 +166,8 @@
    GET  /api/state  -> { value: <state object> | null }
    POST /api/state  -> body: <state object> (stored as-is) */
 let state = null;
+/* تصنيف مكان المبادرة الموحّد: مراحل دراسية للمدارس الحكومية + أنواع جهات أخرى */
+const LOCATION_TYPES = ['ابتدائي','إعدادي','ثانوي','خاصة','جامعة','نادي','استراحة','مركز','غير ذلك'];
 function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
 
 function defaultState(){
@@ -231,6 +233,20 @@ async function loadState(){
       if(!state.adminNotifications) state.adminNotifications=[];
       if(!state.reminderFlags) state.reminderFlags={};
       if(!state.quranActivities) state.quranActivities=[];
+      if(!state.__locationTypesMigrated){
+        (state.schools||[]).forEach(s=>{
+          if(!LOCATION_TYPES.includes(s.level)){
+            const name = s.name||'';
+            if(name.includes('جامعة')) s.level='جامعة';
+            else if(name.includes('الدولية')||name.includes('الحديثة')||name.includes('الخاصة')) s.level='خاصة';
+            else if(name.includes('نادي')) s.level='نادي';
+            else if(name.includes('استراحة')) s.level='استراحة';
+            else if(name.includes('مركز')) s.level='مركز';
+            else s.level='غير ذلك';
+          }
+        });
+        state.__locationTypesMigrated = true;
+      }
       if(!state.users || !state.users.length){
         state.users=[
           {id:uid(), username:'admin', password:'admin123', role:'admin', trainerId:'', displayName:'مدير النظام', active:true},
@@ -267,7 +283,7 @@ async function saveState(){
 const PAGES = [
   {id:'home', label:'الصفحة الرئيسية', icon:'🏠', roles:['admin','user']},
   {id:'order', label:'طلبات الفعاليات والمبادرات', icon:'📋', roles:['admin','user']},
-  {id:'distributions', label:'الطلبات والتوزيعات والإداريات', icon:'🗂️', roles:['admin','user']},
+  {id:'distributions', label:'الطلبات والتوزيعات والإداريات', icon:'🗂️', roles:['admin','user'], hidden:true},
   {id:'reports', label:'التقارير', icon:'📄', roles:['admin','user']},
   {id:'quranActivities', label:'الأنشطة القرآنية', icon:'📖', roles:['admin','user']},
   {id:'tasks', label:'المهام', icon:'✅', roles:['admin','user']},
@@ -286,7 +302,7 @@ let loggedTrainerId=null;
 let trainerPortalTab='upcoming';
 let tpAutoOpened=false;
 
-function visiblePages(){ return PAGES.filter(p=>p.roles.includes(currentRole)); }
+function visiblePages(){ return PAGES.filter(p=>p.roles.includes(currentRole) && !p.hidden); }
 
 function toast(msg){
   const t=document.getElementById('toast');
@@ -623,6 +639,18 @@ function phoneLink(phone){
   if(!p) return '';
   const digits = p.replace(/[^\d+]/g,'');
   return `<a href="tel:${digits}" style="color:inherit;text-decoration:underline;white-space:nowrap;">${escapeHtml(p)}</a>`;
+}
+/* رقم هاتف + أيقونة اتصال + أيقونة واتساب، تُستخدم في أمر التكليف بجانب هاتف المشرف/مقدم المبادرة */
+function phoneLinkWithIcons(phone){
+  const p = (phone||'').toString().trim();
+  if(!p) return '-';
+  const digits = p.replace(/[^\d+]/g,'');
+  const bare = digits.replace(/^\+/,'').replace(/^0+/,'');
+  const waDigits = bare.length<=8 ? '974'+bare : bare;
+  return `<span style="white-space:nowrap;">${escapeHtml(p)}
+    <a href="tel:${digits}" title="اتصال" style="text-decoration:none;margin-inline-start:4px;">📞</a>
+    <a href="https://wa.me/${waDigits}" target="_blank" title="واتساب" style="text-decoration:none;margin-inline-start:2px;">💬</a>
+  </span>`;
 }
 
 /* ============ Order tables ============ */
@@ -1438,8 +1466,7 @@ function findDuplicateSchool(name){
 function quickAddSchool(){
   openModal('إضافة مدرسة جديدة', [
     {name:'name', label:'اسم المدرسة', required:true},
-    {name:'level', label:'المرحلة الدراسية', type:'select', options:[
-      {value:'ابتدائي',label:'ابتدائي'},{value:'إعدادي',label:'إعدادي'},{value:'ثانوي',label:'ثانوي'},{value:'مركز خاص',label:'مركز خاص'},{value:'غير ذلك',label:'غير ذلك'}]},
+    {name:'level', label:'مكان المبادرة (نوع الجهة)', type:'select', options:LOCATION_TYPES.map(t=>({value:t,label:t}))},
     {name:'email', label:'البريد الإلكتروني للمدرسة (اختياري)'},
   ], async v=>{
     const dup = findDuplicateSchool(v.name);
@@ -1651,7 +1678,7 @@ function dashedPeopleBox(people){
   return `<div style="display:flex;border:1.5px solid ${PRINT_LINE_COLOR};border-radius:6px;overflow:hidden;flex-wrap:wrap;">
     ${list.map((p,i)=>`<div style="flex:1 1 0; min-width:110px; padding:0.8mm 3mm; text-align:center; ${i>0?`border-right:1.5px dashed ${PRINT_LINE_COLOR};`:''}">
       <div style="font-size:9.5pt; color:#161616; font-weight:900; line-height:1.25;">${escapeHtml(p.name||'—')}</div>
-      <div style="font-size:16pt; color:#666; line-height:1.25;">${p.phone?phoneLink(p.phone):'-'}</div>
+      <div style="font-size:16pt; color:#666; line-height:1.25;">${p.phone?phoneLinkWithIcons(p.phone):'-'}</div>
     </div>`).join('')}
   </div>`;
 }
@@ -1688,7 +1715,7 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
     ['تاريخ المبادرة', o.dateTo && o.dateTo!==o.date ? escapeHtml(fullDateStr(o.date)+' — إلى — '+fullDateStr(o.dateTo)) : escapeHtml(fullDateStr(o.date))],
     ['وقت المبادرة', escapeHtml(fullTimeRange(o.timeFrom, o.timeTo))],
     ['عدد الأيام والمدة', `عدد الأيام: (${daysCount(o.date, o.dateTo)})&nbsp;&nbsp;&nbsp;المدة بالساعات: (${hoursDuration(o.timeFrom, o.timeTo, o.date, o.dateTo)})`],
-    ['مكان المبادرة والمشرف', `<span>${escapeHtml(school?school.name:'')}</span>&nbsp;&nbsp;<span>${supervisor?escapeHtml(supervisor.name)+(supervisor.phone?' ('+phoneLink(supervisor.phone)+')':''):''}</span>`],
+    ['مكان المبادرة والمشرف', `<span>${escapeHtml(school?school.name:'')}</span>&nbsp;&nbsp;<span>${supervisor?escapeHtml(supervisor.name)+(supervisor.phone?' ('+phoneLinkWithIcons(supervisor.phone)+')':''):''}</span>`],
   ];
   const trainerIds = (o.trainerIds||[]);
   const trainerPeople = trainerIds.map(id=>state.trainers.find(t=>t.id===id)).filter(Boolean).map(t=>({name:t.name, phone:t.phone}));
@@ -1915,20 +1942,24 @@ function renderAdminRequestsReportPage(c){
     return {list, from, to};
   }
   function rowsOf(list){
-    return list.map(o=>{
+    const rows = [];
+    list.forEach(o=>{
       const school = state.schools.find(s=>s.id===o.schoolId);
-      const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
-      const reqs = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean).join('، ');
-      return {o, school, supervisor, reqs};
+      const dateStr = o.dateTo && o.dateTo!==o.date ? `${o.date||''} — ${o.dateTo}` : (o.date||'');
+      const reqNames = (o.adminRequests||[]).map(id=>{ const r=state.adminRequestsList.find(x=>x.id===id); return r?r.name:''; }).filter(Boolean);
+      reqNames.forEach(reqName=>{
+        rows.push({o, school, dateStr, reqName});
+      });
     });
+    return rows;
   }
   function draw(){
     const {list} = getList();
     const rows = rowsOf(list);
     const box = document.getElementById('arq_result');
-    box.innerHTML = `<h2>النتائج (${list.length})</h2>
-      <table><thead><tr><th></th><th>أمر التكليف</th><th>عنوان الفعالية</th><th>من تاريخ</th><th>إلى تاريخ</th><th>عدد الأيام</th><th>من الساعة</th><th>إلى الساعة</th><th>عدد الساعات</th><th>المكان</th><th>مقدم البرنامج</th><th>الطلبات الإدارية للبرنامج</th></tr></thead><tbody>
-        ${rows.map(r=>`<tr><td><input type="checkbox" class="arq-check" data-id="${r.o.id}"></td><td>${r.o.serial}</td><td>${escapeHtml(r.o.title)}</td><td>${r.o.date||''}</td><td>${r.o.dateTo||r.o.date||''}</td><td>${daysCount(r.o.date,r.o.dateTo)}</td><td>${r.o.timeFrom||''}</td><td>${r.o.timeTo||''}</td><td>${hoursDuration(r.o.timeFrom,r.o.timeTo,r.o.date,r.o.dateTo)}</td><td>${r.school?escapeHtml(r.school.name):''}</td><td>${trainerMiniTable(r.o)}</td><td>${escapeHtml(r.reqs)}</td></tr>`).join('') || '<tr><td colspan="12" class="empty-state">لا توجد طلبات إدارية ضمن هذه الفترة</td></tr>'}
+    box.innerHTML = `<h2>النتائج (${rows.length})</h2>
+      <table><thead><tr><th></th><th>رقم التكليف</th><th>تاريخ المبادرة</th><th>عدد الأيام</th><th>عدد الساعات</th><th>المكان</th><th>مقدم المبادرة</th><th>الهاتف</th><th>الطلب</th></tr></thead><tbody>
+        ${rows.map(r=>`<tr><td><input type="checkbox" class="arq-check" data-id="${r.o.id}"></td><td>${r.o.serial}</td><td>${escapeHtml(r.dateStr)}</td><td>${daysCount(r.o.date,r.o.dateTo)}</td><td>${hoursDuration(r.o.timeFrom,r.o.timeTo,r.o.date,r.o.dateTo)}</td><td>${r.school?escapeHtml(r.school.name):''}</td><td>${escapeHtml(trainerNames(r.o))}</td><td>${escapeHtml(trainerPhones(r.o))}</td><td>${escapeHtml(r.reqName)}</td></tr>`).join('') || '<tr><td colspan="9" class="empty-state">لا توجد طلبات إدارية ضمن هذه الفترة</td></tr>'}
       </tbody></table>`;
     enhanceReportTable(box);
   }
@@ -1940,9 +1971,9 @@ function renderAdminRequestsReportPage(c){
     return rowsOf(list.filter(o=>ids.includes(o.id)));
   }
   function excelRowsOf(rows){
-    return rows.map(r=>[r.o.serial, r.o.title, r.o.date||'', r.o.dateTo||r.o.date||'', daysCount(r.o.date,r.o.dateTo), hoursDuration(r.o.timeFrom,r.o.timeTo,r.o.date,r.o.dateTo), r.school?r.school.name:'', r.supervisor?r.supervisor.phone||'':'', trainerPhones(r.o), r.reqs]);
+    return rows.map(r=>[r.o.serial, r.dateStr, daysCount(r.o.date,r.o.dateTo), hoursDuration(r.o.timeFrom,r.o.timeTo,r.o.date,r.o.dateTo), r.school?r.school.name:'', trainerNames(r.o), trainerPhones(r.o), r.reqName]);
   }
-  const excelHeaders = ['أمر التكليف','عنوان الفعالية','من تاريخ','إلى تاريخ','عدد الأيام','عدد الساعات','مكان الفعالية','هاتف المشرف','هاتف مقدم المبادرة','الطلبات الإدارية'];
+  const excelHeaders = ['رقم التكليف','تاريخ المبادرة','عدد الأيام','عدد الساعات','المكان','مقدم المبادرة','الهاتف','الطلب'];
 
   document.getElementById('arq_excel').onclick=()=>{
     const {list, from, to} = getList();
@@ -1955,7 +1986,7 @@ function renderAdminRequestsReportPage(c){
   };
 
   function buildPrintRows(rows){
-    return rows.map(r=>[r.o.serial, escapeHtml(r.o.title), r.o.date||'', r.o.dateTo||r.o.date||'', daysCount(r.o.date,r.o.dateTo), hoursDuration(r.o.timeFrom,r.o.timeTo,r.o.date,r.o.dateTo), r.school?escapeHtml(r.school.name):'', r.supervisor&&r.supervisor.phone?phoneLink(r.supervisor.phone):'', escapeHtml(trainerPhones(r.o)), escapeHtml(r.reqs)]);
+    return rows.map(r=>[r.o.serial, escapeHtml(r.dateStr), daysCount(r.o.date,r.o.dateTo), hoursDuration(r.o.timeFrom,r.o.timeTo,r.o.date,r.o.dateTo), r.school?escapeHtml(r.school.name):'', escapeHtml(trainerNames(r.o)), escapeHtml(trainerPhones(r.o)), escapeHtml(r.reqName)]);
   }
   async function printIt(){
     const {list, from, to} = getList();
@@ -2193,18 +2224,55 @@ async function deleteQuranRecord(id){
 function renderReportsPage(c){
   c.innerHTML = `
   <div class="tabs">
-    <button class="tab-btn active" id="rt_trainer">تقرير مقدم فعالية</button>
-    <button class="tab-btn" id="rt_school">تقرير مدرسة</button>
-    <button class="tab-btn" id="rt_hours">تقرير ساعات مقدمي الفعالية</button>
-    <button class="tab-btn" id="rt_eval">تقرير التقييمات</button>
-    <button class="tab-btn" id="rt_general">تقرير عام</button>
-    <button class="tab-btn" id="rt_bypath">تقرير حسب مسار المبادرة</button>
-    <button class="tab-btn" id="rt_stats">الإحصائيات</button>
+    <button class="tab-btn active" id="rt_start">ابدأ تقريرًا</button>
+    <button class="tab-btn" id="rt_trainer" style="display:none;">تقرير مقدم فعالية</button>
+    <button class="tab-btn" id="rt_school" style="display:none;">تقرير مدرسة</button>
+    <button class="tab-btn" id="rt_hours" style="display:none;">تقرير ساعات مقدمي الفعالية</button>
+    <button class="tab-btn" id="rt_eval" style="display:none;">النتائج والإنجازات</button>
+    <button class="tab-btn" id="rt_general" style="display:none;">تقرير عام</button>
+    <button class="tab-btn" id="rt_bypath" style="display:none;">تقرير حسب مسار المبادرة</button>
+    <button class="tab-btn" id="rt_stats" style="display:none;">الإحصائيات</button>
   </div>
   <div id="reportContent"></div>`;
-  let mode='trainer';
-  const tabs = {trainer:'rt_trainer', school:'rt_school', hours:'rt_hours', eval:'rt_eval', general:'rt_general', bypath:'rt_bypath', stats:'rt_stats'};
+  let mode='start';
+  const tabs = {start:'rt_start', trainer:'rt_trainer', school:'rt_school', hours:'rt_hours', eval:'rt_eval', general:'rt_general', bypath:'rt_bypath', stats:'rt_stats'};
   function setActive(){ Object.entries(tabs).forEach(([k,id])=>document.getElementById(id).classList.toggle('active', mode===k)); }
+  function drawStart(){
+    const box=document.getElementById('reportContent');
+    box.innerHTML = `<div class="card">
+      <h2>ابدأ تقريرًا</h2>
+      <div class="helper" style="margin-bottom:10px;">اختر الفترة ثم نوع التقرير، وسيُفتح التقرير المطلوب بالفترة معبّأة تلقائيًا.</div>
+      <div class="grid">
+        <div class="field"><label>من تاريخ</label><input id="rl_from" type="date" lang="en"></div>
+        <div class="field"><label>إلى تاريخ</label><input id="rl_to" type="date" lang="en"></div>
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>نوع التقرير</label>
+        <select id="rl_type">
+          <option value="trainer">تقرير مقدم الفعالية</option>
+          <option value="school">تقرير مدرسة</option>
+          <option value="bypath">تقرير حسب مسار / مجال المبادرة</option>
+          <option value="stats">الإحصائيات</option>
+          <option value="adminReq">الطلبات الإدارية</option>
+          <option value="eval">النتائج والإنجازات</option>
+          <option value="dist">التوزيعات</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="rl_go">فتح التقرير</button>
+    </div>`;
+    document.getElementById('rl_go').onclick=()=>{
+      const from = document.getElementById('rl_from').value, to = document.getElementById('rl_to').value;
+      const type = document.getElementById('rl_type').value;
+      if(type==='trainer'){ mode='trainer'; drawTrainer(); setActive(); if(from) document.getElementById('rp_from').value=from; if(to) document.getElementById('rp_to').value=to; }
+      else if(type==='school'){ mode='school'; drawSchool(); setActive(); if(from) document.getElementById('rp_from2').value=from; if(to) document.getElementById('rp_to2').value=to; }
+      else if(type==='bypath'){ mode='bypath'; drawByPath(); setActive(); if(from) document.getElementById('bp_from').value=from; if(to) document.getElementById('bp_to').value=to; }
+      else if(type==='stats'){ mode='stats'; renderStatsPage(document.getElementById('reportContent')); setActive(); }
+      else if(type==='eval'){ mode='eval'; drawEval(); setActive(); if(from) document.getElementById('ev_from').value=from; if(to) document.getElementById('ev_to').value=to; }
+      else if(type==='adminReq'){ currentPage='distributions'; distSubTab='adminReq'; render(); }
+      else if(type==='dist'){ currentPage='distributions'; distSubTab='dist'; render(); }
+    };
+  }
+  document.getElementById('rt_start').onclick=()=>{mode='start'; drawStart(); setActive();};
   document.getElementById('rt_trainer').onclick=()=>{mode='trainer'; drawTrainer(); setActive();};
   document.getElementById('rt_school').onclick=()=>{mode='school'; drawSchool(); setActive();};
   document.getElementById('rt_hours').onclick=()=>{mode='hours'; drawHours(); setActive();};
@@ -2215,10 +2283,19 @@ function renderReportsPage(c){
 
   function drawByPath(){
     const box=document.getElementById('reportContent');
-    box.innerHTML = `<div class="card"><h2>تقرير حسب مسار المبادرة</h2>
+    box.innerHTML = `<div class="card"><h2>تقرير حسب مسار / مجال المبادرة</h2>
       <div class="grid">
         <div class="field"><label>من تاريخ</label><input id="bp_from" type="date" lang="en" value="2025-08-11"></div>
         <div class="field"><label>إلى تاريخ</label><input id="bp_to" type="date" lang="en" value="2026-06-16"></div>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;">
+        <label class="checkbox-chip"><input type="checkbox" id="bp_byPath" checked> مسار المبادرة</label>
+        <label class="checkbox-chip"><input type="checkbox" id="bp_byField"> مجال المبادرة</label>
+      </div>
+      <div id="bp_modeWrap" style="display:none;margin-bottom:10px;">
+        <div class="helper" style="margin-bottom:6px;">اخترت المسار والمجال معًا — كيف تريد عرض التقرير؟</div>
+        <label class="checkbox-chip"><input type="radio" name="bp_mode" value="separate" checked> كل تصنيف في تقرير منفصل</label>
+        <label class="checkbox-chip"><input type="radio" name="bp_mode" value="combined"> الكل في تقرير واحد (المسار والمجال كأعمدة)</label>
       </div>
       <button class="btn btn-primary" id="bp_go">عرض</button>
       <button class="icon-btn rect" id="bp_print" title="طباعة">🖨️ طباعة</button>
@@ -2226,60 +2303,105 @@ function renderReportsPage(c){
       <button class="btn btn-outline" id="bp_excel">📊 استخراج إكسل</button>
       <div id="bp_result" style="margin-top:16px;"></div>
     </div>`;
+    function syncModeVisibility(){
+      const both = document.getElementById('bp_byPath').checked && document.getElementById('bp_byField').checked;
+      document.getElementById('bp_modeWrap').style.display = both ? 'block' : 'none';
+    }
+    document.getElementById('bp_byPath').addEventListener('change', syncModeVisibility);
+    document.getElementById('bp_byField').addEventListener('change', syncModeVisibility);
+
+    const baseCols = ['رقم التكليف','الفعالية','التاريخ','الوقت','المكان','هاتف المشرف','مقدم الفعالية','هاتف مقدم الفعالية','الإنجاز'];
+    function rowOf(o, extraCols){
+      const school = state.schools.find(s=>s.id===o.schoolId);
+      const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
+      const base = [o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), school?school.name:'', supervisor?supervisor.phone||'':'', trainerNames(o), trainerPhones(o), o.completionStatus||'لم تنجز'];
+      const extra = (extraCols||[]).map(c=>{
+        if(c==='مسار المبادرة'){ const pt=state.programTypes.find(p=>p.id===o.programTypeId); return pt?pt.name:''; }
+        if(c==='مجال المبادرة'){ const f=state.fields.find(x=>x.id===o.fieldId); return f?f.name:''; }
+        return '';
+      });
+      return [...base, ...extra];
+    }
     function gen(){
       const from=document.getElementById('bp_from').value, to=document.getElementById('bp_to').value;
-      return state.programTypes.map(pt=>{
-        const list = state.orders.filter(o=>o.programTypeId===pt.id && o.completionStatus==='تم' && (!from||o.date>=from) && (!to||o.date<=to))
-          .sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-        return {pt, list};
-      }).filter(g=>g.list.length>0).sort((a,b)=>b.list.length-a.list.length);
+      const byPath = document.getElementById('bp_byPath').checked;
+      const byField = document.getElementById('bp_byField').checked;
+      const mode = document.querySelector('input[name="bp_mode"]:checked')?.value || 'separate';
+      const baseList = state.orders.filter(o=>o.completionStatus==='تم' && (!from||o.date>=from) && (!to||o.date<=to));
+
+      if(byPath && byField && mode==='combined'){
+        return { mode:'combined', columns:[...baseCols,'مسار المبادرة','مجال المبادرة'], list: baseList.sort((a,b)=>(a.date||'').localeCompare(b.date||'')) };
+      }
+      // منفصل: نجمّع حسب المسار و/أو المجال كأقسام مستقلة
+      let groups = [];
+      if(byPath){
+        groups = groups.concat(state.programTypes.map(pt=>({
+          label:'مسار: '+pt.name,
+          list: baseList.filter(o=>o.programTypeId===pt.id).sort((a,b)=>(a.date||'').localeCompare(b.date||''))
+        })));
+      }
+      if(byField){
+        groups = groups.concat(state.fields.map(f=>({
+          label:'مجال: '+f.name,
+          list: baseList.filter(o=>o.fieldId===f.id).sort((a,b)=>(a.date||'').localeCompare(b.date||''))
+        })));
+      }
+      groups = groups.filter(g=>g.list.length>0).sort((a,b)=>b.list.length-a.list.length);
+      return { mode:'separate', columns:baseCols, groups };
     }
-    function kpisOf(groups){
-      const allOrders = groups.flatMap(g=>g.list);
-      const participantsTotal = allOrders.reduce((s,o)=>s+(Number(o.participantsCount)||0),0);
-      const schoolsTotal = new Set(allOrders.map(o=>o.schoolId).filter(Boolean)).size;
-      const daysTotal = allOrders.reduce((s,o)=>s+daysCount(o.date,o.dateTo),0);
-      return {events:allOrders.length, participantsTotal, schoolsTotal, daysTotal};
-    }
-    function rowsOf(o){
-      const s = state.schools.find(x=>x.id===o.schoolId);
-      return [o.serial, o.title, o.date||'', s?s.name:'', trainerNames(o), o.participantsCount||'', o.completionStatus||'لم تنجز'];
-    }
-    const headers = ['م','العنوان','التاريخ','المدرسة','مقدم المبادرة','عدد المستهدفين','الإنجاز'];
     document.getElementById('bp_go').onclick=()=>{
-      const groups = gen();
+      const data = gen();
       const box = document.getElementById('bp_result');
-      box.innerHTML = groups.length ? groups.map(g=>`
-        <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin:14px 0 8px;">${escapeHtml(g.pt.name)} <span class="badge">${g.list.length}</span></h3>
-        <table style="text-align:center;"><thead><tr>${headers.map(h=>`<th style="text-align:center;${h==='التاريخ'?'min-width:130px;':''}">${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>
-          ${g.list.map(o=>`<tr>${rowsOf(o).map((c,i)=>`<td style="text-align:center;${headers[i]==='التاريخ'?'min-width:130px;':''}">${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}
-        </tbody></table>`).join('') : `<div class="empty-state">لا توجد فعاليات منجزة ضمن هذه الفترة</div>`;
+      if(data.mode==='combined'){
+        box.innerHTML = data.list.length ? `<table style="text-align:center;"><thead><tr>${data.columns.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>
+          ${data.list.map(o=>`<tr>${rowOf(o,['مسار المبادرة','مجال المبادرة']).map(v=>`<td>${escapeHtml(String(v))}</td>`).join('')}</tr>`).join('')}
+        </tbody></table>` : `<div class="empty-state">لا توجد فعاليات منجزة ضمن هذه الفترة</div>`;
+      } else {
+        box.innerHTML = data.groups.length ? data.groups.map(g=>`
+          <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin:14px 0 8px;">${escapeHtml(g.label)} <span class="badge">${g.list.length}</span></h3>
+          <table style="text-align:center;"><thead><tr>${data.columns.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>
+            ${g.list.map(o=>`<tr>${rowOf(o).map(v=>`<td>${escapeHtml(String(v))}</td>`).join('')}</tr>`).join('')}
+          </tbody></table>`).join('') : `<div class="empty-state">لا توجد فعاليات منجزة ضمن هذه الفترة</div>`;
+      }
       enhanceReportTable(box);
     };
     document.getElementById('bp_excel').onclick=()=>{
-      const groups = gen();
+      const data = gen();
       const from=document.getElementById('bp_from').value, to=document.getElementById('bp_to').value;
-      if(!groups.length){ toast('لا توجد بيانات لتصديرها'); return; }
-      const sheets = groups.map(g=>({name:g.pt.name.slice(0,30), headers, rows:g.list.map(rowsOf)}));
-      exportToExcelMultiSheet('تقرير_حسب_مسار_المبادرة.xlsx', sheets, `تقرير حسب مسار المبادرة (من ${from||'—'} إلى ${to||'—'})`);
+      if(data.mode==='combined'){
+        if(!data.list.length){ toast('لا توجد بيانات لتصديرها'); return; }
+        exportToExcel('تقرير_حسب_المسار_والمجال.xlsx', data.columns, data.list.map(o=>rowOf(o,['مسار المبادرة','مجال المبادرة'])), `تقرير حسب المسار والمجال (من ${from||'—'} إلى ${to||'—'})`);
+      } else {
+        if(!data.groups.length){ toast('لا توجد بيانات لتصديرها'); return; }
+        const sheets = data.groups.map(g=>({name:g.label.slice(0,30), headers:data.columns, rows:g.list.map(o=>rowOf(o))}));
+        exportToExcelMultiSheet('تقرير_حسب_مسار_المبادرة.xlsx', sheets, `تقرير حسب مسار/مجال المبادرة (من ${from||'—'} إلى ${to||'—'})`);
+      }
     };
     function printIt(){
-      const groups = gen();
-      const k = kpisOf(groups);
+      const data = gen();
       const from=document.getElementById('bp_from').value, to=document.getElementById('bp_to').value;
       const dateBox = `<div style="text-align:center;margin-bottom:5mm;font-size:11pt;font-weight:700;">
         من <span style="display:inline-block;border:1.5px solid ${PRINT_LINE_COLOR};border-radius:6px;padding:1.5mm 6mm;margin:0 3mm;font-weight:900;">${from||'—'}</span>
         إلى <span style="display:inline-block;border:1.5px solid ${PRINT_LINE_COLOR};border-radius:6px;padding:1.5mm 6mm;margin:0 3mm;font-weight:900;">${to||'—'}</span>
       </div>`;
-      const groupsHtml = groups.map(g=>`
-        <div class="sec-t">${escapeHtml(g.pt.name)} (${g.list.length})</div>
-        <table style="text-align:center;"><thead><tr>${headers.map(h=>`<th style="text-align:center;${h==='التاريخ'?'min-width:26mm;':''}">${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>
-          ${g.list.map(o=>`<tr>${rowsOf(o).map((c,i)=>`<td style="text-align:center;${headers[i]==='التاريخ'?'min-width:26mm;':''}">${escapeHtml(String(c))}</td>`).join('')}</tr>`).join('')}
-        </tbody></table>`).join('');
+      let bodyHtml, totalEvents;
+      if(data.mode==='combined'){
+        totalEvents = data.list.length;
+        bodyHtml = `<table style="text-align:center;"><thead><tr>${data.columns.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>
+          ${data.list.map(o=>`<tr>${rowOf(o,['مسار المبادرة','مجال المبادرة']).map(v=>`<td>${escapeHtml(String(v))}</td>`).join('')}</tr>`).join('')}
+        </tbody></table>`;
+      } else {
+        totalEvents = data.groups.reduce((s,g)=>s+g.list.length,0);
+        bodyHtml = data.groups.map(g=>`
+          <div class="sec-t">${escapeHtml(g.label)} (${g.list.length})</div>
+          <table style="text-align:center;"><thead><tr>${data.columns.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>
+            ${g.list.map(o=>`<tr>${rowOf(o).map(v=>`<td>${escapeHtml(String(v))}</td>`).join('')}</tr>`).join('')}
+          </tbody></table>`).join('');
+      }
       doPrintDoc(buildReportDoc({
-        titleAr:'تقرير حسب مسار المبادرة',
-        kpis:[{v:k.events,l:'عدد الفعاليات المنجزة'},{v:k.participantsTotal,l:'عدد المستهدفين'},{v:k.schoolsTotal,l:'عدد المدارس'},{v:k.daysTotal,l:'عدد الأيام'},{v:k.participantsTotal,l:'عدد الطلاب'}],
-        extraHtml: dateBox + groupsHtml
+        titleAr:'تقرير حسب مسار / مجال المبادرة',
+        kpis:[{v:totalEvents,l:'عدد الفعاليات المنجزة'}],
+        extraHtml: dateBox + bodyHtml
       }), true, 'A4');
     }
     document.getElementById('bp_print').onclick=printIt;
@@ -2337,7 +2459,7 @@ function renderReportsPage(c){
 
   function drawEval(){
     const box=document.getElementById('reportContent');
-    box.innerHTML = `<div class="card"><h2>تقرير التقييمات — الفعاليات المنفذة</h2>
+    box.innerHTML = `<div class="card"><h2>النتائج والإنجازات</h2>
       <div class="grid"><div class="field"><label>من تاريخ</label><input id="ev_from" type="date" lang="en"></div><div class="field"><label>إلى تاريخ</label><input id="ev_to" type="date" lang="en"></div></div>
       <button class="btn btn-primary" id="ev_go">عرض</button>
       <button class="icon-btn rect" id="ev_print" title="طباعة">🖨️ طباعة</button>
@@ -2353,39 +2475,42 @@ function renderReportsPage(c){
       const notEvaluated = executed.filter(o=>!o.completionStatus);
       return {evaluated, notEvaluated, from, to};
     }
-    function rowsOf(list){ return list.map(o=>[o.serial, escapeHtml(o.title), o.date||'', escapeHtml(trainerNames(o))||'—', o.completionStatus||'لم تنجز']); }
+    const headers = ['أمر التكليف','عنوان الفعالية','التاريخ','الوقت','المكان','مقدم المبادرة','رقم الهاتف','الإنجاز'];
+    function rowOf(o){
+      const school = state.schools.find(s=>s.id===o.schoolId);
+      return [o.serial, escapeHtml(o.title), o.date||'', escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', escapeHtml(trainerNames(o))||'—', escapeHtml(trainerPhones(o)), o.completionStatus||'لم تنجز'];
+    }
     function tableOf(list){
-      return `<table><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>أسماء المنفذين</th><th>الإنجاز</th></tr></thead><tbody>
-        ${list.length?list.map(o=>`<tr><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${escapeHtml(trainerNames(o))||'—'}</td><td>${o.completionStatus||'لم تنجز'}</td></tr>`).join(''):'<tr><td colspan="5" class="empty-state">لا توجد بيانات</td></tr>'}
+      return `<table><thead><tr>${headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>
+        ${list.length?list.map(o=>`<tr>${rowOf(o).map(v=>`<td>${v}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}" class="empty-state">لا توجد بيانات</td></tr>`}
       </tbody></table>`;
     }
     document.getElementById('ev_go').onclick=()=>{
       const {evaluated, notEvaluated} = gen();
       const box = document.getElementById('ev_result');
       box.innerHTML = `
-        <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin-bottom:8px;">✅ فعاليات نُفذت وتم تقييمها (${evaluated.length})</h3>
+        <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin-bottom:8px;">✅ فعاليات مقيَّمة (${evaluated.length})</h3>
         ${tableOf(evaluated)}
         <div class="divider"></div>
-        <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin-bottom:8px;">⏳ فعاليات نُفذت ولم تُقيَّم بعد (${notEvaluated.length})</h3>
+        <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin-bottom:8px;">⏳ فعاليات غير مقيَّمة (${notEvaluated.length})</h3>
         ${tableOf(notEvaluated)}`;
       enhanceReportTable(box);
     };
     document.getElementById('ev_excel').onclick=()=>{
       const {evaluated, notEvaluated, from, to} = gen();
-      const headers = ['م','العنوان','التاريخ','أسماء المنفذين','الإنجاز'];
-      exportToExcelMultiSheet('تقرير_التقييمات.xlsx', [
-        {name:'مقيَّمة', headers, rows:rowsOf(evaluated)},
-        {name:'غير مقيَّمة', headers, rows:rowsOf(notEvaluated)},
-      ], `تقرير التقييمات (من ${from||'—'} إلى ${to||'—'})`);
+      exportToExcelMultiSheet('النتائج_والإنجازات.xlsx', [
+        {name:'مقيَّمة', headers, rows:evaluated.map(rowOf)},
+        {name:'غير مقيَّمة', headers, rows:notEvaluated.map(rowOf)},
+      ], `النتائج والإنجازات (من ${from||'—'} إلى ${to||'—'})`);
     };
     document.getElementById('ev_print').onclick=()=>{
       const {evaluated, notEvaluated, from, to} = gen();
       doPrintDoc(buildReportDoc({
-        titleAr:'تقرير التقييمات — الفعاليات المنفذة', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
-        kpis:[{v:evaluated.length,l:'تم تقييمها'},{v:notEvaluated.length,l:'بانتظار التقييم'}],
-        headers:['م','العنوان','التاريخ','أسماء المنفذين','الإنجاز'],
-        rows:rowsOf(evaluated),
-        extraHtml:`<div class="sec-t">⏳ فعاليات نُفذت ولم تُقيَّم بعد</div><table><thead><tr><th>م</th><th>العنوان</th><th>التاريخ</th><th>أسماء المنفذين</th><th>الإنجاز</th></tr></thead><tbody>${notEvaluated.length?notEvaluated.map(o=>`<tr><td>${o.serial}</td><td>${escapeHtml(o.title)}</td><td>${o.date||''}</td><td>${escapeHtml(trainerNames(o))||'—'}</td><td>${o.completionStatus||'لم تنجز'}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center;color:#999;">لا توجد</td></tr>'}</tbody></table>`
+        titleAr:'النتائج والإنجازات', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
+        kpis:[{v:evaluated.length,l:'فعاليات مقيَّمة'},{v:notEvaluated.length,l:'بانتظار التقييم'}],
+        headers,
+        rows:evaluated.map(rowOf),
+        extraHtml:`<div class="sec-t">⏳ فعاليات غير مقيَّمة</div><table><thead><tr>${headers.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr></thead><tbody>${notEvaluated.length?notEvaluated.map(o=>`<tr>${rowOf(o).map(v=>`<td>${v}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${headers.length}" style="text-align:center;color:#999;">لا توجد</td></tr>`}</tbody></table>`
       }), true, 'A4');
     };
     document.getElementById('ev_pdf').onclick=()=>document.getElementById('ev_print').onclick();
@@ -2395,9 +2520,28 @@ function renderReportsPage(c){
     const box=document.getElementById('reportContent');
     box.innerHTML = `<div class="card"><h2>تقرير مقدم فعالية</h2>
       <div class="grid">
-        <div class="field"><label>مقدم الفعالية</label><select id="rp_trainer">${state.trainers.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('')}</select></div>
         <div class="field"><label>من تاريخ</label><input id="rp_from" type="date" lang="en"></div>
         <div class="field"><label>إلى تاريخ</label><input id="rp_to" type="date" lang="en"></div>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>مقدمو الفعاليات</span>
+          <label style="font-weight:400;font-size:12px;"><input type="checkbox" id="rp_trainerAll"> تحديد الكل</label>
+        </label>
+        <div id="rp_trainerChecks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;border:1px solid var(--line);border-radius:8px;padding:8px;max-height:180px;overflow:auto;">
+          ${state.trainers.map(t=>`<label class="checkbox-chip"><input type="checkbox" class="rp_trainerChk" value="${t.id}"> ${escapeHtml(t.name)}</label>`).join('') || '<span class="helper">لا يوجد مقدمو فعاليات</span>'}
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>نوع البيانات المطلوبة</span>
+          <label style="font-weight:400;font-size:12px;"><input type="checkbox" id="rp_modeAll"> تحديد الكل</label>
+        </label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;border:1px solid var(--line);border-radius:8px;padding:8px;">
+          <label class="checkbox-chip"><input type="checkbox" class="rp_modeChk" value="events" checked> الفعاليات فقط</label>
+          <label class="checkbox-chip"><input type="checkbox" class="rp_modeChk" value="hours"> الفعاليات والساعات</label>
+          <label class="checkbox-chip"><input type="checkbox" class="rp_modeChk" value="eval"> التقييمات</label>
+        </div>
       </div>
       <button class="btn btn-primary" id="rp_go">عرض الجدول</button>
       <button class="icon-btn rect" id="rp_print" title="طباعة">🖨️ طباعة</button>
@@ -2405,38 +2549,104 @@ function renderReportsPage(c){
       <button class="btn btn-outline" id="rp_excel">📊 تنزيل Excel</button>
       <div id="rp_result" style="margin-top:16px;"></div>
     </div>`;
-    function gen(){
-      const tId=document.getElementById('rp_trainer').value;
-      const from=document.getElementById('rp_from').value, to=document.getElementById('rp_to').value;
-      const list = state.orders.filter(o=>(o.trainerIds||[]).includes(tId) && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-      const trainer=state.trainers.find(t=>t.id===tId);
-      return {list, title:`جدول مقدم الفعالية: ${trainer?trainer.name:''}`, from, to};
+    document.getElementById('rp_trainerAll').addEventListener('change', (e)=>{
+      document.querySelectorAll('.rp_trainerChk').forEach(cb=>cb.checked=e.target.checked);
+    });
+    document.getElementById('rp_modeAll').addEventListener('change', (e)=>{
+      document.querySelectorAll('.rp_modeChk').forEach(cb=>cb.checked=e.target.checked);
+    });
+    function selectedTrainerIds(){ return Array.from(document.querySelectorAll('.rp_trainerChk:checked')).map(cb=>cb.value); }
+    function selectedModes(){ return Array.from(document.querySelectorAll('.rp_modeChk:checked')).map(cb=>cb.value); }
+    function columnsFor(modes){
+      // الأعمدة الأساسية موجودة دائمًا، ثم تُضاف أعمدة إضافية حسب الأنماط المختارة
+      const base = ['رقم التكليف','الفعالية','التاريخ','الوقت','المكان','هاتف المشرف','مقدم الفعالية','هاتف مقدم الفعالية'];
+      const extra = [];
+      if(modes.includes('hours')) extra.push('عدد الأيام','عدد الساعات');
+      extra.push('الإنجاز');
+      if(modes.includes('eval')) extra.push('تقييم المشرف','تقييم المدرسة','تقييم الطلاب');
+      return [...base, ...extra];
     }
-    document.getElementById('rp_go').onclick=()=>{ const box=document.getElementById('rp_result'); box.innerHTML = ordersTableHtmlPrint(gen().list); enhanceReportTable(box); };
+    function rowOf(o, columns){
+      const school = state.schools.find(s=>s.id===o.schoolId);
+      const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
+      const map = {
+        'رقم التكليف': o.serial,
+        'الفعالية': o.title,
+        'التاريخ': o.date||'',
+        'الوقت': fullTimeRange(o.timeFrom,o.timeTo),
+        'المكان': school?school.name:'',
+        'هاتف المشرف': supervisor?supervisor.phone||'':'',
+        'مقدم الفعالية': trainerNames(o),
+        'هاتف مقدم الفعالية': trainerPhones(o),
+        'عدد الأيام': daysCount(o.date,o.dateTo),
+        'عدد الساعات': hoursDuration(o.timeFrom,o.timeTo,o.date,o.dateTo),
+        'الإنجاز': o.completionStatus||'لم تنجز',
+        'تقييم المشرف': o.supervisorRating||'',
+        'تقييم المدرسة': o.schoolRating||'',
+        'تقييم الطلاب': o.studentsRating||'',
+      };
+      return columns.map(c=>map[c]);
+    }
+    function gen(){
+      const from=document.getElementById('rp_from').value, to=document.getElementById('rp_to').value;
+      const tIds = selectedTrainerIds();
+      const modes = selectedModes().length?selectedModes():['events'];
+      const columns = columnsFor(modes);
+      const groups = (tIds.length?tIds:state.trainers.map(t=>t.id)).map(tId=>{
+        const trainer = state.trainers.find(t=>t.id===tId);
+        const list = state.orders.filter(o=>(o.trainerIds||[]).includes(tId) && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+        return {trainer, list};
+      }).filter(g=>g.list.length>0 && g.trainer);
+      return {groups, columns, from, to};
+    }
+    document.getElementById('rp_go').onclick=()=>{
+      const {groups, columns} = gen();
+      const box = document.getElementById('rp_result');
+      box.innerHTML = groups.length ? groups.map(({trainer,list})=>`
+        <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin:14px 0 8px;">${escapeHtml(trainer.name)} <span class="badge">${list.length}</span></h3>
+        <table><thead><tr>${columns.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>
+          ${list.map(o=>`<tr>${rowOf(o,columns).map(v=>`<td>${escapeHtml(String(v))}</td>`).join('')}</tr>`).join('')}
+        </tbody></table>`).join('') : `<div class="empty-state">لا توجد فعاليات ضمن هذا الاختيار</div>`;
+      enhanceReportTable(box);
+    };
     document.getElementById('rp_excel').onclick=()=>{
-      const {list,title,from,to}=gen();
-      const rows = list.map(o=>{ const school=state.schools.find(s=>s.id===o.schoolId); return [o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), school?school.name:'', trainerNames(o), o.completionStatus||'لم تنجز']; });
-      exportToExcel('تقرير_مقدم_فعالية.xlsx', ['م','العنوان','التاريخ','الوقت','المدرسة','مقدم المبادرة','الإنجاز'], rows, `${title} (من ${from||'—'} إلى ${to||'—'})`);
+      const {groups, columns, from, to} = gen();
+      if(!groups.length){ toast('لا توجد بيانات لتصديرها'); return; }
+      const sheets = groups.map(({trainer,list})=>({name:trainer.name.slice(0,30), headers:columns, rows:list.map(o=>rowOf(o,columns))}));
+      exportToExcelMultiSheet('تقرير_مقدم_فعالية.xlsx', sheets, `تقرير مقدم فعالية (من ${from||'—'} إلى ${to||'—'})`);
     };
-    document.getElementById('rp_print').onclick=async ()=>{
-      const {list,title,from,to}=gen();
-      const rows = await Promise.all(list.map(async o=>{
-        const school=state.schools.find(s=>s.id===o.schoolId);
-        const qr = await generateQRDataUrl(qrTextForOrder(o));
-        return [o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), school?escapeHtml(school.name):'', trainerMiniTable(o), o.completionStatus||'لم تنجز', qr?`<img src="${qr}" style="width:16mm;height:16mm;">`:''];
-      }));
-      doPrintDoc(buildReportDoc({ titleAr:title, subtitle:`من ${from||'—'} إلى ${to||'—'}`, kpis:[{v:list.length,l:'عدد الفعاليات'}],
-        headers:['م','العنوان','التاريخ','الوقت','المدرسة','مقدم المبادرة','الإنجاز','QR'], rows }), true, 'A4');
-    };
-    document.getElementById('rp_pdf').onclick=()=>document.getElementById('rp_print').onclick();
+    function printIt(){
+      const {groups, columns, from, to} = gen();
+      const extraHtml = groups.map(({trainer,list})=>`
+        <div class="sec-t">${escapeHtml(trainer.name)} (${list.length})</div>
+        <table><thead><tr>${columns.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>
+          ${list.map(o=>`<tr>${rowOf(o,columns).map(v=>`<td>${escapeHtml(String(v))}</td>`).join('')}</tr>`).join('')}
+        </tbody></table>`).join('');
+      doPrintDoc(buildReportDoc({
+        titleAr:'تقرير مقدم فعالية', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
+        kpis:[{v:groups.reduce((s,g)=>s+g.list.length,0),l:'إجمالي الفعاليات'}],
+        extraHtml
+      }), true, 'A4');
+    }
+    document.getElementById('rp_print').onclick=printIt;
+    document.getElementById('rp_pdf').onclick=printIt;
   }
   function drawSchool(){
     const box=document.getElementById('reportContent');
     box.innerHTML = `<div class="card"><h2>تقرير مدرسة</h2>
       <div class="grid">
-        <div class="field"><label>المدرسة</label><select id="rp_school">${state.schools.map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}</select></div>
         <div class="field"><label>من تاريخ</label><input id="rp_from2" type="date" lang="en"></div>
         <div class="field"><label>إلى تاريخ</label><input id="rp_to2" type="date" lang="en"></div>
+      </div>
+      <div class="field" style="margin-bottom:10px;">
+        <label style="display:flex;justify-content:space-between;align-items:center;">
+          <span>المدارس</span>
+          <label style="font-weight:400;font-size:12px;"><input type="checkbox" id="rp_schoolAll"> تحديد الكل</label>
+        </label>
+        <input id="rp_schoolSearch" placeholder="🔎 اكتب للبحث عن مدرسة..." style="margin-bottom:6px;">
+        <div id="rp_schoolChecks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;border:1px solid var(--line);border-radius:8px;padding:8px;max-height:180px;overflow:auto;">
+          ${state.schools.map(s=>`<label class="checkbox-chip rp_schoolRow" data-name="${escapeHtml(s.name)}"><input type="checkbox" class="rp_schoolChk" value="${s.id}"> ${escapeHtml(s.name)}</label>`).join('') || '<span class="helper">لا توجد مدارس</span>'}
+        </div>
       </div>
       <button class="btn btn-primary" id="rp_go2">عرض الجدول</button>
       <button class="icon-btn rect" id="rp_print2" title="طباعة">🖨️ طباعة</button>
@@ -2444,29 +2654,62 @@ function renderReportsPage(c){
       <button class="btn btn-outline" id="rp_excel2">📊 تنزيل Excel</button>
       <div id="rp_result2" style="margin-top:16px;"></div>
     </div>`;
-    function gen(){
-      const sId=document.getElementById('rp_school').value;
-      const from=document.getElementById('rp_from2').value, to=document.getElementById('rp_to2').value;
-      const list = state.orders.filter(o=>o.schoolId===sId && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-      const sch=state.schools.find(s=>s.id===sId);
-      return {list, title:`جدول المدرسة: ${sch?sch.name:''}`, from, to};
+    document.getElementById('rp_schoolAll').addEventListener('change', (e)=>{
+      document.querySelectorAll('.rp_schoolChk').forEach(cb=>{ if(cb.closest('.rp_schoolRow').style.display!=='none') cb.checked=e.target.checked; });
+    });
+    document.getElementById('rp_schoolSearch').addEventListener('input', (e)=>{
+      const q = e.target.value.trim();
+      document.querySelectorAll('.rp_schoolRow').forEach(row=>{
+        row.style.display = !q || row.dataset.name.includes(q) ? '' : 'none';
+      });
+    });
+    const columns = ['رقم التكليف','الفعالية','التاريخ','الوقت','المكان','هاتف المشرف','مقدم الفعالية','هاتف مقدم الفعالية','الإنجاز'];
+    function rowOf(o){
+      const school = state.schools.find(s=>s.id===o.schoolId);
+      const supervisor = school ? school.supervisors.find(s=>s.id===o.supervisorId) : null;
+      return [o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), school?school.name:'', supervisor?supervisor.phone||'':'', trainerNames(o), trainerPhones(o), o.completionStatus||'لم تنجز'];
     }
-    document.getElementById('rp_go2').onclick=()=>{ const box=document.getElementById('rp_result2'); box.innerHTML = ordersTableHtmlPrint(gen().list); enhanceReportTable(box); };
+    function gen(){
+      const from=document.getElementById('rp_from2').value, to=document.getElementById('rp_to2').value;
+      const sIds = Array.from(document.querySelectorAll('.rp_schoolChk:checked')).map(cb=>cb.value);
+      const groups = (sIds.length?sIds:state.schools.map(s=>s.id)).map(sId=>{
+        const school = state.schools.find(s=>s.id===sId);
+        const list = state.orders.filter(o=>o.schoolId===sId && (!from||o.date>=from) && (!to||o.date<=to)).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+        return {school, list};
+      }).filter(g=>g.list.length>0 && g.school);
+      return {groups, from, to};
+    }
+    document.getElementById('rp_go2').onclick=()=>{
+      const {groups} = gen();
+      const box = document.getElementById('rp_result2');
+      box.innerHTML = groups.length ? groups.map(({school,list})=>`
+        <h3 style="font-family:var(--font-head);color:var(--maroon-800);margin:14px 0 8px;">${escapeHtml(school.name)} <span class="badge">${list.length}</span></h3>
+        <table><thead><tr>${columns.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>
+          ${list.map(o=>`<tr>${rowOf(o).map(v=>`<td>${escapeHtml(String(v))}</td>`).join('')}</tr>`).join('')}
+        </tbody></table>`).join('') : `<div class="empty-state">لا توجد فعاليات ضمن هذا الاختيار</div>`;
+      enhanceReportTable(box);
+    };
     document.getElementById('rp_excel2').onclick=()=>{
-      const {list,title,from,to}=gen();
-      const rows = list.map(o=>[o.serial, o.title, o.date||'', fullTimeRange(o.timeFrom,o.timeTo), trainerNames(o), o.completionStatus||'لم تنجز']);
-      exportToExcel('تقرير_مدرسة.xlsx', ['م','العنوان','التاريخ','الوقت','مقدم المبادرة','الإنجاز'], rows, `${title} (من ${from||'—'} إلى ${to||'—'})`);
+      const {groups, from, to} = gen();
+      if(!groups.length){ toast('لا توجد بيانات لتصديرها'); return; }
+      const sheets = groups.map(({school,list})=>({name:school.name.slice(0,30), headers:columns, rows:list.map(rowOf)}));
+      exportToExcelMultiSheet('تقرير_مدرسة.xlsx', sheets, `تقرير مدرسة (من ${from||'—'} إلى ${to||'—'})`);
     };
-    document.getElementById('rp_print2').onclick=async ()=>{
-      const {list,title,from,to}=gen();
-      const rows = await Promise.all(list.map(async o=>{
-        const qr = await generateQRDataUrl(qrTextForOrder(o));
-        return [o.serial, escapeHtml(o.title), fullDateStr(o.date), escapeHtml(fullTimeRange(o.timeFrom,o.timeTo)), trainerMiniTable(o), o.completionStatus||'لم تنجز', qr?`<img src="${qr}" style="width:16mm;height:16mm;">`:''];
-      }));
-      doPrintDoc(buildReportDoc({ titleAr:title, subtitle:`من ${from||'—'} إلى ${to||'—'}`, kpis:[{v:list.length,l:'عدد الفعاليات'}],
-        headers:['م','العنوان','التاريخ','الوقت','مقدم المبادرة','الإنجاز','QR'], rows }), true, 'A4');
-    };
-    document.getElementById('rp_pdf2').onclick=()=>document.getElementById('rp_print2').onclick();
+    function printIt(){
+      const {groups, from, to} = gen();
+      const extraHtml = groups.map(({school,list})=>`
+        <div class="sec-t">${escapeHtml(school.name)} (${list.length})</div>
+        <table><thead><tr>${columns.map(c=>`<th>${escapeHtml(c)}</th>`).join('')}</tr></thead><tbody>
+          ${list.map(o=>`<tr>${rowOf(o).map(v=>`<td>${escapeHtml(String(v))}</td>`).join('')}</tr>`).join('')}
+        </tbody></table>`).join('');
+      doPrintDoc(buildReportDoc({
+        titleAr:'تقرير مدرسة', subtitle:`من ${from||'—'} إلى ${to||'—'}`,
+        kpis:[{v:groups.reduce((s,g)=>s+g.list.length,0),l:'إجمالي الفعاليات'}],
+        extraHtml
+      }), true, 'A4');
+    }
+    document.getElementById('rp_print2').onclick=printIt;
+    document.getElementById('rp_pdf2').onclick=printIt;
   }
   function drawHours(){
     const box=document.getElementById('reportContent');
@@ -2519,7 +2762,7 @@ function renderReportsPage(c){
     };
     document.getElementById('hr_pdf').onclick=()=>document.getElementById('hr_print').onclick();
   }
-  drawTrainer();
+  drawStart();
 }
 
 /* ============ Simple SVG bar chart ============ */
@@ -2820,12 +3063,28 @@ function renderDistributionsTabContent(c){
       <div class="field"><label>أو من تاريخ (فترة مخصصة)</label><input id="dist_customFrom" type="date" lang="en"></div>
       <div class="field"><label>إلى تاريخ (فترة مخصصة)</label><input id="dist_customTo" type="date" lang="en"></div>
     </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;">
+      <label class="checkbox-chip"><input type="checkbox" id="dist_showList" checked> قائمة (تفاصيل الفعاليات)</label>
+      <label class="checkbox-chip"><input type="checkbox" id="dist_showSummary" checked> ملخّص لكل مقدم مبادرة</label>
+    </div>
+    <div id="dist_modeWrap" style="display:none;margin-bottom:10px;">
+      <div class="helper" style="margin-bottom:6px;">اخترت القائمة والملخص معًا — كيف تريد عرض التقرير عند الطباعة/التصدير؟</div>
+      <label class="checkbox-chip"><input type="radio" name="dist_mode" value="combined" checked> الكل في تقرير واحد</label>
+      <label class="checkbox-chip"><input type="radio" name="dist_mode" value="separate"> كل قسم في تقرير منفصل</label>
+    </div>
     <button class="btn btn-primary" id="dist_go">عرض</button>
     <button class="icon-btn rect" id="dist_print" title="طباعة">🖨️ طباعة</button>
     <button class="icon-btn rect" id="dist_pdf" title="تنزيل PDF">📄 تنزيل PDF</button>
     <button class="btn btn-outline" id="dist_excel">📊 تنزيل Excel</button>
   </div>
   <div id="dist_result" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));"></div>`;
+
+  function syncDistModeVisibility(){
+    const both = document.getElementById('dist_showList').checked && document.getElementById('dist_showSummary').checked;
+    document.getElementById('dist_modeWrap').style.display = both ? 'block' : 'none';
+  }
+  document.getElementById('dist_showList').addEventListener('change', syncDistModeVisibility);
+  document.getElementById('dist_showSummary').addEventListener('change', syncDistModeVisibility);
 
   function periodBounds(period, dateStr){
     const customFrom = document.getElementById('dist_customFrom').value, customTo = document.getElementById('dist_customTo').value;
@@ -2840,7 +3099,7 @@ function renderDistributionsTabContent(c){
     const start = new Date(d.getFullYear(),0,1), end = new Date(d.getFullYear(),11,31);
     return {start:start.toISOString().slice(0,10), end:end.toISOString().slice(0,10)};
   }
-  const LEVEL_ORDER = ['ابتدائي','إعدادي','ثانوي','غير ذلك'];
+  const LEVEL_ORDER = LOCATION_TYPES;
   function sortedLevels(allLevels){
     const known = LEVEL_ORDER.filter(l=>allLevels.includes(l));
     const extra = allLevels.filter(l=>!LEVEL_ORDER.includes(l));
@@ -2912,14 +3171,20 @@ function renderDistributionsTabContent(c){
   }
   function draw(){
     const {groups} = trainerGroups();
+    const showList = document.getElementById('dist_showList').checked;
+    const showSummary = document.getElementById('dist_showSummary').checked;
     const box = document.getElementById('dist_result');
-    box.innerHTML = `<div class="card" style="grid-column:1/-1;"><h2>جدول ملخّص لكل مقدم مبادرة
-        <span style="display:flex;gap:6px;">
-          <button class="icon-btn rect" id="dist_summary_print" title="طباعة الجدول الملخّص">🖨️</button>
-          <button class="icon-btn rect" id="dist_summary_pdf" title="تنزيل PDF للجدول الملخّص">📄</button>
-        </span>
-      </h2>${summaryTableHtml(groups) || '<div class="empty-state">لا توجد بيانات ضمن هذه الفترة</div>'}</div>`
-      + (groups.map(({t,list,stats})=>`<div class="card" style="margin-bottom:0;">
+    let html = '';
+    if(showSummary){
+      html += `<div class="card" style="grid-column:1/-1;"><h2>جدول ملخّص لكل مقدم مبادرة
+          <span style="display:flex;gap:6px;">
+            <button class="icon-btn rect" id="dist_summary_print" title="طباعة الجدول الملخّص">🖨️</button>
+            <button class="icon-btn rect" id="dist_summary_pdf" title="تنزيل PDF للجدول الملخّص">📄</button>
+          </span>
+        </h2>${summaryTableHtml(groups) || '<div class="empty-state">لا توجد بيانات ضمن هذه الفترة</div>'}</div>`;
+    }
+    if(showList){
+      html += (groups.map(({t,list,stats})=>`<div class="card" style="margin-bottom:0;">
         <h2 style="font-size:16px;">${escapeHtml(t.name)} <span class="badge">${list.length}</span></h2>
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px;">
           <span class="stat-box" style="min-width:70px;"><div class="num">${stats.events}</div><div class="lbl">فعاليات</div></span>
@@ -2930,17 +3195,22 @@ function renderDistributionsTabContent(c){
         ${stats.byPath.length?`<div class="helper" style="margin-bottom:8px;">${stats.byPath.map(p=>`${escapeHtml(p.name)}: ${p.count}`).join(' — ')}</div>`:''}
         ${list.length? list.map(o=>{
           const school=state.schools.find(s=>s.id===o.schoolId);
+          const field=state.fields.find(f=>f.id===o.fieldId);
           const dateRange = o.dateTo && o.dateTo!==o.date ? `${o.date||''} — إلى — ${o.dateTo}` : (o.date||'');
           return `<div style="border-bottom:1px dashed var(--line); padding:8px 0; font-size:13px; line-height:1.8;">
-            <strong>${escapeHtml(o.title)}</strong><br>
+            <strong>${escapeHtml(o.title)}</strong> ${field?`<span class="badge">${escapeHtml(field.name)}</span>`:''}<br>
             📅 ${dateRange} (${daysCount(o.date,o.dateTo)} يوم) — ⏰ ${o.timeFrom||''}-${o.timeTo||''} (${hoursDuration(o.timeFrom,o.timeTo,o.date,o.dateTo)} ساعة)<br>
             🏫 ${school?escapeHtml(school.name):''} — الإنجاز: ${o.completionStatus||'لم تنجز'}
           </div>`;
         }).join('') : `<div class="empty-state" style="padding:16px;">لا توجد فعاليات ضمن هذه الفترة</div>`}
       </div>`).join('') || `<div class="empty-state">لا يوجد مقدمو فعاليات</div>`);
-    enhanceReportTable(document.getElementById('dist_result'));
-    document.getElementById('dist_summary_print').onclick = printSummaryOnly;
-    document.getElementById('dist_summary_pdf').onclick = printSummaryOnly;
+    }
+    box.innerHTML = html || `<div class="empty-state">اختر "قائمة" أو "ملخّص" لعرض البيانات</div>`;
+    enhanceReportTable(box);
+    if(showSummary){
+      document.getElementById('dist_summary_print').onclick = printSummaryOnly;
+      document.getElementById('dist_summary_pdf').onclick = printSummaryOnly;
+    }
   }
   function printSummaryOnly(){
     const {start, end, groups} = trainerGroups();
@@ -3397,10 +3667,10 @@ function renderSettingsPage(c){
       <label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="checkbox" id="schoolSelectAll" onchange="document.querySelectorAll('.schoolBulkChk').forEach(c=>c.checked=this.checked)"> تحديد الكل</label>
       <button class="btn btn-outline btn-sm" onclick="bulkDeleteSchools()">🗑️ حذف المدارس المحددة</button>
     </div>
-    ${state.schools.map(s=>`
-      <div style="border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:12px;">
+    ${state.schools.slice().sort((a,b)=>{ const aU=(!a.level||a.level==='غير ذلك')?0:1, bU=(!b.level||b.level==='غير ذلك')?0:1; return aU-bU; }).map(s=>`
+      <div style="border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:12px;${(!s.level||s.level==='غير ذلك')?'background:#fff7ea;border-color:#d9a441;':''}">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="schoolBulkChk" value="${s.id}"> <strong>${escapeHtml(s.name)}</strong> <span class="badge">${escapeHtml(s.level)}</span></label>
+          <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" class="schoolBulkChk" value="${s.id}"> <strong>${escapeHtml(s.name)}</strong> <span class="badge" ${(!s.level||s.level==='غير ذلك')?'style="background:#d9a441;color:#fff;"':''}>${escapeHtml(s.level||'غير مصنّف')}${(!s.level||s.level==='غير ذلك')?' ⚠️':''}</span></label>
           <div><button class="icon-btn" title="تعديل" onclick="editSchool('${s.id}')">✏️</button>
           <button class="icon-btn" title="إضافة مشرف" onclick="quickAddSupervisorSettings('${s.id}')">➕</button>
           <button class="icon-btn danger" title="حذف المدرسة" onclick="deleteFromList('schools','${s.id}')">🗑️</button></div>
@@ -3547,8 +3817,7 @@ function editSchool(id){
   const s = state.schools.find(x=>x.id===id); if(!s) return;
   openModal('تعديل مدرسة: '+s.name, [
     {name:'name', label:'اسم المدرسة', required:true},
-    {name:'level', label:'المرحلة الدراسية', type:'select', options:[
-      {value:'ابتدائي',label:'ابتدائي'},{value:'إعدادي',label:'إعدادي'},{value:'ثانوي',label:'ثانوي'},{value:'مركز خاص',label:'مركز خاص'},{value:'غير ذلك',label:'غير ذلك'}]},
+    {name:'level', label:'مكان المبادرة (نوع الجهة)', type:'select', options:LOCATION_TYPES.map(t=>({value:t,label:t}))},
     {name:'email', label:'البريد الإلكتروني للمدرسة (اختياري)'},
   ], async v=>{ s.name=v.name; s.level=v.level; s.email=v.email||''; await saveState(); toast('تم الحفظ'); render(); });
   setTimeout(()=>{ const f=document.getElementById('mf_name'); if(f) f.value=s.name; const l=document.getElementById('mf_level'); if(l) l.value=s.level; const em=document.getElementById('mf_email'); if(em) em.value=s.email||''; },0);
