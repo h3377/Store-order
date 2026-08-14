@@ -13,8 +13,8 @@
   :root{
     --maroon-950:#6d0f2b; --maroon-900:#6d0f2b; --maroon-800:#8A1538; --maroon-700:#a83c5b; --maroon-600:#a83c5b;
     --maroon-100:#f3ecde; --maroon-50:#FBF7EF; --gold:#C8A951; --gold-d:#a8893a; --red:#9e2b2b; --ink:#2b2320; --line:#e4d9c6; --white:#ffffff;
-    --font-body:'Tajawal','Sakkal Majalla','Cairo',sans-serif;
-    --font-head:'Tajawal','29LT Bukra','Cairo',sans-serif;
+    --font-body:'Almohanad long kaf','Almohanad','Tajawal','Sakkal Majalla','Cairo',sans-serif;
+    --font-head:'Almohanad long kaf','Almohanad','Tajawal','29LT Bukra','Cairo',sans-serif;
     --radius:14px; --shadow:0 1px 3px rgba(43,35,32,.08),0 6px 24px rgba(138,21,56,.08);
   }
   *{box-sizing:border-box;}
@@ -44,6 +44,20 @@
   .content{padding:24px 26px 60px; flex:1;}
   .card{background:var(--white); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:0 14px 14px; margin-bottom:14px; overflow:hidden;}
   .card h2{font-family:var(--font-body); font-weight:900; color:#fff; background:#12335c; font-size:14px; margin:0 -14px 12px -14px; padding:10px 14px; border-radius:0; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; border-bottom:none;}
+  .form-table{width:100%; border-collapse:collapse; margin:0 -14px; width:calc(100% + 28px);}
+  .form-table thead th{background:#c1902f; color:#fff; font-family:var(--font-body); font-weight:900; font-size:14px; padding:10px 14px; text-align:right;}
+  .form-table tbody td{border:1px solid var(--line); padding:10px 12px; vertical-align:top;}
+  .form-table tbody td label{display:block; font-size:12.5px; font-weight:700; color:var(--maroon-800); margin-bottom:5px;}
+  .form-table.compact tbody td{padding:6px 8px; white-space:nowrap;}
+  .form-table.compact tbody td label{font-size:11.5px; margin-bottom:3px;}
+  .form-table .auto-w{width:auto; min-width:0; max-width:100%;}
+  .form-table .auto-w.num{width:84px;}
+  .plus-btn.mini{width:18px; height:18px; font-size:12px; line-height:1; padding:0; vertical-align:middle; margin-inline-start:4px;}
+  .th-bar{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .th-actions{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .th-actions .plus-btn.mini{width:auto; height:24px; padding:0 8px; font-size:11.5px; font-weight:800; border-radius:6px; background:rgba(255,255,255,.9); color:#8a6a1f; border:none; margin:0; white-space:nowrap;}
+  .th-actions .plus-btn.mini:hover{background:#fff;}
+  .th-search{width:160px; height:24px; padding:0 8px; font-size:11.5px; border-radius:6px; border:none; background:rgba(255,255,255,.92);}
   .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:14px; margin-bottom:14px;}
   .field{display:flex; flex-direction:column; gap:6px;}
   .field label{font-size:14px; font-weight:700; color:var(--maroon-800);}
@@ -87,9 +101,9 @@
   .checkbox-list{display:flex; flex-wrap:wrap; gap:10px;}
   .checkbox-chip{display:flex; align-items:center; gap:6px; border:1.5px solid var(--line); border-radius:20px; padding:6px 12px; font-size:13.5px; cursor:pointer;}
   .checkbox-chip input{width:auto;}
-  .presenter-chip{display:flex; align-items:center; gap:8px; border:1.6px solid var(--line); border-radius:10px; padding:10px 12px; font-size:15px; cursor:pointer; background:#fff; transition:.15s;}
+  .presenter-chip{display:flex; align-items:center; gap:8px; border:none; border-radius:0; padding:4px 2px; font-size:15px; cursor:pointer; background:transparent; transition:.15s;}
   .presenter-chip input{width:auto; accent-color:var(--maroon-800);}
-  .presenter-chip:has(input:checked){background:var(--maroon-800); border-color:var(--maroon-800); color:#fff; font-weight:800;}
+  .presenter-chip:has(input:checked){background:transparent; color:var(--maroon-800); font-weight:900;}
   .presenter-chip:has(input:disabled){opacity:.45;}
   .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px;}
   .stat-box{background:#fff; border:1.5px solid var(--maroon-800); border-radius:8px; padding:6px; text-align:center;}
@@ -1086,88 +1100,104 @@ function renderOrderForm(sub){
     <h2>${editing? 'تعديل فعاليات ومبادرات — رقم '+editing.serial : 'فعاليات ومبادرات'}</h2>
   </div>
 
-  <div class="grid" style="grid-template-columns:1fr 1fr; align-items:start; gap:20px;">
   <div class="card">
-    <h2>بيانات المدرسة</h2>
-
-    <div class="grid" style="grid-template-columns:minmax(160px,240px) minmax(160px,240px); gap:14px;">
-      <div class="field"><label>مجال المبادرة</label>
-        <div class="row-inline"><select id="f_field">${state.fields.map(f=>`<option value="${f.id}" ${editing&&editing.fieldId===f.id?'selected':''}>${escapeHtml(f.name)}</option>`).join('')}</select>
-        <button class="plus-btn" title="إضافة مجال جديد" onclick="quickAddField()">+</button></div>
+    <table class="form-table compact"><thead><tr><th colspan="6">
+      <div class="th-bar">
+        <span>المبادرة ووقت تنفيذها</span>
+        <span class="th-actions">
+          <button class="plus-btn mini" title="إضافة مجال جديد" onclick="quickAddField()">+ مجال</button>
+          <button class="plus-btn mini" title="إضافة مسار جديد" onclick="quickAddPType()">+ مسار</button>
+        </span>
       </div>
-      <div class="field"><label>مسار المبادرة</label>
-        <div class="row-inline"><select id="f_ptype">${state.programTypes.map(p=>`<option value="${p.id}" ${editing&&editing.programTypeId===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('')}</select>
-        <button class="plus-btn" title="إضافة مسار جديد" onclick="quickAddPType()">+</button></div>
-      </div>
-    </div>
-
-    <div class="grid" style="grid-template-columns:1fr;">
-      <div class="field"><label>عنوان المبادرة</label><input id="f_title" style="font-size:18px; padding:13px 14px;" value="${editing?escapeHtml(editing.title):''}"></div>
-    </div>
-
-    <div class="grid" style="grid-template-columns:repeat(3,1fr);">
-      <div class="field"><label>تاريخ المبادرة (من)</label><input id="f_date" type="date" lang="en" value="${editing?editing.date:''}"></div>
-      <div class="field"><label>وقت المبادرة من</label><input id="f_timeFrom" type="time" lang="en" value="${editing?editing.timeFrom:''}"></div>
-      <div class="field"><label>وقت المبادرة إلى</label><input id="f_timeTo" type="time" lang="en" value="${editing?editing.timeTo:''}"></div>
-    </div>
-    <div class="grid" style="grid-template-columns:repeat(3,1fr);">
-      <div class="field"><label>تاريخ الانتهاء</label><input id="f_dateTo" type="date" lang="en" value="${editing?editing.dateTo||'':''}"></div>
-      <div class="field"><label>عدد الأيام (تلقائي)</label><input id="f_daysCount" type="text" lang="en" readonly style="background:#f4f6fa;" value="${editing?daysCount(editing.date, editing.dateTo):''}"></div>
-      <div class="field"><label>المدة بالساعات (تلقائي)</label><input id="f_hoursCount" type="text" lang="en" readonly style="background:#f4f6fa;" value="${editing?hoursDuration(editing.timeFrom, editing.timeTo, editing.date, editing.dateTo):''}"></div>
-    </div>
-
-    <div class="grid" style="grid-template-columns:1fr;">
-      <div class="field"><label>مكان التنفيذ (نوع الجهة)</label>
-        <div class="row-inline"><select id="f_placeType">
-          <option value="">-- الكل --</option>
-          ${state.placeTypes.map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('')}
-        </select>
-        <button class="plus-btn" title="إضافة تصنيف مكان تنفيذ" onclick="quickAddPlaceType()">+</button></div>
-      </div>
-    </div>
-    <div class="grid" style="grid-template-columns:1.6fr 1.4fr 0.8fr;">
-      <div class="field"><label>مكان المبادرة (${state.schools.length} مدرسة/جهة)</label>
-        <input id="f_schoolSearch" placeholder="🔎 اكتب للبحث..." style="margin-bottom:6px;">
-        <div class="row-inline"><select id="f_school" size="1">${state.schools.map(s=>`<option value="${s.id}" data-level="${escapeHtml(s.level||'')}" ${editing&&editing.schoolId===s.id?'selected':''}>${escapeHtml(s.name)} — ${escapeHtml(s.level)}</option>`).join('')}</select>
-        <button class="plus-btn" title="إضافة مدرسة/جهة" id="f_addSchoolBtn" onclick="quickAddSchool(document.getElementById('f_placeType').value ? (levelsForPlaceType(document.getElementById('f_placeType').value)[0]||'') : '')">+</button></div>
-      </div>
-      <div class="field"><label>المشرف</label>
-        <div class="row-inline"><select id="f_supervisor"></select>
-        <button class="plus-btn" title="إضافة مشرف لهذه المدرسة" onclick="quickAddSupervisor()">+</button></div>
-      </div>
-      <div class="field"><label>عدد المستهدفين</label><input id="f_count" type="number" lang="en" min="0" value="${editing?editing.participantsCount:''}"></div>
-    </div>
-
-    <div id="supervisorInfo" class="supervisor-info">${''}</div>
+    </th></tr></thead><tbody>
+      <tr>
+        <td><label>مجال المبادرة</label>
+          <select id="f_field" class="auto-w" required>${state.fields.map(f=>`<option value="${f.id}" ${editing&&editing.fieldId===f.id?'selected':''}>${escapeHtml(f.name)}</option>`).join('')}</select>
+        </td>
+        <td><label>مسار المبادرة</label>
+          <select id="f_ptype" class="auto-w" required>${state.programTypes.map(p=>`<option value="${p.id}" ${editing&&editing.programTypeId===p.id?'selected':''}>${escapeHtml(p.name)}</option>`).join('')}</select>
+        </td>
+        <td><label>تاريخ المبادرة (من)</label><input id="f_date" class="auto-w" type="date" lang="en" required value="${editing?editing.date:''}"></td>
+        <td><label>تاريخ الانتهاء</label><input id="f_dateTo" class="auto-w" type="date" lang="en" required value="${editing?editing.dateTo||'':''}"></td>
+        <td><label>وقت المبادرة من</label><input id="f_timeFrom" class="auto-w" type="time" lang="en" required value="${editing?editing.timeFrom:''}"></td>
+        <td><label>وقت المبادرة إلى</label><input id="f_timeTo" class="auto-w" type="time" lang="en" required value="${editing?editing.timeTo:''}"></td>
+      </tr>
+      <tr>
+        <td colspan="2"><label>عدد المستهدفين</label><input id="f_count" class="auto-w num" type="number" lang="en" min="0" required value="${editing?editing.participantsCount:''}"></td>
+        <td colspan="2"><label>عدد الأيام</label><input id="f_daysCount" class="auto-w num" type="text" lang="en" readonly style="background:#f4f6fa;" value="${editing?daysCount(editing.date, editing.dateTo):''}"></td>
+        <td colspan="2"><label>المدة بالساعات</label><input id="f_hoursCount" class="auto-w num" type="text" lang="en" readonly style="background:#f4f6fa;" value="${editing?hoursDuration(editing.timeFrom, editing.timeTo, editing.date, editing.dateTo):''}"></td>
+      </tr>
+      <tr>
+        <td colspan="6"><label>عنوان المبادرة</label><input id="f_title" style="font-size:18px; padding:11px 14px; width:100%;" required value="${editing?escapeHtml(editing.title):''}"></td>
+      </tr>
+    </tbody></table>
   </div>
 
   <div class="card">
-    <h2>بيانات المدرب</h2>
+    <table class="form-table compact"><thead><tr><th colspan="3">
+      <div class="th-bar">
+        <span>بيانات التنفيذ والمكان والمشرفين</span>
+        <span class="th-actions">
+          <input id="f_schoolSearch" class="th-search" placeholder="🔎 بحث عن مدرسة/جهة...">
+          <button class="plus-btn mini" title="إضافة تصنيف مكان تنفيذ" onclick="quickAddPlaceType()">+ مكان</button>
+          <button class="plus-btn mini" title="إضافة مدرسة/جهة" id="f_addSchoolBtn" onclick="quickAddSchool(document.getElementById('f_placeType').value ? (levelsForPlaceType(document.getElementById('f_placeType').value)[0]||'') : '')">+ جهة</button>
+          <button class="plus-btn mini" title="إضافة مشرف لهذه المدرسة" onclick="quickAddSupervisor()">+ مشرف</button>
+        </span>
+      </div>
+    </th></tr></thead><tbody>
+      <tr>
+        <td><label>مكان التنفيذ (نوع الجهة)</label>
+          <select id="f_placeType" class="auto-w">
+            <option value="">-- الكل --</option>
+            ${state.placeTypes.map(p=>`<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('')}
+          </select>
+        </td>
+        <td><label>مكان المبادرة (${state.schools.length} مدرسة/جهة)</label>
+          <select id="f_school" size="1" required>${state.schools.map(s=>`<option value="${s.id}" data-level="${escapeHtml(s.level||'')}" ${editing&&editing.schoolId===s.id?'selected':''}>${escapeHtml(s.name)} — ${escapeHtml(s.level)}</option>`).join('')}</select>
+        </td>
+        <td><label>المشرف</label>
+          <select id="f_supervisor" required></select>
+        </td>
+      </tr>
+      <tr><td colspan="3"><div id="supervisorInfo" class="supervisor-info">${''}</div></td></tr>
+    </tbody></table>
+  </div>
 
-    <div class="field" style="margin-bottom:14px;">
-      <label style="display:flex;justify-content:space-between;align-items:center;">
-        <span>مقدم المبادرة</span>
-        <button class="plus-btn" style="width:28px;height:28px;font-size:15px;" title="إضافة مقدم مبادرة" onclick="quickAddTrainer()">+</button>
-      </label>
-      <div id="trainerChipList" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px;"></div>
-      <div class="helper">مقدّمو المبادرة المشغولون بفارق أقل من ساعة ونصف عن فعالية أخرى في نفس اليوم يظهرون كـ"مشغول" ولا يمكن اختيارهم.</div>
-    </div>
+  <div class="card">
+    <table class="form-table"><thead><tr><th>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span>بيانات المدربين وهواتفهم</span>
+        <button class="plus-btn" style="width:26px;height:26px;font-size:14px;" title="إضافة مقدم مبادرة" onclick="quickAddTrainer()">+</button>
+      </div>
+    </th></tr></thead><tbody>
+      <tr><td>
+        <div id="trainerChipList" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:8px;"></div>
+        <div class="helper">مقدّمو المبادرة المشغولون بفارق أقل من ساعة ونصف عن فعالية أخرى في نفس اليوم يظهرون كـ"مشغول" ولا يمكن اختيارهم.</div>
+      </td></tr>
+    </tbody></table>
+  </div>
 
-    <div class="divider"></div>
-    <div class="grid">
-      <div class="field"><label>ملاحظة الجهة الطالبة</label><textarea id="f_reqNote">${editing?escapeHtml(editing.requesterNote||''):''}</textarea></div>
-      <div class="field"><label>ملاحظة الإدارة</label><textarea id="f_adminNote">${editing?escapeHtml(editing.adminNote||''):''}</textarea></div>
-    </div>
-    <div class="divider"></div>
-    <div class="field">
-      <label style="display:flex;justify-content:space-between;align-items:center;">
+  <div class="card">
+    <table class="form-table"><thead><tr><th colspan="2">ملاحظات</th></tr></thead><tbody>
+      <tr>
+        <td><label>ملاحظة الجهة الطالبة</label><textarea id="f_reqNote">${editing?escapeHtml(editing.requesterNote||''):''}</textarea></td>
+        <td><label>ملاحظة الإدارة</label><textarea id="f_adminNote">${editing?escapeHtml(editing.adminNote||''):''}</textarea></td>
+      </tr>
+    </tbody></table>
+  </div>
+
+  <div class="card">
+    <table class="form-table"><thead><tr><th>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
         <span>الطلبات الإدارية للبرنامج</span>
-        <button class="plus-btn" style="width:28px;height:28px;font-size:15px;" title="إضافة طلب إداري" onclick="quickAddAdminRequest()">+</button>
-      </label>
-      <div class="checkbox-list" id="adminReqList"></div>
-      <div class="helper">إذا كان الطلب مستخدمًا مسبقًا لبرنامج آخر في نفس التاريخ سيظهر تنبيه بذلك.</div>
-    </div>
-  </div>
+        <button class="plus-btn" style="width:26px;height:26px;font-size:14px;" title="إضافة طلب إداري" onclick="quickAddAdminRequest()">+</button>
+      </div>
+    </th></tr></thead><tbody>
+      <tr><td>
+        <div class="checkbox-list" id="adminReqList"></div>
+        <div class="helper">إذا كان الطلب مستخدمًا مسبقًا لبرنامج آخر في نفس التاريخ سيظهر تنبيه بذلك.</div>
+      </td></tr>
+    </tbody></table>
   </div>
 
   <div class="card">
@@ -1331,10 +1361,27 @@ function renderOrderForm(sub){
 
   document.getElementById('saveOrderBtn').onclick=async ()=>{
     const title=document.getElementById('f_title').value.trim();
-    if(!title){ toast('يرجى إدخال عنوان المبادرة'); return; }
     const date=document.getElementById('f_date').value, dateTo=document.getElementById('f_dateTo').value, timeFrom=document.getElementById('f_timeFrom').value, timeTo=document.getElementById('f_timeTo').value;
     const schoolId=document.getElementById('f_school').value;
+    const supervisorId=document.getElementById('f_supervisor').value;
+    const fieldId=document.getElementById('f_field').value, ptypeId=document.getElementById('f_ptype').value;
+    const participantsCount=document.getElementById('f_count').value;
     const trainerIds = Array.from(document.getElementById('trainerChipList').querySelectorAll('input:checked')).map(i=>i.value);
+    const checkedReqs = Array.from(reqBox.querySelectorAll('#reqHiddenChecks input:checked')).map(i=>i.value);
+
+    // التحقق من الحقول الإجبارية في كل الأقسام
+    if(!fieldId){ toast('يرجى اختيار مجال المبادرة'); return; }
+    if(!ptypeId){ toast('يرجى اختيار مسار المبادرة'); return; }
+    if(!title){ toast('يرجى إدخال عنوان المبادرة'); return; }
+    if(!date){ toast('يرجى إدخال تاريخ المبادرة'); return; }
+    if(!dateTo){ toast('يرجى إدخال تاريخ الانتهاء'); return; }
+    if(!timeFrom){ toast('يرجى إدخال وقت المبادرة (من)'); return; }
+    if(!timeTo){ toast('يرجى إدخال وقت المبادرة (إلى)'); return; }
+    if(participantsCount===''){ toast('يرجى إدخال عدد المستهدفين'); return; }
+    if(!schoolId){ toast('يرجى اختيار مكان المبادرة'); return; }
+    if(!supervisorId){ toast('يرجى اختيار المشرف'); return; }
+    if(!trainerIds.length){ toast('يرجى اختيار مقدم مبادرة واحد على الأقل'); return; }
+    if(!checkedReqs.length){ toast('يرجى اختيار طلب إداري واحد على الأقل'); return; }
 
     if(trainerIds.length && date){
       const conflict = anyTrainerConflict(trainerIds, date, timeFrom, timeTo, editing?editing.id:null, dateTo);
@@ -1347,11 +1394,10 @@ function renderOrderForm(sub){
         if(!ok) return;
       }
     }
-    const checkedReqs = Array.from(reqBox.querySelectorAll('#reqHiddenChecks input:checked')).map(i=>i.value);
     const orderData = {
-      title, fieldId: document.getElementById('f_field').value, participantsCount: document.getElementById('f_count').value,
-      date, dateTo: dateTo||'', timeFrom, timeTo, programTypeId: document.getElementById('f_ptype').value,
-      schoolId, supervisorId: document.getElementById('f_supervisor').value, trainerIds,
+      title, fieldId, participantsCount,
+      date, dateTo: dateTo||'', timeFrom, timeTo, programTypeId: ptypeId,
+      schoolId, supervisorId, trainerIds,
       requesterNote: document.getElementById('f_reqNote').value, adminNote: document.getElementById('f_adminNote').value,
       adminRequests: checkedReqs,
     };
@@ -1620,22 +1666,22 @@ function printDocOpen(theme){
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@700;800;900&display=swap" rel="stylesheet">
   <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Tajawal',Arial;direction:rtl;background:#f5f7fa;padding:10mm;color:#222;font-size:14pt;font-weight:400}
-  .doc-heading-font{font-family:'Cairo','Tajawal',Arial;font-weight:900;}
+  body{font-family:'Almohanad long kaf','Almohanad','Tajawal',Arial;direction:rtl;background:#f5f7fa;padding:10mm;color:#222;font-size:14pt;font-weight:400}
+  .doc-heading-font{font-family:'Almohanad long kaf','Almohanad','Cairo','Tajawal',Arial;font-weight:900;}
   .doc{width:100%;max-width:100%;margin:0 auto;padding:10mm 14mm;border:1.5px solid ${PRINT_LINE_COLOR};border-radius:4px;background:#fff;box-sizing:border-box}
   .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid ${theme};padding-bottom:5mm;margin-bottom:5mm;direction:ltr}
   .org-right{text-align:right;direction:rtl;line-height:1.7}
-  .org-l1{font-size:15pt;font-weight:900;color:${PRINT_LINE_COLOR};font-family:'Cairo','Tajawal',Arial;}
+  .org-l1{font-size:15pt;font-weight:900;color:${PRINT_LINE_COLOR};font-family:'Almohanad long kaf','Almohanad','Cairo','Tajawal',Arial;}
   .org-l2,.org-l3{font-size:10pt;color:${PRINT_LINE_COLOR};font-weight:700}
   .logo-ph{font-size:34px}
   .title-blk{text-align:center;margin-bottom:6mm;border:2px solid ${theme};border-radius:8px;padding:5mm;background:${theme}0d}
-  .title-ar{font-size:19pt;font-weight:900;color:${theme};font-family:'Cairo','Tajawal',Arial;letter-spacing:.3px;}
+  .title-ar{font-size:19pt;font-weight:900;color:${theme};font-family:'Almohanad long kaf','Almohanad','Cairo','Tajawal',Arial;letter-spacing:.3px;}
   .title-sub{font-size:10.5pt;color:#555;margin-top:2mm;font-weight:700}
   .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;margin-bottom:6mm}
   .kpi{border:1.5px solid ${theme};border-radius:6px;padding:7px;text-align:center}
   .kpi-v{font-size:15pt;font-weight:900;color:${theme}}
   .kpi-l{font-size:9.5pt;color:#666;margin-top:2px}
-  .sec-t{font-size:14pt;font-weight:900;margin:6mm 0 3mm;border-right:5px solid ${theme};padding-right:8px;color:${theme};font-family:'Cairo','Tajawal',Arial;}
+  .sec-t{font-size:14pt;font-weight:900;margin:6mm 0 3mm;border-right:5px solid ${theme};padding-right:8px;color:${theme};font-family:'Almohanad long kaf','Almohanad','Cairo','Tajawal',Arial;}
   table{width:100%;border-collapse:collapse;font-size:11pt;margin-bottom:4mm}
   thead{display:table-header-group}
   tfoot{display:table-footer-group}
@@ -1792,7 +1838,7 @@ async function buildOrderPrintDoc(o, opts, copyLabel){
   html += printDocHeaderBlock();
   html += `<div style="display:flex;align-items:stretch;border:1.5px dashed ${PRINT_LINE_COLOR};border-radius:8px;overflow:hidden;margin-bottom:4mm;">
     <div style="flex:0 0 260px;padding:3mm 8mm;text-align:center;display:flex;flex-direction:column;justify-content:center;border-left:1px dashed ${PRINT_LINE_COLOR};">
-      <div style="font-family:'Cairo','Tajawal',Arial;font-weight:900;font-size:12pt;color:${PRINT_THEME};">أمر تكليف</div>
+      <div style="font-family:'Almohanad long kaf','Almohanad','Cairo','Tajawal',Arial;font-weight:900;font-size:12pt;color:${PRINT_THEME};">أمر تكليف</div>
       <div style="font-family:Arial,'Tajawal';font-weight:800;font-size:7pt;letter-spacing:1px;color:${PRINT_THEME};margin-top:0.5mm;">ASSIGNMENT ORDER</div>
     </div>
     <div style="flex:1 1 auto;padding:1.5mm 5mm;display:flex;align-items:center;justify-content:center;border-left:1px dashed ${PRINT_LINE_COLOR};">
